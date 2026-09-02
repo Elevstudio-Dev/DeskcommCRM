@@ -44,6 +44,14 @@ export interface Lead {
   position_in_stage: number;
   value_cents: number | null;
   currency: string | null;
+  /**
+   * 0206: a probabilidade que o VENDEDOR aposta (0-100). `null` = nao opinou,
+   * e isso NAO e o mesmo que 0 — ver lib/leads/previsao-ponderada.ts.
+   *
+   * Convive com `score.probability`, que e da IA: as duas discordarem e o
+   * sinal util, entao nenhuma sobrescreve a outra.
+   */
+  commit_probability_pct: number | null;
   owner_user_id: string | null;
   /** 0070: quem é dono do negócio — humano, agente de IA, ou ninguém. */
   owner_kind: OwnerKind;

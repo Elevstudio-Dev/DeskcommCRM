@@ -67,6 +67,8 @@ export const createLeadSchema = z.object({
   contact_id: z.string().uuid().nullable().optional(),
   value_cents: z.coerce.number().int().nonnegative().nullable().optional(),
   currency: z.string().length(3).default("BRL"),
+  /** 0206: aposta do vendedor, 0-100. Ausente = nao opinou (fica null). */
+  commit_probability_pct: z.coerce.number().int().min(0).max(100).nullable().optional(),
   owner_user_id: z.string().uuid().nullable().optional(),
   /** Dono agente já na criação (0070) — mesma regra do update: os dois é 422. */
   owner_agent_id: z.string().uuid().nullable().optional(),
@@ -90,6 +92,8 @@ export const updateLeadSchema = z.object({
   contact_id: z.string().uuid().nullable().optional(),
   value_cents: z.coerce.number().int().nonnegative().nullable().optional(),
   currency: z.string().length(3).optional(),
+  /** 0206: aposta do vendedor, 0-100. `null` explicito limpa a aposta. */
+  commit_probability_pct: z.coerce.number().int().min(0).max(100).nullable().optional(),
   owner_user_id: z.string().uuid().nullable().optional(),
   /**
    * Dono agente (0070). Exclusivo com owner_user_id — mandar os dois não-nulos

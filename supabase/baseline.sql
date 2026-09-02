@@ -17333,3 +17333,25 @@ create unique index if not exists ai_kbv_version_por_fonte
 create unique index if not exists ai_kbv_version_por_agente_legado
   on public.ai_knowledge_versions (agent_id, version_number)
   where knowledge_source_id is null;
+
+-- ---- probabilidade apostada pelo vendedor (migration 0206) ----
+-- Idempotente e auto-curativo: o kit self-host reaplica este arquivo inteiro a
+-- cada `update.sh`, em banco que já tem dados. Corrigir o dado ANTES da
+-- constraint é o que impede um clone sujo de travar a atualização.
+alter table public.crm_leads
+  add column if not exists commit_probability_pct smallint;
+
+update public.crm_leads
+   set commit_probability_pct = null
+ where commit_probability_pct is not null
+   and (commit_probability_pct < 0 or commit_probability_pct > 100);
+
+alter table public.crm_leads
+  drop constraint if exists crm_leads_commit_probability_range;
+
+alter table public.crm_leads
+  add constraint crm_leads_commit_probability_range
+  check (
+    commit_probability_pct is null
+    or (commit_probability_pct >= 0 and commit_probability_pct <= 100)
+  );

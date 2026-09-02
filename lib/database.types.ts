@@ -3194,6 +3194,7 @@ export type Database = {
         Row: {
           assigned_at: string | null
           closed_at: string | null
+          commit_probability_pct: number | null
           contact_id: string | null
           created_at: string
           created_by_user_id: string | null
@@ -3224,6 +3225,7 @@ export type Database = {
         Insert: {
           assigned_at?: string | null
           closed_at?: string | null
+          commit_probability_pct?: number | null
           contact_id?: string | null
           created_at?: string
           created_by_user_id?: string | null
@@ -3254,6 +3256,7 @@ export type Database = {
         Update: {
           assigned_at?: string | null
           closed_at?: string | null
+          commit_probability_pct?: number | null
           contact_id?: string | null
           created_at?: string
           created_by_user_id?: string | null

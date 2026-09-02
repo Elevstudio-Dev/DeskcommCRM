@@ -282,6 +282,7 @@ export async function createLeadHandler(
       description: input.description ?? null,
       contact_id: input.contact_id ?? null,
       value_cents: input.value_cents ?? null,
+      commit_probability_pct: input.commit_probability_pct ?? null,
       currency: input.currency ?? "BRL",
       ...ownerPatch,
       assigned_at:
@@ -383,6 +384,9 @@ export async function updateLeadHandler(
   if (input.description !== undefined) patch.description = input.description;
   if (input.contact_id !== undefined) patch.contact_id = input.contact_id;
   if (input.value_cents !== undefined) patch.value_cents = input.value_cents;
+  if (input.commit_probability_pct !== undefined) {
+    patch.commit_probability_pct = input.commit_probability_pct;
+  }
   if (input.currency !== undefined) patch.currency = input.currency;
   // Dono do negócio (0070): regra em lib/leads/owner-patch.ts, compartilhada
   // com create, bulk e MCP. owner_kind é DERIVADO — nunca lido do body.
