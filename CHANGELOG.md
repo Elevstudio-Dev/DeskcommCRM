@@ -8,6 +8,40 @@ Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual es
 
 ## [Não lançado]
 
+## [1.12.1] — 2026-09-03
+
+Primeira versão publicada pela Elev Studio, a partir da 1.12.0.
+
+### ⚠️ Requer atenção
+
+- **As imagens passam a vir de `ghcr.io/elevstudio-dev`.** Quem tiver uma
+  instalação anterior apontando para o namespace antigo precisa atualizar as
+  três linhas `APP_IMAGE`, `WORKER_IMAGE` e `SCHEDULER_IMAGE` do `.env`. Em
+  instalação nova o `install.sh` já grava o valor certo e não há nada a fazer.
+
+### Corrigido
+
+- **A credencial da OpenRouter voltou a ser conferida de verdade.** A validação
+  batia em `/api/v1/models`, que é público: respondia 200 sem header nenhum, e
+  por isso qualquer texto era gravado como chave válida. A tela dizia "validada"
+  e a falha só aparecia quando um cliente escrevia, como `User not found.` — uma
+  mensagem que não fala em credencial. Agora a prova é `/api/v1/key`, que exige
+  a chave, e uma chave morta é recusada na hora de salvar.
+
+- **O build de E2E parou de morrer sem dizer o motivo** quando o `.env.local` não
+  traz `NEXT_PUBLIC_SUPABASE_URL` — o caso de quem só configurou a marca.
+
+- **A suíte parou de reprovar em instalação com marca própria.** Três testes
+  liam `APP_NAME` do ambiente, então trocar o nome do sistema deixava o
+  `pnpm test:unit` vermelho sem nada estar quebrado.
+
+### Adicionado
+
+- **Probabilidade apostada pelo vendedor** (`commit_probability_pct`, 0 a 100) no
+  negócio, ao lado da que a IA calcula. As duas discordarem é o sinal útil.
+  Negócio sem aposta fica de fora da previsão ponderada e volta contado à parte,
+  em vez de entrar como zero.
+
 ## [1.12.0] — 2026-09-02
 
 ### Adicionado
