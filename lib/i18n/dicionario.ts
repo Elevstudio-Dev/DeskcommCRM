@@ -45,6 +45,9 @@ export const DICIONARIO: Traducoes = {
   // como está. Achado pelo cruzamento novo entre DICIONARIO e NAV_GROUPS.
   Atendimento: { es: "Atención" },
   CRM: { es: "CRM" },
+  "Tempo desde a última mensagem do cliente sem resposta.": {
+    es: "Tiempo desde el último mensaje del cliente sin respuesta.",
+  },
   "Mais ações": { es: "Más acciones" },
   "Este contato já tem um negócio aberto.": { es: "Este contacto ya tiene un negocio abierto." },
   "Este contato já tem": { es: "Este contacto ya tiene" },

@@ -1,8 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useT } from "@/hooks/i18n/useT";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { tempoSemResposta, PISO_MINUTOS } from "@/lib/inbox/tempo-sem-resposta";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -57,6 +59,21 @@ const STATUS_LABEL: Record<string, string> = {
   archived: "Arquivada",
 };
 
+/**
+ * Duas letras para o circulo, com o telefone como rede quando nao ha nome.
+ *
+ * Mesma logica de `ConversationListItem`, replicada e nao importada: aquele
+ * arquivo nao a exporta, e exporta-la de la seria mexer num componente fora
+ * do escopo desta mudanca.
+ */
+function iniciais(nome: string | null | undefined, reserva: string): string {
+  const fonte = (nome ?? "").trim() || reserva;
+  const partes = fonte.split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return "?";
+  if (partes.length === 1) return partes[0]!.slice(0, 2).toUpperCase();
+  return (partes[0]![0]! + partes[partes.length - 1]![0]!).toUpperCase();
+}
+
 export function ConversationHeader({ conversation }: Props) {
   const t = useT();
   const { user } = useAuth();
@@ -99,6 +116,34 @@ export function ConversationHeader({ conversation }: Props) {
   });
 
   const encerrada = status === "closed" || status === "archived";
+
+  /**
+   * O RELOGIO que faz o contador andar.
+   *
+   * 30s e o intervalo em que o numero muda de forma perceptivel sem custo: a
+   * regra e pura e local, entao isto NAO consulta servidor, NAO invalida cache
+   * e NAO re-renderiza a conversa — so o proprio badge.
+   */
+  const [agora, setAgora] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setAgora(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  /**
+   * Ha quanto tempo o cliente espera — `null` quando nao ha espera nenhuma.
+   *
+   * O limite fica no piso ate a tela de configuracao existir. `PISO_MINUTOS` e
+   * o comportamento correto enquanto ninguem escolheu: assumir 15 e dizer qual
+   * e' e melhor que nao mostrar nada.
+   */
+  const espera = tempoSemResposta({
+    lastInboundAt: conversation.last_inbound_at ?? null,
+    lastOutboundAt: conversation.last_outbound_at ?? null,
+    status,
+    agora,
+    limiteMinutos: PISO_MINUTOS,
+  });
   /**
    * A VOLTA aparece sempre que há algo a devolver — inclusive em conversa
    * ENCERRADA. Antes ela era condicionada a `status !== "closed"`, e o resultado
@@ -150,10 +195,54 @@ export function ConversationHeader({ conversation }: Props) {
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-4 py-3">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
+          {/* O ROSTO. A <img> so e montada quando ha arquivo: sem essa guarda o
+              browser pediria a rota para todo contato e levaria 404 em cada um
+              sem foto — que e a maioria. O AvatarFallback cobre o resto, entao
+              as iniciais nunca somem. `is_anonymized` e o gate de LGPD e nao
+              pode sair: contato anonimizado nao mostra rosto. Mesmo padrao de
+              `ConversationListItem`. */}
+          <Avatar className="h-8 w-8 shrink-0">
+            {c?.avatar_storage_path && !c?.is_anonymized ? (
+              <AvatarImage
+                src={`/api/v1/contacts/${c.id}/avatar`}
+                alt=""
+                className="object-cover"
+              />
+            ) : null}
+            <AvatarFallback className="text-[10px]">
+              {iniciais(displayName, phone ?? "?")}
+            </AvatarFallback>
+          </Avatar>
           <h2 className="truncate text-sm font-semibold">{displayName}</h2>
+          {/* O telefone ja era calculado e nunca era renderizado. Some no
+              celular, onde o nome sozinho ja ocupa a linha. */}
+          {phone ? (
+            <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
+              {phone}
+            </span>
+          ) : null}
           <Badge variant="outline" className="h-4 px-1.5 text-[10px]">
             {t(STATUS_LABEL[status] ?? status)}
           </Badge>
+          {/* HA QUANTO TEMPO O CLIENTE ESPERA. Some quando a bola esta com ele
+              — ver os tres casos de `null` em `lib/inbox/tempo-sem-resposta`. */}
+          {espera ? (
+            <Badge
+              variant="outline"
+              data-testid="tempo-sem-resposta"
+              data-faixa={espera.faixa}
+              title={t("Tempo desde a última mensagem do cliente sem resposta.")}
+              className={
+                espera.faixa === "estourado"
+                  ? "h-4 shrink-0 border-destructive/40 bg-destructive/10 px-1.5 text-[10px] text-destructive"
+                  : espera.faixa === "atencao"
+                    ? "h-4 shrink-0 border-amber-500/40 bg-amber-500/10 px-1.5 text-[10px] text-amber-600 dark:text-amber-400"
+                    : "h-4 shrink-0 px-1.5 text-[10px] text-muted-foreground"
+              }
+            >
+              {espera.rotulo}
+            </Badge>
+          ) : null}
           {/* Ao lado do estado, não escondido num painel: a pergunta "dá para
               escrever agora?" se faz ANTES de digitar, não depois de receber um
               `failed` com um código de cinco dígitos. */}
