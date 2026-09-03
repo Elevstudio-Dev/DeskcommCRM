@@ -21,6 +21,8 @@ import { registrarTrocaDeComando } from "@/lib/inbox/atividade-de-comando";
 import { ApiError } from "@/lib/api/types";
 import { ok, fail } from "@/lib/api/wrappers";
 import { requireRole } from "@/lib/auth/require-role";
+import { negocioQueHerdaODono } from "@/lib/leads/dono-ao-assumir";
+import { logger } from "@/lib/logger";
 import { claimConversationSchema, validateRequest } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 import type { Conversation } from "@/lib/types/messaging";
@@ -109,6 +111,60 @@ export async function POST(req: NextRequest, ctx: RouteCtx): Promise<Response> {
     actor: { type: "user", id: user.id, role: authz.org.role },
     motivo: "Assumiu o atendimento desta conversa",
   });
+
+  // O DONO DO NEGÓCIO — quando não há dúvida de qual.
+  //
+  // FORA da transação da RPC, de propósito. Assumir a conversa é o que o
+  // atendente pediu; o funil ganhar dono é consequência. Uma consequência que
+  // falha não pode desfazer o pedido — por isso erro aqui vira log e a resposta
+  // segue 200. A regra de QUAL negócio herda vive em `lib/leads/dono-ao-assumir.ts`,
+  // separada porque é decisão, não consulta.
+  if (conv.contact_id) {
+    try {
+      const { data: abertos, error: buscaErr } = await supabase
+        .from("crm_leads")
+        .select("id, owner_user_id, owner_agent_id")
+        .eq("organization_id", conv.organization_id)
+        .eq("contact_id", conv.contact_id)
+        .eq("status", "open");
+
+      if (buscaErr) throw new Error(buscaErr.message);
+
+      const alvoId = negocioQueHerdaODono(abertos ?? []);
+      if (alvoId) {
+        const agora = new Date().toISOString();
+        const { error: donoErr } = await supabase
+          .from("crm_leads")
+          .update({
+            owner_user_id: user.id,
+            // Derivado aqui, nunca vindo do cliente — é o que mantém a
+            // constraint `crm_leads_owner_kind_coherence` fora do alcance de
+            // quem chama a rota.
+            owner_kind: "user",
+            assigned_at: agora,
+            updated_at: agora,
+          })
+          .eq("id", alvoId)
+          .eq("organization_id", conv.organization_id);
+
+        if (donoErr) throw new Error(donoErr.message);
+
+        await audit({
+          action: "lead.updated",
+          actorUserId: user.id,
+          organizationId: conv.organization_id,
+          resourceType: "lead",
+          resourceId: alvoId,
+          requestId,
+        });
+      }
+    } catch (err) {
+      logger.warn("[conversation.claim] não consegui dar dono ao negócio", {
+        conversationId: conv.id,
+        erro: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
 
   return ok(conv, { requestId });
 }
