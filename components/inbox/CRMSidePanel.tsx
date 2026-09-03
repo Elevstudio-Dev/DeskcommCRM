@@ -545,6 +545,13 @@ export function CRMSidePanel({ conversation }: Props) {
           pipelineId={defaultPipeline.data.pipeline.id}
           stages={defaultPipeline.data.stages}
           contactId={contactId}
+          negociosAbertos={(leads ?? [])
+            .filter((l) => l.status === "open")
+            .map((l) => ({ id: l.id, title: l.title }))}
+          onUsarExistente={(leadId) => {
+            setLeadAtivoId(leadId);
+            setLeadDialogOpen(false);
+          }}
           onCreated={() => {
             setLeadAtivoId(null);
             recarregar();

@@ -45,6 +45,13 @@ export const DICIONARIO: Traducoes = {
   // como está. Achado pelo cruzamento novo entre DICIONARIO e NAV_GROUPS.
   Atendimento: { es: "Atención" },
   CRM: { es: "CRM" },
+  "Este contato já tem um negócio aberto.": { es: "Este contacto ya tiene un negocio abierto." },
+  "Este contato já tem": { es: "Este contacto ya tiene" },
+  "negócios abertos.": { es: "negocios abiertos." },
+  "Usar este": { es: "Usar este" },
+  "O funil abre um negócio sozinho na primeira mensagem, para a pessoa não ficar fora do radar. Criar outro faz sentido quando é uma oportunidade diferente.": {
+    es: "El embudo abre un negocio por sí solo en el primer mensaje, para que la persona no quede fuera del radar. Crear otro tiene sentido cuando es una oportunidad diferente.",
+  },
   "Agente de IA": { es: "Agente de IA" },
   Canais: { es: "Canales" },
   Análise: { es: "Análisis" },

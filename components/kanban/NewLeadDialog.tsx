@@ -45,6 +45,25 @@ interface Props {
   stages: Stage[];
   /** Vincula o lead criado a este contato de origem (ex.: painel do Inbox). */
   contactId?: string | null;
+  /**
+   * Os negócios ABERTOS que este contato já tem.
+   *
+   * Só chega preenchido de onde o contato é conhecido — o painel do Inbox. Da
+   * página do funil vem vazio, e aí não há o que avisar.
+   *
+   * POR QUE ISTO EXISTE: `lib/leads/nascimento-do-lead.ts` cria um negócio
+   * sozinho quando a primeira mensagem chega, e recusa criar um segundo se já
+   * houver aberto. Essa guarda protege só o caminho automático — a criação
+   * manual não olhava, e o resultado media-se na tela: o mesmo contato com dois
+   * cards no funil, um deles sem valor e sem motivo.
+   *
+   * Avisa, não bloqueia: duas oportunidades para o mesmo cliente é caso real
+   * (o orçamento do site e a manutenção mensal), e recusar seria trocar um
+   * engano ocasional por uma parede diária.
+   */
+  negociosAbertos?: { id: string; title: string }[];
+  /** Fecha o diálogo e leva ao negócio que já existe, em vez de criar outro. */
+  onUsarExistente?: (leadId: string) => void;
   /** Depois do INSERT — o inbox relê o resumo para o lead novo aparecer no formulário. */
   onCreated?: () => void;
 }
@@ -60,6 +79,8 @@ export function NewLeadDialog({
   pipelineId,
   stages,
   contactId,
+  negociosAbertos,
+  onUsarExistente,
   onCreated,
 }: Props) {
   const t = useT();
@@ -149,6 +170,37 @@ export function NewLeadDialog({
             {t("Crie um lead manualmente neste pipeline.")}
           </DialogDescription>
         </DialogHeader>
+        {negociosAbertos && negociosAbertos.length > 0 && (
+          <div className="rounded-md border bg-muted/50 p-3 text-sm">
+            <p className="font-medium">
+              {negociosAbertos.length === 1
+                ? t("Este contato já tem um negócio aberto.")
+                : `${t("Este contato já tem")} ${negociosAbertos.length} ${t("negócios abertos.")}`}
+            </p>
+            <ul className="mt-2 space-y-1">
+              {negociosAbertos.map((n) => (
+                <li key={n.id} className="flex items-center justify-between gap-2">
+                  <span className="truncate">{n.title}</span>
+                  {onUsarExistente && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onUsarExistente(n.id)}
+                    >
+                      {t("Usar este")}
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {t(
+                "O funil abre um negócio sozinho na primeira mensagem, para a pessoa não ficar fora do radar. Criar outro faz sentido quando é uma oportunidade diferente.",
+              )}
+            </p>
+          </div>
+        )}
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">{t("Título")}</Label>
