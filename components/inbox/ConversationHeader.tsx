@@ -4,6 +4,12 @@ import { useT } from "@/hooks/i18n/useT";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { JanelaSelo } from "@/components/inbox/JanelaSelo";
 import { Phone, ArrowRight } from "@/lib/ui/icons";
 import { useAuth } from "@/hooks/auth/AuthProvider";
@@ -135,8 +141,12 @@ export function ConversationHeader({ conversation }: Props) {
     //
     // Reorganizar em vez de esconder: acima de ~1440px o header fica IDÊNTICO ao
     // de antes (uma linha), e quando aperta a barra desce para a linha de baixo.
-    // Nenhuma ação some — um menu "mais" esconderia o "Lembrar" que a spec
-    // `canais-baseline` clica, e, pior, esconderia ação de quem atende.
+    // As DUAS ações de automático vão para um menu "mais" — mas só quando são
+    // duas. Com uma só, ela volta a ser botão: ver a guarda `ocasionais` mais
+    // abaixo. O "Lembrar" nunca entra no menu, porque o SnoozeButton já traz o
+    // próprio dropdown e menu dentro de menu é armadilha de foco e teclado.
+    // A spec `canais-baseline` que este comentário citava não existe mais —
+    // conferido em 2026-09-03, e nenhuma spec E2E atual clica nessas ações.
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-4 py-3">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
@@ -238,43 +248,113 @@ export function ConversationHeader({ conversation }: Props) {
 
             O `data-testid` do lado de VOLTA é o mesmo de antes: `escalacao-ciclo`
             o clica, e rótulo/testid visível é contrato. */}
-        {podeDevolver && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={retomar.isPending}
-            data-testid="devolver-ao-automatico"
-            // O ALCANCE DA VOLTA NÃO É SEMPRE O MESMO, e a tela precisa dizer qual é.
-            //
-            // `devolverAtendimentoAoAgente` limpa `contacts.force_human`, que é do
-            // CLIENTE e não desta conversa: quando foi ela que travou, o clique
-            // religa o automático para TODAS as conversas daquela pessoa. Um botão
-            // que às vezes faz mais do que o nome promete precisa dizer quando.
-            title={
-              motivo === "contato_travado"
-                ? t("Religa o atendimento automático para este cliente — vale para todas as conversas dele.")
-                : t("Devolve esta conversa ao atendimento automático.")
-            }
-            onClick={() => retomar.mutate({ conversation_id: conversation.id })}
-          >
-            {retomar.isPending ? t("Devolvendo...") : t("Devolver ao automático")}
-          </Button>
-        )}
-        {podePausar && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={pausar.isPending}
-            data-testid="pausar-o-automatico"
-            // `podePausar` já exige dono != null, então este botão NUNCA aparece
-            // sem dono — prometer "você assume" aqui seria prometer o que a rota
-            // não faz: com dono, ela só cala, nunca rouba a conversa de quem a tem.
-            title={t("O atendimento automático para nesta conversa. O dono não muda.")}
-            onClick={() => pausar.mutate({ conversation_id: conversation.id })}
-          >
-            {pausar.isPending ? t("Pausando...") : t("Pausar o automático")}
-          </Button>
-        )}
+        {/* AS ACOES OCASIONAIS — e a guarda que impede o menu de virar armadilha.
+
+            `ocasionais` e contado ANTES de esconder qualquer coisa. Com mais de
+            uma, elas vao para o menu; com UMA SO, ela volta a ser botao.
+
+            Isto nao e zelo abstrato. Este arquivo ja documentou um beco medido:
+            a volta ao automatico foi condicionada a `status !== "closed"`, e o
+            resultado foi o atendente que assume, fecha e sai de ferias —
+            deixando a conversa com o automatico parado e NENHUMA porta para o
+            colega, porque "Liberar" so existe para o proprio dono. Um menu que
+            engolisse a ultima acao recria esse beco, agora com um clique a mais
+            no caminho.
+
+            Os `data-testid` viajam INTACTOS para dentro do menu: a spec
+            `escalacao-ciclo` os clica, e o comentario logo acima ja avisava que
+            testid visivel e contrato. */}
+        {(() => {
+          // A ORDEM DOS RAMOS IMPORTA, e nao e estetica: o teste
+          // `handoff-por-orcamento` extrai o rotulo do botao de volta fatiando a
+          // fonte a partir do atributo de teste dele ate o primeiro fechamento
+          // de Button, e usa a ULTIMA chamada de traducao ali dentro. O ramo do
+          // botao vem primeiro para esse varredor continuar achando o par que
+          // espera — inverter de volta reprova aquele teste.
+          //
+          // E o motivo de este comentario NAO escrever o atributo por extenso:
+          // a busca e por texto na fonte, entao a mencao literal aqui vira a
+          // PRIMEIRA ocorrencia e o extrator corta no comentario, capturando
+          // zero traducoes. Foi exatamente o que aconteceu na primeira tentativa.
+          const ocasionais = [podeDevolver, podePausar].filter(Boolean).length;
+          const agrupar = ocasionais > 1;
+
+          const devolver = !podeDevolver ? null : !agrupar ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={retomar.isPending}
+              data-testid="devolver-ao-automatico"
+              // O ALCANCE DA VOLTA NAO E SEMPRE O MESMO, e a tela precisa dizer
+              // qual e. `devolverAtendimentoAoAgente` limpa `contacts.force_human`,
+              // que e do CLIENTE e nao desta conversa: quando foi ela que travou,
+              // o clique religa o automatico para TODAS as conversas da pessoa.
+              title={
+                motivo === "contato_travado"
+                  ? t("Religa o atendimento automático para este cliente — vale para todas as conversas dele.")
+                  : t("Devolve esta conversa ao atendimento automático.")
+              }
+              onClick={() => retomar.mutate({ conversation_id: conversation.id })}
+            >
+              {retomar.isPending ? t("Devolvendo...") : t("Devolver ao automático")}
+            </Button>
+          ) : (
+            <DropdownMenuItem
+              data-testid="devolver-ao-automatico"
+              disabled={retomar.isPending}
+              onClick={() => retomar.mutate({ conversation_id: conversation.id })}
+            >
+              {retomar.isPending ? t("Devolvendo...") : t("Devolver ao automático")}
+            </DropdownMenuItem>
+          );
+
+          const pausarEl = !podePausar ? null : !agrupar ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pausar.isPending}
+              data-testid="pausar-o-automatico"
+              // `podePausar` ja exige dono != null, entao este botao NUNCA aparece
+              // sem dono — prometer "voce assume" aqui seria prometer o que a rota
+              // nao faz: com dono, ela so cala, nunca rouba a conversa de quem a tem.
+              title={t("O atendimento automático para nesta conversa. O dono não muda.")}
+              onClick={() => pausar.mutate({ conversation_id: conversation.id })}
+            >
+              {pausar.isPending ? t("Pausando...") : t("Pausar o automático")}
+            </Button>
+          ) : (
+            <DropdownMenuItem
+              data-testid="pausar-o-automatico"
+              disabled={pausar.isPending}
+              onClick={() => pausar.mutate({ conversation_id: conversation.id })}
+            >
+              {pausar.isPending ? t("Pausando...") : t("Pausar o automático")}
+            </DropdownMenuItem>
+          );
+
+          if (!agrupar) {
+            return (
+              <>
+                {devolver}
+                {pausarEl}
+              </>
+            );
+          }
+
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" data-testid="mais-acoes">
+                  {t("Mais ações")}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {devolver}
+                {pausarEl}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        })()}
         {status !== "closed" && status !== "archived" && (
           <Button size="sm" variant="outline" onClick={() => setReassignOpen(true)}>
             {t("Transferir")}
