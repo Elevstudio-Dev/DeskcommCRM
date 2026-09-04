@@ -21,8 +21,16 @@ import type { OnboardingState } from "@/lib/schemas/onboarding";
 export interface PassoDoOnboarding {
   /** Segmento da rota em `app/onboarding/<segmento>`. */
   segmento: string;
-  /** O nome da PEÇA que a pessoa está montando, não o nome do sistema. */
-  rotulo: string;
+  /**
+   * O nome da PEÇA que a pessoa está montando, não o nome do sistema.
+   *
+   * FUNÇÃO DO CONTEXTO, e não texto fixo, porque o wizard conta duas histórias
+   * diferentes. No caminho com IA a pessoa está contratando um funcionário, e
+   * as peças são dele: "o telefone DELE", "onde ELE organiza". No caminho só
+   * CRM esse dono não existe — e um rótulo que fala de "ele" sem que ninguém
+   * tenha sido contratado deixa a pessoa procurando quem é "ele".
+   */
+  rotulo: (ctx: ContextoDoPasso) => string;
   /**
    * O passo existe nesta instalação? Integração desligada não vira passo
    * fantasma.
@@ -37,6 +45,17 @@ export interface PassoDoOnboarding {
 export interface ContextoDoPasso {
   /** A integração de loja está ligada nesta instalação? */
   lojaLigada: boolean;
+  /**
+   * A pessoa escolheu começar COM o atendente de IA?
+   *
+   * `false` faz `setup-ai` e `testar` deixarem de EXISTIR — não de serem
+   * pulados. É a mesma distinção que a loja desligada já usa, e ela é o motivo
+   * de este mecanismo existir: passo pulado vira linha de pendência no resumo,
+   * passo inexistente não vira linha nenhuma. Acusar alguém de não ter feito
+   * uma tela que nunca lhe foi oferecida é o defeito que o cabeçalho deste
+   * arquivo conta.
+   */
+  comIa: boolean;
 }
 
 /** Um passo marcado no estado — com ou sem `skipped`. */
@@ -50,8 +69,21 @@ function foiPulado(valor: { skipped?: boolean } | undefined): boolean {
 
 export const PASSOS: readonly PassoDoOnboarding[] = [
   {
+    segmento: "caminho",
+    rotulo: () => "Por onde começar",
+    existe: () => true,
+    /**
+     * QUEM JÁ PASSOU DAQUI NÃO VOLTA. Uma instalação que começou o wizard antes
+     * deste passo existir não tem `caminho` no estado — e sem esta segunda
+     * condição ela seria mandada de volta para a bifurcação depois de já ter
+     * preenchido o negócio, como se estivesse recomeçando.
+     */
+    cumprido: (s) => marcado(s.caminho) || marcado(s.welcome),
+    pulado: () => false,
+  },
+  {
     segmento: "welcome",
-    rotulo: "Seu negócio",
+    rotulo: () => "Seu negócio",
     existe: () => true,
     cumprido: (s) => marcado(s.welcome),
     pulado: () => false,
@@ -60,22 +92,22 @@ export const PASSOS: readonly PassoDoOnboarding[] = [
     segmento: "connect-whatsapp",
     // O telefone é a primeira peça concreta do funcionário, e é o passo que
     // pede o celular na mão — o instalador já avisa para deixá-lo aberto.
-    rotulo: "O telefone dele",
+    rotulo: (ctx) => (ctx.comIa ? "O telefone dele" : "Seu WhatsApp"),
     existe: () => true,
     cumprido: (s) => marcado(s.whatsapp),
     pulado: (s) => foiPulado(s.whatsapp),
   },
   {
     segmento: "connect-nuvemshop",
-    rotulo: "Sua loja",
+    rotulo: () => "Sua loja",
     existe: (ctx) => ctx.lojaLigada,
     cumprido: (s) => marcado(s.nuvemshop),
     pulado: (s) => foiPulado(s.nuvemshop),
   },
   {
     segmento: "setup-ai",
-    rotulo: "Treinar",
-    existe: () => true,
+    rotulo: () => "Treinar",
+    existe: (ctx) => ctx.comIa,
     cumprido: (s) => marcado(s.ai),
     pulado: (s) => foiPulado(s.ai),
   },
@@ -84,7 +116,11 @@ export const PASSOS: readonly PassoDoOnboarding[] = [
     // O quadro vem DEPOIS de treinar de propósito: a sugestão sai da chave que a
     // pessoa acabou de confirmar funcionando, e é o mesmo cérebro que vai
     // atender. Pedir o quadro antes obrigaria a montá-lo no escuro.
-    rotulo: "Onde ele organiza",
+    //
+    // Sem IA o passo continua existindo, e não por teimosia: `pacotes-de-funil`
+    // entrega quadros prontos por ramo, que já são o plano B de quando a chave
+    // falha. O que muda é a origem da proposta, não a existência do passo.
+    rotulo: (ctx) => (ctx.comIa ? "Onde ele organiza" : "Seu funil"),
     existe: () => true,
     cumprido: (s) => marcado(s.funil),
     pulado: (s) => foiPulado(s.funil),
@@ -95,19 +131,36 @@ export const PASSOS: readonly PassoDoOnboarding[] = [
     // funcionário responder ANTES de acabar é o que transforma "configurei um
     // sistema" em "contratei alguém" — e é onde o erro aparece antes do
     // primeiro cliente real, não depois.
-    rotulo: "Ver ele atender",
-    existe: () => true,
+    //
+    // Sem funcionário contratado não há o que ver atender.
+    rotulo: () => "Ver ele atender",
+    existe: (ctx) => ctx.comIa,
     cumprido: (s) => marcado(s.teste),
     pulado: (s) => foiPulado(s.teste),
   },
   {
     segmento: "invite-team",
-    rotulo: "Quem trabalha com ele",
+    rotulo: (ctx) => (ctx.comIa ? "Quem trabalha com ele" : "Sua equipe"),
     existe: () => true,
     cumprido: (s) => marcado(s.team),
     pulado: (s) => foiPulado(s.team),
   },
 ] as const;
+
+/**
+ * O contexto, montado a partir do estado e do ambiente.
+ *
+ * Existe para a regra "ausente é com IA" morar em UM lugar. Repetida nas três
+ * telas que montam contexto, ela seria três chances de alguém escrever
+ * `=== "com_ia"` — que se comporta igual hoje e passa a divergir no dia em que
+ * um caminho novo entrar no enum.
+ */
+export function contextoDoOnboarding(
+  state: OnboardingState,
+  ambiente: { lojaLigada: boolean },
+): ContextoDoPasso {
+  return { lojaLigada: ambiente.lojaLigada, comIa: state.caminho !== "so_crm" };
+}
 
 /** Os passos que existem NESTA instalação, na ordem. */
 export function passosVisiveis(ctx: ContextoDoPasso): PassoDoOnboarding[] {
@@ -143,7 +196,7 @@ export function resumoDoOnboarding(
 ): ItemDoResumo[] {
   return passosVisiveis(ctx).map((p) => ({
     segmento: p.segmento,
-    rotulo: p.rotulo,
+    rotulo: p.rotulo(ctx),
     feito: p.cumprido(state) && !p.pulado(state),
     pulado: p.pulado(state),
   }));

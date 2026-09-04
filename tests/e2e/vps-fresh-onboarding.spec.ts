@@ -94,6 +94,35 @@ async function login(page: Page, password = OWNER_PASSWORD): Promise<void> {
   await page.locator("#email").fill(OWNER_EMAIL);
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: /entrar/i }).click();
+  await escolherCaminhoComIa(page);
+}
+
+/**
+ * ATRAVESSA A BIFURCAÇÃO, escolhendo o caminho COM IA.
+ *
+ * O wizard passou a começar perguntando por onde a pessoa quer ir. Estes casos
+ * medem o caminho do funcionário de IA, então o helper responde por eles — sem
+ * isso, todo caso pararia na primeira tela esperando um `welcome` que ainda não
+ * é a vez.
+ *
+ * `count()` antes do clique, e não `catch`: a escolha é GRAVADA, então numa
+ * segunda passagem a tela não aparece mais. Tentar clicar sempre falharia em
+ * todos os casos menos o primeiro.
+ */
+async function escolherCaminhoComIa(page: Page): Promise<void> {
+  // Espera o roteador POUSAR num passo (`/onboarding/<algo>`), e não na rota
+  // nua `/onboarding`, que é só a escada de redirecionamento. Depois decide
+  // pela URL — não por contar elementos.
+  //
+  // Contar elementos falhou duas vezes por motivos opostos, e as duas merecem
+  // registro: `count()` logo após a navegação devolve zero porque a bifurcação
+  // é componente de cliente e ainda não hidratou; e esperar por uma das duas
+  // telas trava quando a organização JÁ passou das duas — a partir do quarto
+  // caso deste arquivo o wizard entra direto no passo do WhatsApp.
+  await page.waitForURL(/\/onboarding\/[a-z-]+/, { timeout: 30_000 });
+  if (!page.url().includes("/onboarding/caminho")) return;
+  await page.getByRole("button", { name: /Com o atendente de IA/i }).click();
+  await page.waitForURL(/\/onboarding\/welcome/, { timeout: 30_000 });
 }
 
 test.describe.configure({ mode: "serial", timeout: 120_000 });

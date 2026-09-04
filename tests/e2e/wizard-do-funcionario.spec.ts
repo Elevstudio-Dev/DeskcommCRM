@@ -86,7 +86,37 @@ async function login(page: Page): Promise<void> {
   await page.locator("#email").fill(email);
   await page.locator("#password").fill(SENHA);
   await page.getByRole("button", { name: /entrar/i }).click();
+  await escolherCaminhoComIa(page);
 }
+
+/**
+ * ATRAVESSA A BIFURCAÇÃO, escolhendo o caminho COM IA.
+ *
+ * O wizard passou a começar perguntando por onde a pessoa quer ir. Estes casos
+ * medem o caminho do funcionário de IA, então o helper responde por eles — sem
+ * isso, todo caso pararia na primeira tela esperando um `welcome` que ainda não
+ * é a vez.
+ *
+ * `count()` antes do clique, e não `catch`: a escolha é GRAVADA, então numa
+ * segunda passagem a tela não aparece mais. Tentar clicar sempre falharia em
+ * todos os casos menos o primeiro.
+ */
+async function escolherCaminhoComIa(page: Page): Promise<void> {
+  // Espera o roteador POUSAR num passo (`/onboarding/<algo>`), e não na rota
+  // nua `/onboarding`, que é só a escada de redirecionamento. Depois decide
+  // pela URL — não por contar elementos.
+  //
+  // Contar elementos falhou duas vezes por motivos opostos, e as duas merecem
+  // registro: `count()` logo após a navegação devolve zero porque a bifurcação
+  // é componente de cliente e ainda não hidratou; e esperar por uma das duas
+  // telas trava quando a organização JÁ passou das duas — a partir do quarto
+  // caso deste arquivo o wizard entra direto no passo do WhatsApp.
+  await page.waitForURL(/\/onboarding\/[a-z-]+/, { timeout: 30_000 });
+  if (!page.url().includes("/onboarding/caminho")) return;
+  await page.getByRole("button", { name: /Com o atendente de IA/i }).click();
+  await page.waitForURL(/\/onboarding\/welcome/, { timeout: 30_000 });
+}
+
 
 test.describe.configure({ mode: "serial", timeout: 120_000 });
 
@@ -442,5 +472,45 @@ test.describe("o wizard monta um funcionário", () => {
       .maybeSingle();
     expect(org?.onboarded_at).toBeTruthy();
     expect(org?.display_name).toBe("Clínica Bem Viver");
+  });
+
+  /**
+   * O OUTRO CAMINHO — e ele fica por ÚLTIMO de propósito.
+   *
+   * A escolha é gravada no estado da organização, e este arquivo roda em série
+   * compartilhando uma só. Um caso de "só CRM" no meio mudaria o wizard para
+   * todos os que viessem depois.
+   */
+  test("quem escolhe só o CRM não vê os passos de IA", async ({ page }) => {
+    // O RESET VEM ANTES DO LOGIN, e a ordem inversa custou uma rodada: a
+    // organização deste arquivo termina o wizard nos casos anteriores, e
+    // `app/onboarding/page.tsx` manda quem tem `onboarded_at` direto para o
+    // inbox. Logar primeiro e zerar depois deixava o teste esperando uma
+    // bifurcação que o roteador nunca chegava a desenhar.
+    //
+    // `onboarded_at` vai junto do estado pelo mesmo motivo: um sem o outro não
+    // devolve o wizard.
+    await svc
+      .from("organizations")
+      .update({ onboarding_state: {}, onboarded_at: null } as never)
+      .eq("id", orgId!);
+
+    await page.goto("/login");
+    await page.locator("#email").fill(email);
+    await page.locator("#password").fill(SENHA);
+    await page.getByRole("button", { name: /entrar/i }).click();
+    await page.waitForURL(/\/onboarding\/caminho/, { timeout: 30_000 });
+
+    await page.getByRole("button", { name: /Só o CRM, por enquanto/i }).click();
+    await page.waitForURL(/\/onboarding\/welcome/, { timeout: 30_000 });
+
+    // O indicador de progresso desenha o que a máquina de passos devolve. Se os
+    // dois passos de IA aparecerem aqui, eles voltaram a existir.
+    await expect(page.getByText("Treinar", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Ver ele atender", { exact: true })).toHaveCount(0);
+    // E o que SOBRA precisa estar lá — senão o caso passaria com a tela vazia,
+    // que é o modo de falha desta classe de asserção.
+    await expect(page.getByText("Seu funil", { exact: true })).toBeVisible();
+    await expect(page.getByText("Sua equipe", { exact: true })).toBeVisible();
   });
 });

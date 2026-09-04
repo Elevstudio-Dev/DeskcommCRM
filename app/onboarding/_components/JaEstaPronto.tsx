@@ -19,17 +19,29 @@ import { traduzir } from "@/lib/i18n/dicionario";
 export function JaEstaPronto({
   retrato,
   idioma,
+  comIa = true,
 }: {
   retrato: RetratoDaInstalacao;
   idioma: Idioma;
+  /**
+   * A pessoa escolheu começar COM o atendente de IA?
+   *
+   * `false` tira a linha da chave desta lista. "Falta a chave da inteligência
+   * artificial" é informação útil para quem vai montar um funcionário — e é
+   * cobrança para quem acabou de dizer, na tela anterior, que quer a IA depois.
+   * A instalação não deixou de ter uma pendência; ela deixou de ser DELA agora.
+   */
+  comIa?: boolean;
 }) {
   const t = (texto: string) => traduzir(texto, idioma);
-  const itens: { pronto: boolean; texto: string }[] = [
+  // SEM anotação explícita: ela venceria a inferência do predicado do `filter`
+  // lá embaixo, e `itens` continuaria carregando `| null` por toda a renderização.
+  const itens = [
     {
       pronto: true,
       texto: t("Servidor no ar e banco de dados instalado"),
     },
-    {
+    !comIa ? null : {
       // Três estados, não dois: cadastrada-e-confirmada, cadastrada-e-sendo-
       // conferida, e nenhuma. A do meio existe porque a validação roda em
       // segundo plano — e dizer "falta a chave" a quem acabou de colá-la é a
@@ -54,7 +66,7 @@ export function JaEstaPronto({
         ? `${t("Funil de vendas criado:")} ${retrato.funil.nome}`
         : t("Nenhum funil de vendas ainda"),
     },
-  ];
+  ].filter((i): i is { pronto: boolean; texto: string } => i !== null);
 
   const faltando = itens.filter((i) => !i.pronto).length;
 
