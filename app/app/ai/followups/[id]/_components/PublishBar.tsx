@@ -53,7 +53,15 @@ export function PublishBar({ flowId, flow, graph, dirty, onSaved, onPublishError
   const handoffPolicy = useUpdateHandoffPolicy(flowId);
 
   const onSave = () => {
-    save.mutate(graph, { onSuccess: () => onSaved(graph) });
+    // O aviso vive AQUI e nao no hook: este e o caminho em que a pessoa pediu
+    // "salvar" e nada mais acontece depois. No caminho do Publicar o mesmo
+    // hook roda calado — ver o comentario em `useSaveFollowupFlowDraft`.
+    save.mutate(graph, {
+      onSuccess: () => {
+        onSaved(graph);
+        toast.success(t("Rascunho salvo."));
+      },
+    });
   };
 
   const onPublish = async () => {
