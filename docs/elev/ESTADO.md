@@ -44,3 +44,8 @@ teste não é, e um comando que demora 30 minutos ninguém executa.
 
 Quando `atrás` crescer, siga [sincronizar-com-upstream.md](sincronizar-com-upstream.md)
 — a decisão de puxar não é automática.
+
+---
+
+Como rodar cada suíte, e o seed que o E2E exige antes:
+[rodar-os-testes.md](rodar-os-testes.md).
