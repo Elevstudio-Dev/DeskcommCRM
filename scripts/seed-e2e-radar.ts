@@ -154,6 +154,24 @@ async function main(): Promise<void> {
     stage_id: stageId,
     contact_id: contactId,
     owner_user_id: null,
+    // `owner_kind` e `assigned_at` andam JUNTO com o dono, e por isso sao
+    // zerados aqui tambem.
+    //
+    // Desde que assumir a conversa passou a dar dono ao negocio (quando ha um
+    // so aberto para o contato), estes tres campos podem ser gravados por
+    // QUALQUER spec que assuma uma conversa deste contato — inclusive depois
+    // deste seed ter rodado. Medido em 2026-09-03: a conversa voltou a ficar
+    // SEM atendente (alguem liberou) e o negocio permaneceu COM dono, porque
+    // liberar conversa nao tira o dono do funil — sao conceitos separados, de
+    // proposito. O `radar-assignee` le o dono do NEGOCIO, entao a tela dizia
+    // "Com atendente" onde o teste esperava "Sem dono".
+    //
+    // Zerar so `owner_user_id` deixaria `owner_kind` apontando para um dono que
+    // nao existe mais, e a constraint `crm_leads_owner_kind_coherence` recusa
+    // essa combinacao.
+    owner_kind: null,
+    owner_agent_id: null,
+    assigned_at: null,
     last_activity_at: coldAt,
   };
 
