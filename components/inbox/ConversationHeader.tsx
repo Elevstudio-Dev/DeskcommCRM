@@ -4,7 +4,7 @@ import { useT } from "@/hooks/i18n/useT";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { tempoSemResposta, PISO_MINUTOS } from "@/lib/inbox/tempo-sem-resposta";
+import { tempoSemResposta } from "@/lib/inbox/tempo-sem-resposta";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import { JanelaSelo } from "@/components/inbox/JanelaSelo";
 import { Phone, ArrowRight } from "@/lib/ui/icons";
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { useClaimConversation } from "@/hooks/inbox/useClaimConversation";
+import { useLimiteDeResposta } from "@/hooks/inbox/useLimiteDeResposta";
 import { useReleaseConversation } from "@/hooks/inbox/useReleaseConversation";
 import { useCloseConversation } from "@/hooks/inbox/useCloseConversation";
 import { useResumeAiAttendance } from "@/hooks/inbox/useResumeAiAttendance";
@@ -137,12 +138,14 @@ export function ConversationHeader({ conversation }: Props) {
    * o comportamento correto enquanto ninguem escolheu: assumir 15 e dizer qual
    * e' e melhor que nao mostrar nada.
    */
+  const limiteMinutos = useLimiteDeResposta();
+
   const espera = tempoSemResposta({
     lastInboundAt: conversation.last_inbound_at ?? null,
     lastOutboundAt: conversation.last_outbound_at ?? null,
     status,
     agora,
-    limiteMinutos: PISO_MINUTOS,
+    limiteMinutos,
   });
   /**
    * A VOLTA aparece sempre que há algo a devolver — inclusive em conversa
