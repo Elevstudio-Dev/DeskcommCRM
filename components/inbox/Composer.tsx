@@ -279,6 +279,17 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
           </div>
         )}
         <div className="flex items-end gap-2">
+          {/*
+            A PÍLULA. Os três botões e o campo moram DENTRO dela, como no
+            WhatsApp — e não é gosto: com os ícones do lado de fora, o campo
+            fica sendo mais uma caixa numa tela cheia de caixas, e a barra de
+            escrever deixa de ser reconhecível de relance. Dentro, o conjunto
+            vira uma peça só, e o olho acha onde digitar sem procurar.
+
+            O botão de enviar fica FORA de propósito: ele é a ação, não o
+            campo. É a mesma separação que o WhatsApp faz.
+          */}
+          <div className="flex flex-1 items-end gap-0.5 rounded-3xl bg-[var(--chat-in)] px-1.5 py-1 shadow-[var(--chat-bolha-sombra)]">
           {mode === "reply" && (
             <AttachMenu
               disabled={respostaBarrada}
@@ -338,17 +349,21 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
                 : t("Enter envia · Shift+Enter quebra linha")
             }
             className={cn(
-              "min-h-9 max-h-40 flex-1 resize-none rounded-md border border-input bg-background px-3 py-2 text-sm",
-              "placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-ring",
+              // Sem borda e sem fundo: a pílula em volta é que desenha o campo.
+              // Sem anel de foco TAMBÉM — um anel dentro da pílula desenharia
+              // uma segunda moldura por cima da primeira.
+              "min-h-9 max-h-40 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm",
+              "placeholder:text-muted-foreground focus:outline-hidden focus:ring-0",
             )}
             disabled={mode === "note" ? isDisabled : respostaBarrada}
             aria-label={t("Mensagem")}
           />
+          </div>
           {text.trim() || mode === "note" ? (
             <Button
               type="button"
               size="icon"
-              className="h-9 w-9 shrink-0"
+              className="size-10 shrink-0 rounded-full"
               onClick={handleSubmit}
               disabled={(mode === "note" ? isDisabled : respostaBarrada) || !text.trim()}
               aria-label={t("Enviar")}

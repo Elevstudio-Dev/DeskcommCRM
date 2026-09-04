@@ -22,6 +22,17 @@ interface Props {
   onResponder?: (m: Message) => void;
   /** A mensagem citada por ESTA, quando houver — desenha o fio. */
   citada?: Message | null;
+  /**
+   * Esta bolha ABRE um bloco de falas seguidas do mesmo lado?
+   *
+   * Só a primeira leva rabinho. É assim no WhatsApp e não é enfeite: o rabinho
+   * marca onde a fala começa. Repetido em toda bolha ele vira ruído, e o bloco
+   * perde a leitura de "isto tudo é a mesma pessoa falando seguido".
+   *
+   * O padrão é `true` porque uma bolha solta é, por definição, a primeira do
+   * seu bloco — assim quem renderiza uma sozinha não precisa saber desta regra.
+   */
+  primeiraDoGrupo?: boolean;
 }
 
 function AckIndicator({ status, t }: { status: string; t: (texto: string) => string }) {
@@ -37,7 +48,13 @@ function AckIndicator({ status, t }: { status: string; t: (texto: string) => str
   return null;
 }
 
-export function MessageBubble({ message, debugCitations, onResponder, citada }: Props) {
+export function MessageBubble({
+  message,
+  debugCitations,
+  onResponder,
+  citada,
+  primeiraDoGrupo = true,
+}: Props) {
   const localeDaData = useLocaleDeData();
   const t = useT();
   const isOutbound = message.direction === "outbound";
@@ -66,7 +83,15 @@ export function MessageBubble({ message, debugCitations, onResponder, citada }: 
   return (
     <div
       className={cn(
-        "group flex w-full items-center gap-1 px-4 py-1",
+        "group flex w-full items-center gap-1 px-4",
+        // O ESPAÇAMENTO CONTA A MESMA HISTÓRIA QUE O RABINHO: dentro de um
+        // bloco as bolhas quase se encostam; entre blocos abre. É o que faz
+        // "três mensagens seguidas do cliente" ser lido como um turno de fala,
+        // e não como três eventos soltos.
+        //
+        // Mora aqui, e não num `space-y` do container, porque só esta linha
+        // sabe se abre bloco — e `space-y` no pai brigaria com margem no filho.
+        primeiraDoGrupo ? "pb-[2px] pt-2" : "py-[2px]",
         isOutbound ? "justify-end" : "justify-start",
       )}
     >
@@ -107,14 +132,21 @@ export function MessageBubble({ message, debugCitations, onResponder, citada }: 
       )}
       <div
         className={cn(
-          "max-w-[75%] text-sm",
+          // 65% e não 75%: linha longa demais cansa, e a largura curta é o que
+          // faz o bloco de mensagens ter ritmo em vez de virar parede de texto.
+          "max-w-[65%] text-sm",
           isBareSticker
             ? "px-0 py-0"
             : cn(
-                "rounded-2xl px-3 py-2 shadow-sm",
+                // `rounded-lg` (8px) e não `rounded-2xl` (16px): a bolha muito
+                // arredondada briga com o rabinho, que é reto.
+                "inbox-bolha rounded-lg px-2.5 py-1.5",
                 isOutbound
-                  ? "rounded-br-sm bg-primary text-primary-foreground"
-                  : "rounded-bl-sm bg-muted text-foreground",
+                  ? "inbox-bolha-saida bg-[var(--chat-out)] text-[var(--chat-out-fg)]"
+                  : "inbox-bolha-entrada bg-[var(--chat-in)] text-[var(--chat-in-fg)]",
+                // O canto DO RABINHO fica reto — é ele que vira o rabinho.
+                primeiraDoGrupo &&
+                  cn("inbox-bolha-rabinho", isOutbound ? "rounded-tr-none" : "rounded-tl-none"),
               ),
           isFailed && "border border-destructive",
         )}
@@ -130,8 +162,8 @@ export function MessageBubble({ message, debugCitations, onResponder, citada }: 
             className={cn(
               "mb-1 rounded-md border-l-2 px-2 py-1 text-xs",
               isOutbound
-                ? "border-primary-foreground/50 bg-primary-foreground/10"
-                : "border-primary bg-background/60",
+                ? "border-[var(--chat-out-fg)]/50 bg-[var(--chat-out-fg)]/10"
+                : "border-[var(--chat-out)] bg-black/[0.04] dark:bg-white/[0.06]",
             )}
           >
             <div className="font-medium opacity-80">
@@ -192,8 +224,15 @@ export function MessageBubble({ message, debugCitations, onResponder, citada }: 
 
         <div
           className={cn(
-            "mt-1 flex items-center justify-end gap-1 text-[10px]",
-            isOutbound ? "text-primary-foreground" : "text-muted-foreground",
+            // `-mt-0.5` e não `mt-1`: a hora encosta na última linha do texto,
+            // como no WhatsApp. Com folga inteira, a bolha ganha uma faixa vazia
+            // que a faz parecer alta demais para o que diz.
+            "-mt-0.5 flex items-center justify-end gap-1 text-[10px]",
+            // A hora é referência, não conteúdo — no lado de saída ela herda a
+            // cor do texto com opacidade, o que funciona em qualquer marca que
+            // o revendedor escolher. Cor própria aqui exigiria uma segunda
+            // rampa por marca, e a que envelhece primeiro é sempre a cópia.
+            isOutbound ? "text-[var(--chat-out-fg)]/75" : "text-muted-foreground",
           )}
         >
           {editada && (
@@ -215,7 +254,21 @@ export function MessageBubble({ message, debugCitations, onResponder, citada }: 
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex items-center gap-0.5 font-semibold text-destructive">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-0.5 font-semibold",
+                      // VERMELHO NÃO SOBREVIVE À COR DA MARCA. Na bolha de
+                      // saída o fundo é `--chat-out`, que o revendedor troca em
+                      // runtime — não há vermelho que tenha contraste contra
+                      // todos. Medido a olho em 2026-09-04 com a accent padrão
+                      // (verde-sálvia): "Falhou" ficava ilegível nos dois temas.
+                      //
+                      // Do lado de dentro da bolha, quem carrega o alarme é o
+                      // ÍCONE e o peso da fonte; a cor herda o texto da bolha,
+                      // que por construção já tem contraste com ela.
+                      isOutbound ? "text-[var(--chat-out-fg)]" : "text-destructive",
+                    )}
+                  >
                     <WarningOctagon size={10} weight="fill" aria-hidden /> {t("Falhou")}
                   </span>
                 </TooltipTrigger>
