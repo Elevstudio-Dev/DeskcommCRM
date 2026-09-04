@@ -438,6 +438,25 @@ IMG_APP="${IMG_NS}/deskcommcrm"
 IMG_WORKER="${IMG_NS}/deskcomm-worker"
 IMG_SCHEDULER="${IMG_NS}/deskcomm-scheduler"
 
+# A marca que a instalacao NASCE com, quando quem instala aperta Enter.
+#
+# NAO e o mesmo que `DEFAULT_APP_NAME` em `lib/branding.ts`. Aquela constante e
+# o padrao do PRODUTO e nao se edita: `tests/unit/marca-do-produto-nao-se-edita-no-codigo.test.ts`
+# existe porque um contribuidor a trocou para marcar a instalacao dele e a
+# personalizacao viajou num PR, para todo mundo, em silencio. O argumento vale
+# em dobro para nos: puxamos do upstream todo mes, e `lib/branding.ts` e
+# exatamente o arquivo que o merge reescreve sem conflito — a marca sumiria numa
+# sincronizacao e ninguem veria.
+#
+# O caminho suportado (`docs/white-label.md`) e o `.env`, e este e o instalador
+# que o escreve. `APP_NAME` semeia `platform_branding` na primeira leitura, entao
+# a marca acaba no BANCO — sobrevive a atualizacao de imagem e a perda do env.
+#
+# Quem instala para o proprio cliente troca isto respondendo a pergunta; o valor
+# daqui e so o Enter. Amarrado por `tests/unit/marca-padrao-da-instalacao.test.ts`,
+# que cobra que o install.sh derive daqui em vez de repetir a string.
+MARCA_PADRAO="Elev CRM"
+
 # A última versão publicada (ex.: "1.2.1"), ou vazio se não deu para saber.
 #
 # Consulta o REMOTO, não o clone: o install.sh clona com `--depth 1`, que não
