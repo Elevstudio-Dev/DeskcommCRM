@@ -102,13 +102,39 @@ describe("header do inbox — não trava a largura da tela", () => {
     expect(acoes.className).toContain("min-w-0");
   });
 
-  it("as ações continuam TODAS no header — reorganizar não é esconder", () => {
+  it("a ação principal fica à vista; o resto mora em Opções", () => {
     renderHeader();
-    // Se um dia alguém "resolver" o aperto colapsando ações num menu, este caso
-    // reprova. Esconder ação de quem atende é pior que uma segunda linha.
-    for (const rotulo of ["Assumir", "Transferir", "Fechar"]) {
-      expect(screen.getByText(rotulo), `a ação "${rotulo}" sumiu do header`).toBeTruthy();
-    }
+
+    // ─── ESTE CASO MUDOU DE FORMA EM 2026-09-04, e o porquê importa ────────
+    //
+    // Ele dizia: "as ações continuam TODAS no header — reorganizar não é
+    // esconder", e reprovava qualquer tentativa de colapsar ações num menu. A
+    // razão era boa: esconder ação de quem atende é pior que uma segunda linha.
+    //
+    // O dono decidiu o contrário, com a pergunta feita de forma direta e a
+    // consequência na mesa — e a decisão dele preserva o que este caso realmente
+    // protegia. "Assumir"/"Liberar" é a ação do dia inteiro e continua FORA do
+    // menu; o que entrou foram as ocasionais. Ninguém ficou sem porta: ficou com
+    // um clique a mais nas que se usa de vez em quando.
+    //
+    // O caso não foi apagado porque a regra não morreu — ela ganhou forma nova.
+    // Apagá-lo deixaria o próximo a colapsar TAMBÉM o "Assumir" sem esbarrar em
+    // nada, que é o beco que a versão anterior existia para fechar.
+
+    // A ação principal, visível sem abrir nada.
+    expect(screen.getByText("Assumir"), 'a ação principal saiu do header').toBeTruthy();
+
+    // E a porta para o resto — um gatilho que existe e se anuncia.
+    expect(
+      screen.getByText("Opções"),
+      "sem o menu, as ações ocasionais ficam sem porta nenhuma",
+    ).toBeTruthy();
+
+    // O que NÃO pode voltar: a ação principal dentro do menu. Se "Assumir"
+    // deixar de estar no header e só existir depois de um clique, este caso
+    // reprova — é o limite que a decisão do dono manteve de pé.
+    const header = document.querySelector("div")!;
+    expect(header.textContent).toContain("Assumir");
   });
 
   it('"Ver contato" existe no DOM e só se cala onde há outra porta', () => {

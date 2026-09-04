@@ -16,6 +16,7 @@ import * as path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { test, expect, type Page } from "@playwright/test";
 import { carregarEnvLocal } from "../../scripts/lib/env-de-teste";
+import { escolherVisaoDoInbox } from "./helpers/visao-do-inbox";
 
 const CREDS_PATH = path.join(process.cwd(), ".e2e-creds.json");
 const EVIDENCE = path.join(process.cwd(), "loop/checkpoints/evidence/G5");
@@ -117,7 +118,7 @@ test.describe("G5-03 — fila com posição + atribuição", () => {
     ).toHaveCount(0, { timeout: 15_000 });
 
     // (4) Aparece em "Minhas" do dono.
-    await page.getByRole("tab", { name: /Minhas/ }).click();
+    await escolherVisaoDoInbox(page, /Minhas/);
     await expect(
       page.getByRole("button").filter({ hasText: q.contact_name }),
     ).toBeVisible({ timeout: 15_000 });

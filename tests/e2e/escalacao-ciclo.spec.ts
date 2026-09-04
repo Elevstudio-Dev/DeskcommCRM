@@ -34,6 +34,7 @@ import * as path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { carregarEnvLocal } from "../../scripts/lib/env-de-teste";
+import { acaoDaConversa } from "./helpers/visao-do-inbox";
 
 const CREDS_PATH = path.join(process.cwd(), ".e2e-creds.json");
 const EVIDENCIA = path.join(process.cwd(), ".superpowers/evidence/ia-360-w3");
@@ -228,7 +229,9 @@ test.describe("IA 360 W3 — o agente para, a pessoa continua, o agente retoma s
       page.getByTestId("badge-atendimento-humano"),
       "conversa com o robô calado não pode ter a mesma cara de uma conversa normal",
     ).toBeVisible({ timeout: 30_000 });
-    const botaoDevolver = page.getByTestId("devolver-ao-automatico");
+    // A volta mora no menu "Opções" desde 2026-09-04. Um clique a mais, mesma
+    // pergunta: a tela oferece o caminho de volta ou não?
+    const botaoDevolver = await acaoDaConversa(page, "devolver-ao-automatico");
     await expect(
       botaoDevolver,
       "a rota de devolver existia desde a IA-06 e nenhuma tela a chamava",

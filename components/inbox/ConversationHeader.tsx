@@ -10,6 +10,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { JanelaSelo } from "@/components/inbox/JanelaSelo";
@@ -25,7 +28,7 @@ import { useAutomaticoAtivo } from "@/hooks/ai/useAutomaticoAtivo";
 import { OwnerBadge } from "@/components/kanban/OwnerBadge";
 import { comandoDaConversa, ROTULO_DO_MOTIVO } from "@/lib/inbox/comando-da-conversa";
 import { ReassignDialog } from "@/components/inbox/ReassignDialog";
-import { SnoozeButton } from "@/components/inbox/SnoozeButton";
+import { ItensDeLembrete, rotuloDeLembrete } from "@/components/inbox/SnoozeButton";
 import type { ConversationWithContact } from "@/hooks/inbox/useConversationsRealtime";
 import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
 import { phoneForDisplay } from "@/lib/channels/phone-variants";
@@ -163,6 +166,14 @@ export function ConversationHeader({ conversation }: Props) {
    * pior que não oferecer nenhuma.
    */
   const podeDevolver = travaVigente;
+  /**
+   * A conversa ainda aceita ação de atendimento?
+   *
+   * Era `status !== "closed" && status !== "archived"` repetido em quatro
+   * lugares. Repetido, ele vira quatro chances de alguém acrescentar um estado
+   * novo em três — que é como um botão passa a aparecer em conversa arquivada.
+   */
+  const estaViva = status !== "closed" && status !== "archived";
   /**
    * PAUSAR só aparece quando pausar é um gesto DIFERENTE de assumir.
    *
@@ -328,149 +339,89 @@ export function ConversationHeader({ conversation }: Props) {
             {t("Liberar")}
           </Button>
         )}
-        {/* O INTERRUPTOR. Um botão, dois rótulos, um slot.
-            Fica ANTES de transferir/fechar porque é a ação que a pessoa procura
-            quando terminou o que tinha para fazer aqui.
+        {/*
+          UM MENU SÓ — "Opções" — E O QUE FICA FORA DELE.
 
-            Dois botões lado a lado foi medido e recusado: a barra de ações já
-            estourou a caixa útil de 392px em 1280px uma vez (ver o comentário no
-            topo do JSX), e um botão a mais custa ~85px — o cabeçalho ganharia uma
-            segunda fileira justo na largura mais apertada. Os dois estados são
-            mutuamente exclusivos, então nunca precisam existir juntos.
+          Antes eram cinco botões lado a lado. A barra estourava a caixa útil de
+          392px em 1280px (ver o comentário no topo do JSX) e ganhava uma segunda
+          fileira justo na largura mais apertada.
 
-            O `data-testid` do lado de VOLTA é o mesmo de antes: `escalacao-ciclo`
-            o clica, e rótulo/testid visível é contrato. */}
-        {/* AS ACOES OCASIONAIS — e a guarda que impede o menu de virar armadilha.
+          ASSUMIR/LIBERAR NÃO ENTRA, e isso é decisão de dono tomada em
+          2026-09-04: é a ação que o atendente faz o dia inteiro, e dentro do
+          menu ela custaria dois cliques em toda conversa. Uma ação principal à
+          vista e o resto num menu é o formato de ferramenta de atendimento.
 
-            `ocasionais` e contado ANTES de esconder qualquer coisa. Com mais de
-            uma, elas vao para o menu; com UMA SO, ela volta a ser botao.
+          OS `data-testid` VIAJAM INTACTOS para dentro do menu. `escalacao-ciclo`
+          os clica, e testid visível é contrato — vale tanto para botão quanto
+          para item de menu.
 
-            Isto nao e zelo abstrato. Este arquivo ja documentou um beco medido:
-            a volta ao automatico foi condicionada a `status !== "closed"`, e o
-            resultado foi o atendente que assume, fecha e sai de ferias —
-            deixando a conversa com o automatico parado e NENHUMA porta para o
-            colega, porque "Liberar" so existe para o proprio dono. Um menu que
-            engolisse a ultima acao recria esse beco, agora com um clique a mais
-            no caminho.
-
-            Os `data-testid` viajam INTACTOS para dentro do menu: a spec
-            `escalacao-ciclo` os clica, e o comentario logo acima ja avisava que
-            testid visivel e contrato. */}
-        {(() => {
-          // A ORDEM DOS RAMOS IMPORTA, e nao e estetica: o teste
-          // `handoff-por-orcamento` extrai o rotulo do botao de volta fatiando a
-          // fonte a partir do atributo de teste dele ate o primeiro fechamento
-          // de Button, e usa a ULTIMA chamada de traducao ali dentro. O ramo do
-          // botao vem primeiro para esse varredor continuar achando o par que
-          // espera — inverter de volta reprova aquele teste.
-          //
-          // E o motivo de este comentario NAO escrever o atributo por extenso:
-          // a busca e por texto na fonte, entao a mencao literal aqui vira a
-          // PRIMEIRA ocorrencia e o extrator corta no comentario, capturando
-          // zero traducoes. Foi exatamente o que aconteceu na primeira tentativa.
-          const ocasionais = [podeDevolver, podePausar].filter(Boolean).length;
-          const agrupar = ocasionais > 1;
-
-          const devolver = !podeDevolver ? null : !agrupar ? (
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={retomar.isPending}
-              data-testid="devolver-ao-automatico"
-              // O ALCANCE DA VOLTA NAO E SEMPRE O MESMO, e a tela precisa dizer
-              // qual e. `devolverAtendimentoAoAgente` limpa `contacts.force_human`,
-              // que e do CLIENTE e nao desta conversa: quando foi ela que travou,
-              // o clique religa o automatico para TODAS as conversas da pessoa.
-              title={
-                motivo === "contato_travado"
-                  ? t("Religa o atendimento automático para este cliente — vale para todas as conversas dele.")
-                  : t("Devolve esta conversa ao atendimento automático.")
-              }
-              onClick={() => retomar.mutate({ conversation_id: conversation.id })}
-            >
-              {retomar.isPending ? t("Devolvendo...") : t("Devolver ao automático")}
-            </Button>
-          ) : (
-            <DropdownMenuItem
-              data-testid="devolver-ao-automatico"
-              disabled={retomar.isPending}
-              onClick={() => retomar.mutate({ conversation_id: conversation.id })}
-            >
-              {retomar.isPending ? t("Devolvendo...") : t("Devolver ao automático")}
-            </DropdownMenuItem>
-          );
-
-          const pausarEl = !podePausar ? null : !agrupar ? (
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={pausar.isPending}
-              data-testid="pausar-o-automatico"
-              // `podePausar` ja exige dono != null, entao este botao NUNCA aparece
-              // sem dono — prometer "voce assume" aqui seria prometer o que a rota
-              // nao faz: com dono, ela so cala, nunca rouba a conversa de quem a tem.
-              title={t("O atendimento automático para nesta conversa. O dono não muda.")}
-              onClick={() => pausar.mutate({ conversation_id: conversation.id })}
-            >
-              {pausar.isPending ? t("Pausando...") : t("Pausar o automático")}
-            </Button>
-          ) : (
-            <DropdownMenuItem
-              data-testid="pausar-o-automatico"
-              disabled={pausar.isPending}
-              onClick={() => pausar.mutate({ conversation_id: conversation.id })}
-            >
-              {pausar.isPending ? t("Pausando...") : t("Pausar o automático")}
-            </DropdownMenuItem>
-          );
-
-          if (!agrupar) {
-            return (
-              <>
-                {devolver}
-                {pausarEl}
-              </>
-            );
-          }
-
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline" data-testid="mais-acoes">
-                  {t("Mais ações")}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {devolver}
-                {pausarEl}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        })()}
-        {status !== "closed" && status !== "archived" && (
-          <Button size="sm" variant="outline" onClick={() => setReassignOpen(true)}>
-            {t("Transferir")}
-          </Button>
-        )}
-        {status !== "closed" && status !== "archived" && (
-          <SnoozeButton
-            conversationId={conversation.id}
-            snoozeUntil={conversation.snooze_until ?? null}
-          />
-        )}
-        {status !== "closed" && status !== "archived" && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={close.isPending}
-            onClick={() => {
-              if (confirm(t("Fechar esta conversa?"))) {
-                close.mutate({ conversation_id: conversation.id });
-              }
-            }}
-          >
-            {t("Fechar")}
-          </Button>
+          O MENU SÓ APARECE SE TIVER O QUE OFERECER. Um gatilho que abre vazio é
+          pior que gatilho nenhum: promete e não entrega.
+        */}
+        {(podeDevolver || podePausar || estaViva) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" data-testid="opcoes-da-conversa">
+                {t("Opções")}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {podeDevolver && (
+                <DropdownMenuItem
+                  data-testid="devolver-ao-automatico"
+                  disabled={retomar.isPending}
+                  onClick={() => retomar.mutate({ conversation_id: conversation.id })}
+                >
+                  {retomar.isPending ? t("Devolvendo...") : t("Devolver ao automático")}
+                </DropdownMenuItem>
+              )}
+              {podePausar && (
+                <DropdownMenuItem
+                  data-testid="pausar-o-automatico"
+                  disabled={pausar.isPending}
+                  onClick={() => pausar.mutate({ conversation_id: conversation.id })}
+                >
+                  {pausar.isPending ? t("Pausando...") : t("Pausar o automático")}
+                </DropdownMenuItem>
+              )}
+              {estaViva && (
+                <DropdownMenuItem onClick={() => setReassignOpen(true)}>
+                  {t("Transferir")}
+                </DropdownMenuItem>
+              )}
+              {estaViva && (
+                // SUBMENU, e não item que abre outro menu: o lembrete tem três
+                // durações, e empurrá-las para o nível de cima faria "Opções"
+                // virar uma lista onde metade dos itens é sobre a mesma coisa.
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    {rotuloDeLembrete(conversation.snooze_until ?? null, t)}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <ItensDeLembrete
+                      conversationId={conversation.id}
+                      snoozeUntil={conversation.snooze_until ?? null}
+                    />
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
+              {estaViva && (
+                <DropdownMenuItem
+                  disabled={close.isPending}
+                  onClick={() => {
+                    // ARQUIVAR, não "Fechar" — decisão de dono em 2026-09-04. A
+                    // aba da lista virou "Arquivadas" junto: duas palavras para
+                    // a mesma coisa ensinam que são coisas diferentes.
+                    if (confirm(t("Arquivar esta conversa?"))) {
+                      close.mutate({ conversation_id: conversation.id });
+                    }
+                  }}
+                >
+                  {t("Arquivar")}
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
         {/* `xl:hidden` porque a partir de 1280px o painel lateral de CRM entra
             na tela — e ele já tem um "Ver contato", para o MESMO contato, a um

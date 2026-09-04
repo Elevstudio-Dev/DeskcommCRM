@@ -45,7 +45,30 @@ export function ImageMedia({ messageId, alt }: Props) {
         <img src={src} alt={alt} loading="lazy" onLoad={() => setState("ready")} onError={() => setState("error")} className="h-full w-full object-cover" />
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-4xl border-none bg-transparent p-0 shadow-none">
+        {/*
+          O BOTÃO DE FECHAR PRECISA DE FUNDO PRÓPRIO AQUI.
+
+          O `DialogContent` desenha um `X` de 16px, sem fundo, herdando a cor do
+          texto — o que funciona num diálogo branco e SOME sobre uma foto. Medido
+          em 2026-09-04: 16×16, `background: rgba(0,0,0,0)`, cor `rgb(28,26,22)`.
+          Sobre uma foto clara ele é quase invisível; sobre uma escura, invisível.
+          O dono abriu uma imagem e relatou que "não tem a opção de fechar" — ela
+          tinha, com dezesseis pixels de alvo e sem contraste.
+
+          As classes abaixo mexem SÓ neste diálogo, pelo seletor de filho: dão
+          círculo escuro, ícone branco e 36px de alvo. Trocar isso no
+          `components/ui/dialog.tsx` mudaria todo diálogo do produto, e os
+          outros não têm o problema — eles têm fundo sólido atrás do botão.
+        */}
+        <DialogContent
+          className={cn(
+            "max-w-4xl border-none bg-transparent p-0 shadow-none",
+            "[&>button]:right-2 [&>button]:top-2 [&>button]:grid [&>button]:size-9 [&>button]:place-items-center",
+            "[&>button]:rounded-full [&>button]:bg-black/65 [&>button]:text-white [&>button]:opacity-100",
+            "[&>button]:backdrop-blur-sm [&>button:hover]:bg-black/80",
+            "[&>button>svg]:size-5",
+          )}
+        >
           <DialogTitle className="sr-only">{alt}</DialogTitle>
           <img src={src} alt={alt} className="max-h-[85vh] w-full rounded-lg object-contain" />
         </DialogContent>

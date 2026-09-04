@@ -31,6 +31,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { agenteAtende } from "../../lib/ai/agents/no-ar";
 import { carregarEnvLocal } from "../../scripts/lib/env-de-teste";
 import { lerCreds, loginComoAdmin } from "./helpers/login-admin";
+import { escolherVisaoDoInbox } from "./helpers/visao-do-inbox";
 
 const env = carregarEnvLocal();
 const admin: SupabaseClient = createClient(
@@ -149,10 +150,10 @@ test.describe("Inbox: as abas perguntam quem manda", () => {
     const temAutomatico = await orgTemAutomaticoNoAr(orgId);
 
     // ── FILA: quem realmente precisa de gente.
-    // `tab`, não `button`: as abas são `TabsTrigger` do shadcn. E o nome vem por
-    // REGEX porque o contador entra no nome acessível ("Fila 36") — `exact` aqui
-    // nunca casaria. Mesmo idioma da spec irmã `inbox-quem-manda.spec.ts`.
-    await page.getByRole("tab", { name: /Fila/i }).first().click();
+    // As visões viram itens de um MENU (2026-09-04) — abrir e escolher é um
+    // gesto só, e mora no helper. O nome vem por REGEX porque o contador entra
+    // no nome acessível ("Fila 36") — `exact` aqui nunca casaria.
+    await escolherVisaoDoInbox(page, /Fila/i);
     // A escalada está na Fila nos DOIS casos — é o que não depende do fato.
     await expect(page.getByText(ESPERANDO).first()).toBeVisible({ timeout: 15_000 });
     if (temAutomatico) {
@@ -168,14 +169,14 @@ test.describe("Inbox: as abas perguntam quem manda", () => {
 
     // ── AUTOMÁTICO: a outra direção, e ela é a que impede um 'conserto' que
     // simplesmente esvazie a Fila.
-    // ESTA é a asserção que não depende de nada: a aba do automático pede
+    // ESTA é a asserção que não depende de nada: a visão do automático pede
     // exatamente `comando=automatico` nos dois casos, então a separação aqui vale
     // sempre — e é ela que impede um "conserto" que simplesmente esvazie a Fila.
-    await page.getByRole("tab", { name: /Autom/i }).first().click();
+    await escolherVisaoDoInbox(page, /Autom/i);
     await expect(page.getByText(ROBO).first()).toBeVisible({ timeout: 15_000 });
     await expect(
       page.getByText(ESPERANDO),
-      "a aba do automático listou uma conversa escalada para humano",
+      "a visão do automático listou uma conversa escalada para humano",
     ).toHaveCount(0);
   });
 });

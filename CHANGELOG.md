@@ -8,6 +8,41 @@ Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual es
 
 ## [Não lançado]
 
+### Adicionado
+
+- **O onboarding pergunta primeiro se você quer a IA** Quem chegava para cadastrar a empresa caía direto na configuração do atendente
+  de IA, mesmo querendo só o CRM. Agora a primeira tela oferece dois caminhos:
+  **começar com o atendente de IA** (o caminho de sempre, com a configuração e o
+  teste do agente) ou **começar só com o CRM** — negócio, WhatsApp, funil e
+  equipe, deixando a IA para depois.
+
+  Quem escolhe só o CRM não perde nada: os passos da IA continuam disponíveis
+  quando quiser ligá-la, e o resumo do onboarding para de cobrar o que você
+  decidiu não usar agora.
+
+### Alterado
+
+- **A área de conversa ficou com a cara do WhatsApp** Quem atende passa o dia entre o WhatsApp Web e o CRM, e a diferença visual
+  entre os dois custava tempo. A conversa agora tem fundo com textura discreta,
+  balões com rabinho, mensagens seguidas da mesma pessoa agrupadas e a hora
+  junto do texto — o mesmo desenho que a mão já conhece.
+
+  A cor dos balões enviados continua sendo **a cor da sua marca**, não o verde do
+  WhatsApp: a tela fica familiar sem deixar de ser sua.
+
+- **As ações da conversa moraram num menu "Opções"** O topo da conversa tinha cinco botões concorrendo pelo mesmo espaço e o nome
+  do contato espremido no meio. Agora **Assumir** (ou **Liberar**) fica à vista,
+  porque é a ação do dia a dia, e o resto — transferir, lembrar depois, devolver
+  ao automático, pausar o automático, arquivar — mora num menu **Opções**.
+
+  As visões da caixa de entrada (Fila, Minhas, Todas, Automático, Arquivadas)
+  também viraram um menu, com a visão atual e a contagem dela sempre visíveis no
+  botão. A lista de conversas ganhou a largura que as abas ocupavam.
+
+  **"Fechar" agora se chama "Arquivar"**, e a aba "Fechadas" virou "Arquivadas" —
+  a conversa nunca foi apagada, e o nome antigo sugeria o contrário.
+
+
 ## [1.14.0] — 2026-09-04
 
 ### Adicionado

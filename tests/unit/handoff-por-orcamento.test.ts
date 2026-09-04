@@ -506,10 +506,34 @@ describe("os textos do orçamento nomeiam botões que existem", () => {
    * também) ganhou suas próprias chamadas `t(...)` antes do texto visível, e
    * pegar a primeira ocorrência passou a capturar o tooltip em vez do rótulo.
    */
-  function rotuloDoBotaoDeVolta(): string {
-    const bloco = fonteCabecalho.slice(fonteCabecalho.indexOf('data-testid="devolver-ao-automatico"'));
-    const fechamento = bloco.indexOf("</Button>");
-    const corpoDoBotao = fechamento === -1 ? bloco : bloco.slice(0, fechamento);
+  /**
+   * A extração, sobre uma fonte QUALQUER — não só a do disco.
+   *
+   * Parametrizada porque o controle negativo abaixo precisa da mesma leitura
+   * sobre a fonte sabotada. Ele duplicava estas linhas, e a cópia envelheceu
+   * exatamente como este arquivo avisa em outros pontos: quando o botão virou
+   * item de menu, o original foi corrigido e a cópia continuou cortando em
+   * `</Button>`, reprovando o controle por um motivo que não é o que ele mede.
+   */
+  function rotuloEmFonte(fonte: string): string {
+    const bloco = fonte.slice(fonte.indexOf('data-testid="devolver-ao-automatico"'));
+    // FECHA EM BOTÃO **OU** EM ITEM DE MENU.
+    //
+    // A volta ao automático era um `<Button>`; em 2026-09-04 as ações do
+    // cabeçalho foram reunidas num menu "Opções" e ela virou
+    // `<DropdownMenuItem>`. Procurando só por `</Button>`, o corte pulava para
+    // um botão distante e a "última tradução antes do fechamento" passou a ser
+    // "Ver contato" — o extrator perdeu o alvo e o caso reprovou.
+    //
+    // Reprovar foi o comportamento CERTO: é o que o cabeçalho desta função
+    // manda fazer quando o alvo some. O conserto é ensinar o extrator a forma
+    // nova, nunca afrouxar a asserção.
+    const fechamento = ["</Button>", "</DropdownMenuItem>"]
+      .map((marca) => bloco.indexOf(marca))
+      .filter((i) => i !== -1)
+      .reduce((menor, i) => Math.min(menor, i), Number.POSITIVE_INFINITY);
+    const corpoDoBotao =
+      fechamento === Number.POSITIVE_INFINITY ? bloco : bloco.slice(0, fechamento);
     const ocorrencias = [...corpoDoBotao.matchAll(/t\("([^"]+)"\)/g)];
     const ultima = ocorrencias[ocorrencias.length - 1];
     if (ultima === undefined) {
@@ -519,6 +543,11 @@ describe("os textos do orçamento nomeiam botões que existem", () => {
       );
     }
     return ultima[1]!;
+  }
+
+  /** O rótulo como ele está no componente, no disco. */
+  function rotuloDoBotaoDeVolta(): string {
+    return rotuloEmFonte(fonteCabecalho);
   }
 
   it("o botão de volta existe e tem um rótulo legível (guarda de vacuidade)", () => {
@@ -545,12 +574,8 @@ describe("os textos do orçamento nomeiam botões que existem", () => {
       't("Voltar para a IA")',
     );
     expect(renomeado).not.toBe(fonteCabecalho);
-    const blocoRenomeado = renomeado.slice(renomeado.indexOf('data-testid="devolver-ao-automatico"'));
-    const fechamentoRenomeado = blocoRenomeado.indexOf("</Button>");
-    const corpoRenomeado =
-      fechamentoRenomeado === -1 ? blocoRenomeado : blocoRenomeado.slice(0, fechamentoRenomeado);
-    const ocorrenciasRenomeadas = [...corpoRenomeado.matchAll(/t\("([^"]+)"\)/g)];
-    const novo = ocorrenciasRenomeadas[ocorrenciasRenomeadas.length - 1]?.[1];
+    // MESMA leitura do caso real, sobre a fonte sabotada — não uma cópia dela.
+    const novo = rotuloEmFonte(renomeado);
     expect(novo).toBe("Voltar para a IA");
     expect(corpoDoBloqueio(15_000, 10_000)).not.toContain(novo as string);
   });

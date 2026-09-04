@@ -26,10 +26,47 @@ function isSnoozeActive(snoozeUntil: string | null): boolean {
   return snoozeUntil != null && new Date(snoozeUntil).getTime() > Date.now();
 }
 
+/** O rótulo do lembrete depende de já haver um marcado. */
+export function rotuloDeLembrete(snoozeUntil: string | null, t: (s: string) => string): string {
+  return isSnoozeActive(snoozeUntil) ? t("Lembrete ativo") : t("Lembrar");
+}
+
+/**
+ * SÓ OS ITENS, sem gatilho e sem menu em volta.
+ *
+ * Existe porque o cabeçalho da conversa passou a reunir as ações num menu
+ * "Opções", e um `DropdownMenu` inteiro não pode morar dentro de outro. Aqui os
+ * itens ficam soltos: o `SnoozeButton` os embrulha no menu dele, e o cabeçalho
+ * os embrulha num submenu. Nenhum dos dois copia a lista de durações — copiar
+ * seria a lista que envelhece só de um lado.
+ */
+export function ItensDeLembrete({ conversationId, snoozeUntil }: Omit<Props, "disabled">) {
+  const t = useT();
+  const { snooze, cancel } = useSnoozeConversation();
+  if (isSnoozeActive(snoozeUntil)) {
+    return (
+      <DropdownMenuItem onClick={() => cancel.mutate({ conversation_id: conversationId })}>
+        {t("Cancelar lembrete")}
+      </DropdownMenuItem>
+    );
+  }
+  return (
+    <>
+      {DURATIONS.map((d) => (
+        <DropdownMenuItem
+          key={d.hours}
+          onClick={() => snooze.mutate({ conversation_id: conversationId, duration_hours: d.hours })}
+        >
+          {t(d.label)}
+        </DropdownMenuItem>
+      ))}
+    </>
+  );
+}
+
 export function SnoozeButton({ conversationId, snoozeUntil, disabled }: Props) {
   const t = useT();
   const { snooze, cancel } = useSnoozeConversation();
-  const isActive = isSnoozeActive(snoozeUntil);
   const isPending = snooze.isPending || cancel.isPending;
 
   return (
@@ -42,28 +79,11 @@ export function SnoozeButton({ conversationId, snoozeUntil, disabled }: Props) {
           className="flex items-center gap-1"
         >
           <Clock size={12} weight="regular" aria-hidden />
-          {isActive ? t("Lembrete ativo") : t("Lembrar")}
+          {rotuloDeLembrete(snoozeUntil, t)}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {isActive ? (
-          <DropdownMenuItem
-            onClick={() => cancel.mutate({ conversation_id: conversationId })}
-          >
-            {t("Cancelar lembrete")}
-          </DropdownMenuItem>
-        ) : (
-          DURATIONS.map((d) => (
-            <DropdownMenuItem
-              key={d.hours}
-              onClick={() =>
-                snooze.mutate({ conversation_id: conversationId, duration_hours: d.hours })
-              }
-            >
-              {t(d.label)}
-            </DropdownMenuItem>
-          ))
-        )}
+        <ItensDeLembrete conversationId={conversationId} snoozeUntil={snoozeUntil} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

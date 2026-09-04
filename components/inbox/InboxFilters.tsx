@@ -1,9 +1,15 @@
 "use client";
 import { useT } from "@/hooks/i18n/useT";
 import { useEffect, useState } from "react";
-import { MagnifyingGlass } from "@/lib/ui/icons";
+import { CaretDown, MagnifyingGlass } from "@/lib/ui/icons";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,7 +31,10 @@ const INBOX_TABS: { value: InboxTab; label: string }[] = [
   { value: "unassigned", label: "Fila" },
   { value: "mine", label: "Minhas" },
   { value: "all", label: "Todas" },
-  { value: "closed", label: "Fechadas" },
+  // "Arquivadas", não "Fechadas": o botão do cabeçalho virou "Arquivar" em
+  // 2026-09-04, e duas palavras para a mesma coisa ensinam que são coisas
+  // diferentes. O VALOR (`closed`) não muda — ele é contrato de API e de banco.
+  { value: "closed", label: "Arquivadas" },
   // "Automático", não "IA": a palavra deste ator já é contrato em quatro arquivos
   // e no dicionário, e `handoff-por-orcamento.test.ts` usa literalmente "Voltar
   // para a IA" como a sabotagem que deve reprovar. A aba era a última fora do
@@ -165,45 +174,58 @@ export function InboxFilters({ value, onChange }: Props) {
         </Select>
       )}
 
-      <Tabs
-        value={value.tab}
-        onValueChange={(v) => onChange({ ...value, tab: v as InboxTab })}
-      >
-        {/*
-          FLEX, e não grade de colunas iguais.
+      {/*
+        DROPDOWN, e não fila de abas — decisão de dono em 2026-09-04.
 
-          A grade dava a cada aba `minmax(0, 1fr)` — o mesmo espaço para "Fila"
-          e para "Automático". Na coluna do inbox, que é estreita, o rótulo
-          longo não cabia na célula e transbordava por cima do vizinho:
-          "FechadasAutomático" era o que aparecia na tela. Medido em 1600px de
-          largura, que não é tela pequena.
+        A fila cabia em cinco rótulos e já vinha brigando com a largura: numa
+        primeira versão as abas se sobrepunham ("FechadasAutomático"), e o
+        conserto foi deixá-las rolar na horizontal. Rolagem horizontal esconde
+        opção sem dizer que existe — quem não arrasta nunca descobre "Automático".
 
-          O `TabsList` do design system já traz `max-w-full overflow-x-auto`
-          justamente para fila de aba que cresce — era a grade que anulava isso.
-          Com flex, cada aba ocupa o que precisa e a fila rola se faltar espaço,
-          que é degradar em vez de quebrar.
-        */}
-        <TabsList className="flex h-8 w-full justify-start">
+        Num menu, todas as visões ficam na mesma lista, com o contador ao lado,
+        e o gatilho diz em qual você está. O custo é um clique a mais para
+        trocar de visão; o ganho é nenhuma visão invisível.
+      */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-full justify-between"
+            data-testid="visao-do-inbox"
+          >
+            <span className="flex items-center gap-1.5">
+              {t(INBOX_TABS.find((x) => x.value === value.tab)?.label ?? "Fila")}
+              {typeof countFor[value.tab] === "number" && countFor[value.tab]! > 0 && (
+                <span className="text-[10px] tabular-nums text-muted-foreground">
+                  {countFor[value.tab]}
+                </span>
+              )}
+            </span>
+            <CaretDown size={12} weight="bold" aria-hidden />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-[--radix-dropdown-menu-trigger-width]">
           {tabs.map((tab) => {
-            const meta = INBOX_TABS.find((t) => t.value === tab)!;
+            const meta = INBOX_TABS.find((x) => x.value === tab)!;
             const count = countFor[tab];
             return (
-              <TabsTrigger
+              <DropdownMenuItem
                 key={tab}
-                value={tab}
-                className="shrink-0 gap-1 whitespace-nowrap text-[11px]"
+                onClick={() => onChange({ ...value, tab })}
+                className="justify-between gap-3"
               >
-                {t(meta.label)}
+                <span className={tab === value.tab ? "font-medium" : undefined}>
+                  {t(meta.label)}
+                </span>
                 {typeof count === "number" && count > 0 && (
-                  <span className="text-[10px] tabular-nums text-muted-foreground">
-                    {count}
-                  </span>
+                  <span className="text-[10px] tabular-nums text-muted-foreground">{count}</span>
                 )}
-              </TabsTrigger>
+              </DropdownMenuItem>
             );
           })}
-        </TabsList>
-      </Tabs>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <div className="flex items-center justify-between">
         <Label htmlFor="only-unread" className="text-xs text-muted-foreground">

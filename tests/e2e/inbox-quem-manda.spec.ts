@@ -26,6 +26,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
 import { carregarEnvLocal } from "../../scripts/lib/env-de-teste";
+import { acaoDaConversa, visaoAtualDoInbox } from "./helpers/visao-do-inbox";
 
 const CREDS_PATH = path.join(process.cwd(), ".e2e-creds.json");
 const EVIDENCIA = path.join(process.cwd(), ".superpowers/evidence/inbox-quem-manda");
@@ -233,7 +234,7 @@ test.describe("Inbox — quem manda nesta conversa", () => {
     // -----------------------------------------------------------------
     // (6) A VOLTA existe e funciona — o interruptor tem os dois lados.
     // -----------------------------------------------------------------
-    const voltar = page.getByTestId("devolver-ao-automatico");
+    const voltar = await acaoDaConversa(page, "devolver-ao-automatico");
     await expect(voltar).toBeVisible();
     await voltar.click();
 
@@ -276,10 +277,12 @@ test.describe("Inbox — quem manda nesta conversa", () => {
     await expect(naFila).toBeVisible({ timeout: 30_000 });
     await captura(page, "4-escalada-aparece-na-fila");
 
-    // E o BADGE da aba a conta — badge que não bate com a lista manda o atendente
-    // procurar um trabalho que a aba não mostra (ou o contrário, que é este caso).
-    const abaFila = page.getByRole("tab", { name: /Fila/i }).first();
-    await expect(abaFila).toContainText(/[1-9]/, { timeout: 30_000 });
+    // E o CONTADOR a conta — contador que não bate com a lista manda o atendente
+    // procurar um trabalho que a tela não mostra (ou o contrário, que é este caso).
+    // A Fila é a visão padrão do inbox (`parseFilterParam` cai em "unassigned"),
+    // então o número está no próprio gatilho, sem precisar abrir o menu — e não
+    // abrir importa: overlay aberto engoliria o clique em `naFila` logo abaixo.
+    await expect(visaoAtualDoInbox(page)).toContainText(/[1-9]/, { timeout: 30_000 });
 
     // Abrindo, a tela diz que ninguém está no comando — nem pessoa, nem automático.
     await naFila.click();

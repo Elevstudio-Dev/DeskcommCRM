@@ -15,6 +15,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { InboxFilters, visibleInboxTabs, type InboxFiltersValue } from "@/components/inbox/InboxFilters";
 import type * as CanaisModule from "@/hooks/channels/useChannelSessions";
@@ -98,26 +99,48 @@ describe("visibleInboxTabs (lógica pura de visões)", () => {
 });
 
 describe("InboxFilters render — 3 visões + escopo", () => {
-  it("agent em modo own*: mostra Minhas e Fila, esconde Todas", () => {
+  /**
+   * As visões deixaram de ser ABAS e viraram itens de um menu (2026-09-04, a
+   * pedido do dono). O que o caso mede não mudou — quem enxerga qual visão —,
+   * mas agora é preciso ABRIR o menu antes de olhar: item de dropdown fechado
+   * não está no documento, e um `queryBy` sem abrir passaria por vacuidade,
+   * afirmando "o agent não vê Todas" sobre uma tela onde ninguém vê nada.
+   */
+  async function abrirAsVisoes() {
+    await userEvent.click(screen.getByTestId("visao-do-inbox"));
+  }
+
+  it("agent em modo own*: mostra Minhas e Fila, esconde Todas", async () => {
     setOrg("agent", "own_and_unassigned");
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
-    expect(screen.getByRole("tab", { name: /Minhas/ })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Fila/ })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: /Todas/ })).not.toBeInTheDocument();
+    await abrirAsVisoes();
+    // Guarda de vacuidade: se o menu não abriu, o `queryBy` de baixo passaria
+    // por não achar NADA — e o caso aprovaria a tela errada.
+    expect(screen.getByRole("menuitem", { name: /Minhas/ })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /Fila/ })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Todas/ })).not.toBeInTheDocument();
   });
 
-  it("manager: mostra Todas", () => {
+  it("manager: mostra Todas", async () => {
     setOrg("manager", "own_and_unassigned");
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
-    expect(screen.getByRole("tab", { name: /Todas/ })).toBeInTheDocument();
+    await abrirAsVisoes();
+    expect(screen.getByRole("menuitem", { name: /Todas/ })).toBeInTheDocument();
   });
 
-  it("contagens por visão são renderizadas (Fila=3, Minhas=2)", () => {
+  it("contagens por visão são renderizadas (Fila=3, Minhas=2)", async () => {
     setOrg("manager", "all");
     render(<InboxFilters value={VALUE} onChange={() => {}} />);
-    expect(screen.getByRole("tab", { name: /Fila/ })).toHaveTextContent("3");
-    expect(screen.getByRole("tab", { name: /Minhas/ })).toHaveTextContent("2");
-    expect(screen.getByRole("tab", { name: /Todas/ })).toHaveTextContent("5");
+
+    // O GATILHO carrega a contagem da visão ATUAL, sem abrir nada — é o número
+    // que a pessoa vê de relance, e perdê-lo custaria o sinal mais usado da
+    // tela ("tem gente esperando na fila").
+    expect(screen.getByTestId("visao-do-inbox")).toHaveTextContent("3");
+
+    await abrirAsVisoes();
+    expect(screen.getByRole("menuitem", { name: /Fila/ })).toHaveTextContent("3");
+    expect(screen.getByRole("menuitem", { name: /Minhas/ })).toHaveTextContent("2");
+    expect(screen.getByRole("menuitem", { name: /Todas/ })).toHaveTextContent("5");
   });
 });
 

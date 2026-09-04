@@ -11,6 +11,8 @@ import * as path from "node:path";
 
 import { test, expect, type Page } from "@playwright/test";
 
+import { comAsVisoesAbertas } from "./helpers/visao-do-inbox";
+
 interface E2ECreds {
   password: string;
   users: Record<string, { id: string; email: string; role: string }>;
@@ -32,16 +34,22 @@ test.describe("G4-02 — inbox com escopo", () => {
   test("agent em modo own*: vê Minhas e Fila, NÃO vê Todas", async ({ page }) => {
     await login(page, creds.users.agent!.email);
     await page.goto("/app/inbox");
-    await expect(page.getByRole("tab", { name: /Minhas/ })).toBeVisible();
-    await expect(page.getByRole("tab", { name: /Fila/ })).toBeVisible();
-    await expect(page.getByRole("tab", { name: /Todas/ })).toHaveCount(0);
+    // As visões viram um MENU (2026-09-04): é preciso abrir para olhar. Sem
+    // abrir, o `toHaveCount(0)` de "Todas" passaria por vacuidade.
+    await comAsVisoesAbertas(page, async () => {
+      await expect(page.getByRole("menuitem", { name: /Minhas/ })).toBeVisible();
+      await expect(page.getByRole("menuitem", { name: /Fila/ })).toBeVisible();
+      await expect(page.getByRole("menuitem", { name: /Todas/ })).toHaveCount(0);
+    });
     await page.screenshot({ path: path.join(EVIDENCE, "G4-02-inbox-scope-agent.png"), fullPage: true });
   });
 
   test("manager: vê a visão Todas", async ({ page }) => {
     await login(page, creds.users.manager!.email);
     await page.goto("/app/inbox");
-    await expect(page.getByRole("tab", { name: /Todas/ })).toBeVisible();
+    await comAsVisoesAbertas(page, async () => {
+      await expect(page.getByRole("menuitem", { name: /Todas/ })).toBeVisible();
+    });
     await page.screenshot({ path: path.join(EVIDENCE, "G4-02-inbox-scope-manager.png"), fullPage: true });
   });
 
