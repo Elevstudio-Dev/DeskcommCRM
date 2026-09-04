@@ -8,6 +8,65 @@ Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual es
 
 ## [Não lançado]
 
+## [1.13.0] — 2026-09-04
+
+### ⚠️ Requer atenção
+
+- **Nada a fazer à mão.** O conserto do tempo real é uma mudança de política no
+  banco, e o `update.sh` reaplica o `baseline.sql` — ela entra sozinha. Se você
+  aplica o schema por fora, garanta que este release passou pelo banco antes de
+  concluir que a atualização terminou.
+
+### Corrigido
+
+- **O Inbox voltou a mostrar a mensagem do cliente chegando.** Este é o motivo
+  desta versão. A entrega em tempo real estava morta e mentindo: o canal
+  respondia "conectado", não havia erro na tela nem no navegador, e a mensagem
+  só aparecia depois de atualizar a página. Quem atende via a conversa parada
+  enquanto o cliente esperava resposta.
+
+  A causa estava no banco. O Realtime decide quem recebe cada mudança avaliando
+  a regra de acesso da tabela **com o papel de cada assinante conectado**. As
+  regras valiam também para o papel anônimo — e as funções de acesso são
+  negadas a ele de propósito. Para esse assinante a função não devolvia "não":
+  ela levantava erro. E um erro ali derruba a entrega **do lote inteiro**,
+  inclusive para quem estava autenticado e tinha todo o direito de receber.
+
+  Um assinante anônimo existe em toda instalação, porque o navegador se conecta
+  antes de o login chegar ao socket. Um só bastava para calar todo mundo.
+  Medido: 75 erros no registro do Realtime e uma jornada de teste falhando 5 de
+  6 vezes; depois do conserto, 3 de 3 e nenhum erro novo.
+
+- **Chave de IA recusada agora diz o que houve e o que fazer.** A tela mostrava
+  o código cru — `auth_failed_401` — e nada mais. Agora diz se o problema é a
+  chave, o limite de uso, o provedor fora do ar ou a rede do servidor, com o
+  link para gerar outra chave naquele provedor. O motivo técnico continua na
+  tela, ao lado, para quem for investigar.
+
+- **Publicar um fluxo de follow-up não perde mais o clique.** O aviso de
+  "rascunho salvo" aparecia por cima do botão e engolia o toque seguinte, sem
+  nada explicando por que o botão "não funcionou". Publicar salva calado agora;
+  o botão Salvar continua avisando.
+
+- **Treze avisos falavam português com a interface em espanhol.** Quatro deles
+  já tinham tradução escrita e nunca ligada.
+
+### Adicionado
+
+- **O cabeçalho da conversa mostra rosto, telefone e há quanto tempo o cliente
+  espera.** O contador só aparece quando a bola está do nosso lado: some quando
+  alguém já respondeu, quando o cliente nunca escreveu, e quando a conversa foi
+  encerrada.
+- **O limite de primeira resposta é por organização**, em
+  `organizations.settings.sla.primeira_resposta_minutos`. Sem configuração, 15
+  minutos.
+- **Assumir a conversa passa a dar dono ao negócio**, quando há um só negócio
+  aberto — antes ficava "sem responsável" mesmo depois de assumir.
+- **Criar negócio à mão avisa quando aquele contato já tem um aberto**, em vez
+  de deixar dois cards duplicados no funil.
+- **A instalação nasce com a marca configurada.** Quem instala e aperta Enter
+  na pergunta do nome recebe a marca do produto, não a do projeto de origem.
+
 ## [1.12.1] — 2026-09-03
 
 Primeira versão publicada pela Elev Studio, a partir da 1.12.0.

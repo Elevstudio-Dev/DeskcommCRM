@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { apiClient } from "@/lib/api/client";
+import { useT } from "@/hooks/i18n/useT";
 
 /**
  * Remarca e cancela de verdade — `PATCH` e `DELETE /api/v1/agenda/agendamentos`.
@@ -30,12 +31,13 @@ import { apiClient } from "@/lib/api/client";
  * usa, então a grade e o histórico repintam sozinhos.
  */
 export function useRemarcarAgendamento() {
+  const t = useT();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (entrada: { id: string; starts_at: string }) =>
       apiClient.patch<{ data: { id: string } }>("/api/v1/agenda/agendamentos", entrada),
     onSuccess: () => {
-      toast.success("Agendamento remarcado.");
+      toast.success(t("Agendamento remarcado."));
       void qc.invalidateQueries({ queryKey: ["agenda"] });
     },
     onError: (err) => showApiError(err),
@@ -43,6 +45,7 @@ export function useRemarcarAgendamento() {
 }
 
 export function useCancelarAgendamento() {
+  const t = useT();
   const qc = useQueryClient();
   return useMutation({
     // O `reason` é obrigatório na rota (mínimo 3 caracteres) e não é burocracia:
@@ -50,7 +53,7 @@ export function useCancelarAgendamento() {
     mutationFn: async (entrada: { id: string; reason: string }) =>
       apiClient.delete<{ data: { id: string } }>("/api/v1/agenda/agendamentos", entrada),
     onSuccess: () => {
-      toast.success("Agendamento cancelado.");
+      toast.success(t("Agendamento cancelado."));
       void qc.invalidateQueries({ queryKey: ["agenda"] });
     },
     onError: (err) => showApiError(err),

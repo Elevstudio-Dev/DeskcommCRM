@@ -43,7 +43,15 @@ test("criar conta: signup → e-mail de confirmação → onboarding → re-logi
 
   // 4. Autenticado no onboarding — tenant provisionado
   await expect(page).toHaveURL(/\/onboarding\/welcome/);
-  await expect(page.getByText("Boas-vindas ao DeskcommCRM")).toBeVisible();
+  // A MARCA NAO SE CRAVA EM ASSERCAO. O produto e revendido, e `APP_NAME` no
+  // `.env` troca este texto por completo — uma instalacao chamada "Elev CRM"
+  // mostra "Boas-vindas ao Elev CRM", e uma assercao literal reprovaria numa
+  // instalacao que esta CERTA. Medido: foi exatamente o que aconteceu aqui.
+  //
+  // O que importa nesta jornada e ter CHEGADO ao onboarding autenticado, com o
+  // tenant provisionado — a saudacao e so o sinal disso. Casar pelo prefixo
+  // mantem o sinal e larga a parte que o operador escolhe.
+  await expect(page.getByText(/^Boas-vindas ao /)).toBeVisible();
   await expect(page.getByText("Loja E2E Signup")).toBeVisible();
 
   // 5. Sai (limpa sessão) e entra de novo com as credenciais criadas

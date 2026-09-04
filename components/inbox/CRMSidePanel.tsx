@@ -327,7 +327,7 @@ function CamposDoFunil({
   async function salvar() {
     try {
       await edit.mutateAsync({ leadId, patch: { custom_fields: customFields } });
-      toast.success("Campos atualizados");
+      toast.success(t("Campos atualizados"));
       onSalvo();
     } catch {
       // toast already shown
@@ -545,6 +545,13 @@ export function CRMSidePanel({ conversation }: Props) {
           pipelineId={defaultPipeline.data.pipeline.id}
           stages={defaultPipeline.data.stages}
           contactId={contactId}
+          negociosAbertos={(leads ?? [])
+            .filter((l) => l.status === "open")
+            .map((l) => ({ id: l.id, title: l.title }))}
+          onUsarExistente={(leadId) => {
+            setLeadAtivoId(leadId);
+            setLeadDialogOpen(false);
+          }}
           onCreated={() => {
             setLeadAtivoId(null);
             recarregar();

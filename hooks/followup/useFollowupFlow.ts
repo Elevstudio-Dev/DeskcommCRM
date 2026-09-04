@@ -56,11 +56,28 @@ export function useSaveFollowupFlowDraft(id: string) {
       });
       return res.data;
     },
+    /**
+     * SEM aviso aqui — quem chama decide, e os dois chamadores querem coisas
+     * diferentes.
+     *
+     * `onPublish` salva o rascunho ANTES de publicar (PublishBar.tsx), porque
+     * publicar o que esta na tela exige gravar o que esta na tela. Avisar
+     * "Rascunho salvo." nesse caminho conta um passo interno a quem pediu
+     * outra coisa — e o aviso dela ("Fluxo publicado.") vem logo atras, entao
+     * sao dois avisos empilhados para uma acao so.
+     *
+     * E empilhados EM CIMA DO BOTAO: o `Toaster` fica em `top-right`
+     * (app/layout.tsx:297) e a PublishBar tambem. Medido em 2026-09-04 —
+     * `followup-builder.spec.ts:307` estourava 30s com
+     * "<li data-sonner-toast> ... subtree intercepts pointer events" no
+     * segundo clique em Publicar. Nao e defeito de teste: quem edita um no e
+     * clica Publicar em seguida tem o clique engolido do mesmo jeito, sem
+     * nada na tela explicando por que o botao "nao funcionou".
+     */
     onSuccess: (updated) => {
       qc.setQueryData<FollowupFlowDetailRow>(followupFlowQueryKey(id), (prev) =>
         prev ? { ...prev, ...updated } : prev,
       );
-      toast.success("Rascunho salvo.");
     },
     onError: (err) => showApiError(err),
   });
@@ -124,6 +141,7 @@ export function useDisableFollowupFlow(id: string) {
 }
 
 export function useRollbackFollowupFlow(id: string) {
+  const t = useT();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (version_id: string) => {
@@ -134,7 +152,7 @@ export function useRollbackFollowupFlow(id: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: followupFlowQueryKey(id) });
-      toast.success("Fluxo revertido para a versão anterior.");
+      toast.success(t("Fluxo revertido para a versão anterior."));
     },
     onError: (err) => showApiError(err),
   });
@@ -142,6 +160,7 @@ export function useRollbackFollowupFlow(id: string) {
 
 /** PATCH trigger_config — controle de gatilho (Manual/Silêncio) na PublishBar. */
 export function useUpdateTriggerConfig(id: string) {
+  const t = useT();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (trigger_config: Record<string, unknown>) => {
@@ -154,13 +173,14 @@ export function useUpdateTriggerConfig(id: string) {
       qc.setQueryData<FollowupFlowDetailRow>(followupFlowQueryKey(id), (prev) =>
         prev ? { ...prev, ...updated } : prev,
       );
-      toast.success("Gatilho atualizado.");
+      toast.success(t("Gatilho atualizado."));
     },
     onError: (err) => showApiError(err),
   });
 }
 
 export function useUpdateHandoffPolicy(id: string) {
+  const t = useT();
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (handoff_policy: "pause" | "cancel" | "allow") => {
@@ -173,7 +193,7 @@ export function useUpdateHandoffPolicy(id: string) {
       qc.setQueryData<FollowupFlowDetailRow>(followupFlowQueryKey(id), (prev) =>
         prev ? { ...prev, ...updated } : prev,
       );
-      toast.success("Política de handoff atualizada.");
+      toast.success(t("Política de handoff atualizada."));
     },
     onError: (err) => showApiError(err),
   });

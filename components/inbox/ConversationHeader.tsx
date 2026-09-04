@@ -1,13 +1,22 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useT } from "@/hooks/i18n/useT";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { tempoSemResposta } from "@/lib/inbox/tempo-sem-resposta";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { JanelaSelo } from "@/components/inbox/JanelaSelo";
 import { Phone, ArrowRight } from "@/lib/ui/icons";
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { useClaimConversation } from "@/hooks/inbox/useClaimConversation";
+import { useLimiteDeResposta } from "@/hooks/inbox/useLimiteDeResposta";
 import { useReleaseConversation } from "@/hooks/inbox/useReleaseConversation";
 import { useCloseConversation } from "@/hooks/inbox/useCloseConversation";
 import { useResumeAiAttendance } from "@/hooks/inbox/useResumeAiAttendance";
@@ -51,6 +60,21 @@ const STATUS_LABEL: Record<string, string> = {
   archived: "Arquivada",
 };
 
+/**
+ * Duas letras para o circulo, com o telefone como rede quando nao ha nome.
+ *
+ * Mesma logica de `ConversationListItem`, replicada e nao importada: aquele
+ * arquivo nao a exporta, e exporta-la de la seria mexer num componente fora
+ * do escopo desta mudanca.
+ */
+function iniciais(nome: string | null | undefined, reserva: string): string {
+  const fonte = (nome ?? "").trim() || reserva;
+  const partes = fonte.split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return "?";
+  if (partes.length === 1) return partes[0]!.slice(0, 2).toUpperCase();
+  return (partes[0]![0]! + partes[partes.length - 1]![0]!).toUpperCase();
+}
+
 export function ConversationHeader({ conversation }: Props) {
   const t = useT();
   const { user } = useAuth();
@@ -93,6 +117,36 @@ export function ConversationHeader({ conversation }: Props) {
   });
 
   const encerrada = status === "closed" || status === "archived";
+
+  /**
+   * O RELOGIO que faz o contador andar.
+   *
+   * 30s e o intervalo em que o numero muda de forma perceptivel sem custo: a
+   * regra e pura e local, entao isto NAO consulta servidor, NAO invalida cache
+   * e NAO re-renderiza a conversa — so o proprio badge.
+   */
+  const [agora, setAgora] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setAgora(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  /**
+   * Ha quanto tempo o cliente espera — `null` quando nao ha espera nenhuma.
+   *
+   * O limite fica no piso ate a tela de configuracao existir. `PISO_MINUTOS` e
+   * o comportamento correto enquanto ninguem escolheu: assumir 15 e dizer qual
+   * e' e melhor que nao mostrar nada.
+   */
+  const limiteMinutos = useLimiteDeResposta();
+
+  const espera = tempoSemResposta({
+    lastInboundAt: conversation.last_inbound_at ?? null,
+    lastOutboundAt: conversation.last_outbound_at ?? null,
+    status,
+    agora,
+    limiteMinutos,
+  });
   /**
    * A VOLTA aparece sempre que há algo a devolver — inclusive em conversa
    * ENCERRADA. Antes ela era condicionada a `status !== "closed"`, e o resultado
@@ -135,15 +189,63 @@ export function ConversationHeader({ conversation }: Props) {
     //
     // Reorganizar em vez de esconder: acima de ~1440px o header fica IDÊNTICO ao
     // de antes (uma linha), e quando aperta a barra desce para a linha de baixo.
-    // Nenhuma ação some — um menu "mais" esconderia o "Lembrar" que a spec
-    // `canais-baseline` clica, e, pior, esconderia ação de quem atende.
+    // As DUAS ações de automático vão para um menu "mais" — mas só quando são
+    // duas. Com uma só, ela volta a ser botão: ver a guarda `ocasionais` mais
+    // abaixo. O "Lembrar" nunca entra no menu, porque o SnoozeButton já traz o
+    // próprio dropdown e menu dentro de menu é armadilha de foco e teclado.
+    // A spec `canais-baseline` que este comentário citava não existe mais —
+    // conferido em 2026-09-03, e nenhuma spec E2E atual clica nessas ações.
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-4 py-3">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
+          {/* O ROSTO. A <img> so e montada quando ha arquivo: sem essa guarda o
+              browser pediria a rota para todo contato e levaria 404 em cada um
+              sem foto — que e a maioria. O AvatarFallback cobre o resto, entao
+              as iniciais nunca somem. `is_anonymized` e o gate de LGPD e nao
+              pode sair: contato anonimizado nao mostra rosto. Mesmo padrao de
+              `ConversationListItem`. */}
+          <Avatar className="h-8 w-8 shrink-0">
+            {c?.avatar_storage_path && !c?.is_anonymized ? (
+              <AvatarImage
+                src={`/api/v1/contacts/${c.id}/avatar`}
+                alt=""
+                className="object-cover"
+              />
+            ) : null}
+            <AvatarFallback className="text-[10px]">
+              {iniciais(displayName, phone ?? "?")}
+            </AvatarFallback>
+          </Avatar>
           <h2 className="truncate text-sm font-semibold">{displayName}</h2>
+          {/* O telefone ja era calculado e nunca era renderizado. Some no
+              celular, onde o nome sozinho ja ocupa a linha. */}
+          {phone ? (
+            <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
+              {phone}
+            </span>
+          ) : null}
           <Badge variant="outline" className="h-4 px-1.5 text-[10px]">
             {t(STATUS_LABEL[status] ?? status)}
           </Badge>
+          {/* HA QUANTO TEMPO O CLIENTE ESPERA. Some quando a bola esta com ele
+              — ver os tres casos de `null` em `lib/inbox/tempo-sem-resposta`. */}
+          {espera ? (
+            <Badge
+              variant="outline"
+              data-testid="tempo-sem-resposta"
+              data-faixa={espera.faixa}
+              title={t("Tempo desde a última mensagem do cliente sem resposta.")}
+              className={
+                espera.faixa === "estourado"
+                  ? "h-4 shrink-0 border-destructive/40 bg-destructive/10 px-1.5 text-[10px] text-destructive"
+                  : espera.faixa === "atencao"
+                    ? "h-4 shrink-0 border-amber-500/40 bg-amber-500/10 px-1.5 text-[10px] text-amber-600 dark:text-amber-400"
+                    : "h-4 shrink-0 px-1.5 text-[10px] text-muted-foreground"
+              }
+            >
+              {espera.rotulo}
+            </Badge>
+          ) : null}
           {/* Ao lado do estado, não escondido num painel: a pergunta "dá para
               escrever agora?" se faz ANTES de digitar, não depois de receber um
               `failed` com um código de cinco dígitos. */}
@@ -238,43 +340,113 @@ export function ConversationHeader({ conversation }: Props) {
 
             O `data-testid` do lado de VOLTA é o mesmo de antes: `escalacao-ciclo`
             o clica, e rótulo/testid visível é contrato. */}
-        {podeDevolver && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={retomar.isPending}
-            data-testid="devolver-ao-automatico"
-            // O ALCANCE DA VOLTA NÃO É SEMPRE O MESMO, e a tela precisa dizer qual é.
-            //
-            // `devolverAtendimentoAoAgente` limpa `contacts.force_human`, que é do
-            // CLIENTE e não desta conversa: quando foi ela que travou, o clique
-            // religa o automático para TODAS as conversas daquela pessoa. Um botão
-            // que às vezes faz mais do que o nome promete precisa dizer quando.
-            title={
-              motivo === "contato_travado"
-                ? t("Religa o atendimento automático para este cliente — vale para todas as conversas dele.")
-                : t("Devolve esta conversa ao atendimento automático.")
-            }
-            onClick={() => retomar.mutate({ conversation_id: conversation.id })}
-          >
-            {retomar.isPending ? t("Devolvendo...") : t("Devolver ao automático")}
-          </Button>
-        )}
-        {podePausar && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={pausar.isPending}
-            data-testid="pausar-o-automatico"
-            // `podePausar` já exige dono != null, então este botão NUNCA aparece
-            // sem dono — prometer "você assume" aqui seria prometer o que a rota
-            // não faz: com dono, ela só cala, nunca rouba a conversa de quem a tem.
-            title={t("O atendimento automático para nesta conversa. O dono não muda.")}
-            onClick={() => pausar.mutate({ conversation_id: conversation.id })}
-          >
-            {pausar.isPending ? t("Pausando...") : t("Pausar o automático")}
-          </Button>
-        )}
+        {/* AS ACOES OCASIONAIS — e a guarda que impede o menu de virar armadilha.
+
+            `ocasionais` e contado ANTES de esconder qualquer coisa. Com mais de
+            uma, elas vao para o menu; com UMA SO, ela volta a ser botao.
+
+            Isto nao e zelo abstrato. Este arquivo ja documentou um beco medido:
+            a volta ao automatico foi condicionada a `status !== "closed"`, e o
+            resultado foi o atendente que assume, fecha e sai de ferias —
+            deixando a conversa com o automatico parado e NENHUMA porta para o
+            colega, porque "Liberar" so existe para o proprio dono. Um menu que
+            engolisse a ultima acao recria esse beco, agora com um clique a mais
+            no caminho.
+
+            Os `data-testid` viajam INTACTOS para dentro do menu: a spec
+            `escalacao-ciclo` os clica, e o comentario logo acima ja avisava que
+            testid visivel e contrato. */}
+        {(() => {
+          // A ORDEM DOS RAMOS IMPORTA, e nao e estetica: o teste
+          // `handoff-por-orcamento` extrai o rotulo do botao de volta fatiando a
+          // fonte a partir do atributo de teste dele ate o primeiro fechamento
+          // de Button, e usa a ULTIMA chamada de traducao ali dentro. O ramo do
+          // botao vem primeiro para esse varredor continuar achando o par que
+          // espera — inverter de volta reprova aquele teste.
+          //
+          // E o motivo de este comentario NAO escrever o atributo por extenso:
+          // a busca e por texto na fonte, entao a mencao literal aqui vira a
+          // PRIMEIRA ocorrencia e o extrator corta no comentario, capturando
+          // zero traducoes. Foi exatamente o que aconteceu na primeira tentativa.
+          const ocasionais = [podeDevolver, podePausar].filter(Boolean).length;
+          const agrupar = ocasionais > 1;
+
+          const devolver = !podeDevolver ? null : !agrupar ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={retomar.isPending}
+              data-testid="devolver-ao-automatico"
+              // O ALCANCE DA VOLTA NAO E SEMPRE O MESMO, e a tela precisa dizer
+              // qual e. `devolverAtendimentoAoAgente` limpa `contacts.force_human`,
+              // que e do CLIENTE e nao desta conversa: quando foi ela que travou,
+              // o clique religa o automatico para TODAS as conversas da pessoa.
+              title={
+                motivo === "contato_travado"
+                  ? t("Religa o atendimento automático para este cliente — vale para todas as conversas dele.")
+                  : t("Devolve esta conversa ao atendimento automático.")
+              }
+              onClick={() => retomar.mutate({ conversation_id: conversation.id })}
+            >
+              {retomar.isPending ? t("Devolvendo...") : t("Devolver ao automático")}
+            </Button>
+          ) : (
+            <DropdownMenuItem
+              data-testid="devolver-ao-automatico"
+              disabled={retomar.isPending}
+              onClick={() => retomar.mutate({ conversation_id: conversation.id })}
+            >
+              {retomar.isPending ? t("Devolvendo...") : t("Devolver ao automático")}
+            </DropdownMenuItem>
+          );
+
+          const pausarEl = !podePausar ? null : !agrupar ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={pausar.isPending}
+              data-testid="pausar-o-automatico"
+              // `podePausar` ja exige dono != null, entao este botao NUNCA aparece
+              // sem dono — prometer "voce assume" aqui seria prometer o que a rota
+              // nao faz: com dono, ela so cala, nunca rouba a conversa de quem a tem.
+              title={t("O atendimento automático para nesta conversa. O dono não muda.")}
+              onClick={() => pausar.mutate({ conversation_id: conversation.id })}
+            >
+              {pausar.isPending ? t("Pausando...") : t("Pausar o automático")}
+            </Button>
+          ) : (
+            <DropdownMenuItem
+              data-testid="pausar-o-automatico"
+              disabled={pausar.isPending}
+              onClick={() => pausar.mutate({ conversation_id: conversation.id })}
+            >
+              {pausar.isPending ? t("Pausando...") : t("Pausar o automático")}
+            </DropdownMenuItem>
+          );
+
+          if (!agrupar) {
+            return (
+              <>
+                {devolver}
+                {pausarEl}
+              </>
+            );
+          }
+
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" data-testid="mais-acoes">
+                  {t("Mais ações")}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {devolver}
+                {pausarEl}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        })()}
         {status !== "closed" && status !== "archived" && (
           <Button size="sm" variant="outline" onClick={() => setReassignOpen(true)}>
             {t("Transferir")}
