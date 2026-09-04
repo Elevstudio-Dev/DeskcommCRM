@@ -7,7 +7,6 @@ import { z } from "zod";
 
 import { refreshCredentialsView } from "../_actions";
 
-import { motivoDaRecusa } from "@/lib/ai/credenciais/motivo-da-recusa";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,6 +33,7 @@ import {
   type Provider,
 } from "@/hooks/ai/useCredentials";
 import { IDS_DE_PROVEDOR, PROVEDORES } from "@/lib/ai/pontos/provedores";
+import { descreverErroDeValidacao } from "@/lib/ai/credenciais/erro-de-validacao";
 import { useT } from "@/hooks/i18n/useT";
 
 const formSchema = z.object({
@@ -63,6 +63,7 @@ export function AddCredentialDialog({ open, onOpenChange }: Props) {
   const [apiKey, setApiKey] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
+  const provedor = PROVEDORES.find((p) => p.id === provider) ?? PROVEDORES[0];
 
   const reset = () => {
     setProvider("anthropic");
@@ -105,15 +106,15 @@ export function AddCredentialDialog({ open, onOpenChange }: Props) {
         const justCreated = fresh?.find((c) => c.id === res.data.id);
         if (justCreated?.models_available != null) {
           toast.success(
-            `${t("Validada")} — ${justCreated.models_available} ${t("modelos disponíveis.")}`,
+            `${t("Validada")} — ${justCreated.models_available.length} ${t("modelos disponíveis.")}`,
           );
         } else if (justCreated?.validation_error) {
-          // O toast some sozinho, entao ele leva o proximo passo — nao o
-          // codigo. O codigo fica no cartao, que nao some.
-          const motivo = motivoDaRecusa(justCreated.provider, justCreated.validation_error);
-          toast.error(motivo ? t(motivo.titulo) : t("Validação falhou"), {
-            description: motivo ? t(motivo.comoResolver) : justCreated.validation_error,
-          });
+          const erro = descreverErroDeValidacao(justCreated.validation_error);
+          toast.error(
+            erro.generico
+              ? `${t("Falha na validação")} (${justCreated.validation_error}).`
+              : t(erro.frase),
+          );
         }
       }, 3000);
 
@@ -144,7 +145,7 @@ export function AddCredentialDialog({ open, onOpenChange }: Props) {
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="cred-provider">{t("Provider")}</Label>
+            <Label htmlFor="cred-provider">{t("Provedor")}</Label>
             <Select value={provider} onValueChange={(v) => setProvider(v as Provider)}>
               <SelectTrigger id="cred-provider">
                 <SelectValue />
@@ -157,13 +158,14 @@ export function AddCredentialDialog({ open, onOpenChange }: Props) {
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">{t(provedor.quandoUsar)}</p>
             {errors.provider && (
               <p className="text-xs text-destructive">{errors.provider}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cred-label">{t("Label")}</Label>
+            <Label htmlFor="cred-label">{t("Nome")}</Label>
             <Input
               id="cred-label"
               value={label}
@@ -176,13 +178,23 @@ export function AddCredentialDialog({ open, onOpenChange }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cred-key">{t("API key")}</Label>
+            <div className="flex items-baseline justify-between">
+              <Label htmlFor="cred-key">{t("API key")}</Label>
+              <a
+                className="text-xs underline underline-offset-4"
+                href={provedor.ondePegarAChave}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t("Pegar chave em")} {provedor.rotulo}
+              </a>
+            </div>
             <Input
               id="cred-key"
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-..."
+              placeholder={provedor.prefixoDaChave}
               autoComplete="off"
               required
             />

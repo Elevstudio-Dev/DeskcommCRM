@@ -4712,9 +4712,9 @@ GRANT ALL ON TABLE "public"."ai_provider_credentials_safe" TO "service_role";
 
 
 
-GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."api_audit_log" TO "anon";
-GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."api_audit_log" TO "authenticated";
-GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."api_audit_log" TO "service_role";
+GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE ON TABLE "public"."api_audit_log" TO "anon";
+GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE ON TABLE "public"."api_audit_log" TO "authenticated";
+GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE ON TABLE "public"."api_audit_log" TO "service_role";
 
 
 
@@ -4748,8 +4748,8 @@ GRANT ALL ON TABLE "public"."conversations" TO "service_role";
 
 
 
-GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."crm_lead_activities" TO "anon";
-GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."crm_lead_activities" TO "authenticated";
+GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE ON TABLE "public"."crm_lead_activities" TO "anon";
+GRANT SELECT,INSERT,REFERENCES,TRIGGER,TRUNCATE ON TABLE "public"."crm_lead_activities" TO "authenticated";
 GRANT ALL ON TABLE "public"."crm_lead_activities" TO "service_role";
 
 
@@ -4778,8 +4778,8 @@ GRANT ALL ON TABLE "public"."crm_stages" TO "service_role";
 
 
 
-GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."event_log" TO "anon";
-GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."event_log" TO "authenticated";
+GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE ON TABLE "public"."event_log" TO "anon";
+GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE ON TABLE "public"."event_log" TO "authenticated";
 GRANT ALL ON TABLE "public"."event_log" TO "service_role";
 
 
@@ -4861,8 +4861,8 @@ GRANT ALL ON TABLE "public"."user_recovery_codes" TO "service_role";
 
 
 
-GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."webhook_events_log" TO "anon";
-GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."webhook_events_log" TO "authenticated";
+GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE ON TABLE "public"."webhook_events_log" TO "anon";
+GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE ON TABLE "public"."webhook_events_log" TO "authenticated";
 GRANT ALL ON TABLE "public"."webhook_events_log" TO "service_role";
 
 
@@ -12469,6 +12469,26 @@ grant select on public.ai_provider_credentials_safe to authenticated;
 notify pgrst, 'reload schema';
 
 
+-- ---- credenciais de IA voltam a ser LIDAS por quem não é admin (migration 0207) ----
+-- A 0150 (bloco acima) deixou `..._write` como ÚNICA policy da tabela. `FOR ALL`
+-- cobre o SELECT, então a leitura passou a exigir admin — e a view
+-- `ai_provider_credentials_safe` é `security_invoker=true`, então um `manager`
+-- passava na autorização da aplicação e era filtrado para ZERO LINHAS na base.
+-- A tela respondia 200 com `[]`, e a pessoa concluía que não havia credencial.
+--
+-- O par que o cabeçalho da 0150 promete: escrita de admin, leitura por tenancy.
+-- O segredo segue protegido pelo GRANT POR COLUNA logo acima — é ele, e não a
+-- RLS, que esconde `api_key_encrypted/iv/tag`. (issue #292)
+--
+-- Este bloco vem DEPOIS do da 0150 de propósito: lá em cima há um
+-- `drop policy if exists ..._select`, e inverter a ordem apagaria este conserto.
+drop policy if exists tenant_isolation_ai_provider_credentials_select on public.ai_provider_credentials;
+create policy tenant_isolation_ai_provider_credentials_select on public.ai_provider_credentials
+  for select using (organization_id in (select public.fn_user_org_ids()));
+
+notify pgrst, 'reload schema';
+
+
 
 -- ---- o quadro de clientes montado no onboarding (migration 0156) ----
 -- O gatilho `trg_seed_default_pipeline_for_org` semeia um funil de e-commerce em
@@ -17227,6 +17247,63 @@ comment on column public.catalog_products.controla_estoque is
   'false = item que não se conta (decant, sob encomenda). A busca do agente não o esconde por quantidade zero.';
 
 
+-- ---- versão de acervo conta por MATERIAL, não por agente (migration 0205) ----
+--
+-- O índice `ai_kbv_version_unique` era `(agent_id, version_number)`, mas desde a
+-- 0181 o número é contado por `knowledge_source_id`. Toda fonte nova nasce com
+-- `version_number = 1`, então a SEGUNDA fonte do mesmo agente colidia com a
+-- primeira e nunca indexava — a tela dizia "pronto" e `chunks_count` ficava 0.
+-- Determinístico, não corrida. Medido em produção: 5 materiais, 1 indexou.
+--
+-- Dois índices parciais porque há dois regimes: versões anteriores à 0181 têm
+-- `knowledge_source_id` NULL e guardam o invariante antigo (por agente); sem o
+-- segundo índice elas ficariam sem restrição, já que NULL não colide com NULL.
+delete from public.ai_knowledge_versions v
+ where v.knowledge_source_id is not null
+   and exists (
+     select 1 from public.ai_knowledge_versions o
+      where o.knowledge_source_id = v.knowledge_source_id
+        and o.version_number = v.version_number
+        and o.id < v.id
+   );
+
+alter table public.ai_knowledge_versions
+  drop constraint if exists ai_kbv_version_unique;
+
+drop index if exists public.ai_kbv_version_unique;
+
+create unique index if not exists ai_kbv_version_por_fonte
+  on public.ai_knowledge_versions (knowledge_source_id, version_number)
+  where knowledge_source_id is not null;
+
+create unique index if not exists ai_kbv_version_por_agente_legado
+  on public.ai_knowledge_versions (agent_id, version_number)
+  where knowledge_source_id is null;
+
+-- ---- elegibilidade da IA por origem do lead (migration 0206) ----
+--
+-- Gate OPT-IN por canal (`channel_sessions.metadata.ai_gate = 'allowlist'`):
+-- ausente / 'open' = comportamento de hoje (a IA responde todo inbound quando há
+-- agente publicado), nenhum self-hoster afetado. Com 'allowlist', a IA só
+-- responde quando o CONTATO está autorizado, e é isto que estas colunas guardam.
+-- Contact-level como `force_human` (a trava oposta). Aditiva e idempotente:
+-- colunas anuláveis, sem default, sem constraint — nenhuma linha existente viola
+-- nada. RLS de `contacts` já cobre (row-level); coluna nova não precisa policy.
+
+alter table public.contacts
+  add column if not exists ai_authorized_at timestamptz;
+
+alter table public.contacts
+  add column if not exists ai_authorized_reason text;
+
+comment on column public.contacts.ai_authorized_at is
+  'Elegibilidade da IA (gate opt-in channel_sessions.metadata.ai_gate=allowlist): quando o contato foi autorizado a ser atendido automaticamente. NULL = não autorizado, a IA não responde. Renovado a cada turno autorizado enquanto a conversa está viva.';
+
+comment on column public.contacts.ai_authorized_reason is
+  'Origem da autorização de IA: respondi:<form>:<submission> | campanha:<id> | automacao:<rule> | retomada_manual.';
+
+notify pgrst, 'reload schema';
+
 -- ---- VARREDURA anon: função nova nasce exposta em quem ATUALIZA (migration 0116) ----
 --
 -- ⚠️ ESTE BLOCO É, DE PROPÓSITO, O ÚLTIMO DO ARQUIVO. Apêndice novo entra ANTES
@@ -17301,40 +17378,7 @@ grant execute on function public.fn_encrypt_oauth(text) to service_role;
 grant execute on function public.fn_lgpd_cascade_redact_contact(uuid, uuid, uuid) to service_role;
 grant execute on function public.fn_update_budget_consumption() to service_role;
 
--- ---- versão de acervo conta por MATERIAL, não por agente (migration 0205) ----
---
--- O índice `ai_kbv_version_unique` era `(agent_id, version_number)`, mas desde a
--- 0181 o número é contado por `knowledge_source_id`. Toda fonte nova nasce com
--- `version_number = 1`, então a SEGUNDA fonte do mesmo agente colidia com a
--- primeira e nunca indexava — a tela dizia "pronto" e `chunks_count` ficava 0.
--- Determinístico, não corrida. Medido em produção: 5 materiais, 1 indexou.
---
--- Dois índices parciais porque há dois regimes: versões anteriores à 0181 têm
--- `knowledge_source_id` NULL e guardam o invariante antigo (por agente); sem o
--- segundo índice elas ficariam sem restrição, já que NULL não colide com NULL.
-delete from public.ai_knowledge_versions v
- where v.knowledge_source_id is not null
-   and exists (
-     select 1 from public.ai_knowledge_versions o
-      where o.knowledge_source_id = v.knowledge_source_id
-        and o.version_number = v.version_number
-        and o.id < v.id
-   );
-
-alter table public.ai_knowledge_versions
-  drop constraint if exists ai_kbv_version_unique;
-
-drop index if exists public.ai_kbv_version_unique;
-
-create unique index if not exists ai_kbv_version_por_fonte
-  on public.ai_knowledge_versions (knowledge_source_id, version_number)
-  where knowledge_source_id is not null;
-
-create unique index if not exists ai_kbv_version_por_agente_legado
-  on public.ai_knowledge_versions (agent_id, version_number)
-  where knowledge_source_id is null;
-
--- ---- probabilidade apostada pelo vendedor (migration 0206) ----
+-- ---- probabilidade apostada pelo vendedor (migration 0208) ----
 -- Idempotente e auto-curativo: o kit self-host reaplica este arquivo inteiro a
 -- cada `update.sh`, em banco que já tem dados. Corrigir o dado ANTES da
 -- constraint é o que impede um clone sujo de travar a atualização.
@@ -17356,7 +17400,7 @@ alter table public.crm_leads
     or (commit_probability_pct >= 0 and commit_probability_pct <= 100)
   );
 
--- ---- o canal diz SUBSCRIBED e nao entrega (migration 0207) ----
+-- ---- o canal diz SUBSCRIBED e nao entrega (migration 0209) ----
 --
 -- MEDIDO, não deduzido (2026-09-04, Supabase local pg17):
 --
@@ -17420,7 +17464,7 @@ begin
     execute format(
       'alter policy %I on %I.%I to authenticated',
       r.policyname, r.schemaname, r.tablename);
-    raise notice '0207: policy % em %.% agora vale só para authenticated',
+    raise notice '0209: policy % em %.% agora vale só para authenticated',
       r.policyname, r.schemaname, r.tablename;
   end loop;
 end

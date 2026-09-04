@@ -32,9 +32,11 @@ import {
   credentialStatus,
   credentialsListQueryKey,
   type CredentialRow,
+  type CredentialStatus,
 } from "@/hooks/ai/useCredentials";
-import { motivoDaRecusa } from "@/lib/ai/credenciais/motivo-da-recusa";
 import { useT } from "@/hooks/i18n/useT";
+import { PROVEDORES } from "@/lib/ai/pontos/provedores";
+import { descreverErroDeValidacao } from "@/lib/ai/credenciais/erro-de-validacao";
 
 interface Props {
   credential: CredentialRow;
@@ -42,16 +44,18 @@ interface Props {
   usageCount: number;
 }
 
-const STATUS_LABEL: Record<ReturnType<typeof credentialStatus>, string> = {
+const STATUS_LABEL: Record<CredentialStatus, string> = {
   validated: "Validada",
   validating: "Validando…",
+  unvalidated: "Não validada",
   invalid: "Inválida",
   inactive: "Inativa",
 };
 
-const STATUS_VARIANT: Record<ReturnType<typeof credentialStatus>, "default" | "secondary" | "destructive" | "outline"> = {
+const STATUS_VARIANT: Record<CredentialStatus, "default" | "secondary" | "destructive" | "outline"> = {
   validated: "default",
   validating: "secondary",
+  unvalidated: "outline",
   invalid: "destructive",
   inactive: "outline",
 };
@@ -64,9 +68,10 @@ export function CredentialCard({ credential, canWrite, usageCount }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const status = credentialStatus(credential);
-  const motivo = motivoDaRecusa(credential.provider, credential.validation_error);
   const last4 = credential.api_key_last4 ?? "????";
   const inUse = usageCount > 0;
+  const erro = descreverErroDeValidacao(credential.validation_error);
+  const provedor = PROVEDORES.find((p) => p.id === credential.provider);
 
   const onRevalidate = () => {
     startTransition(async () => {
@@ -125,37 +130,37 @@ export function CredentialCard({ credential, canWrite, usageCount }: Props) {
         </div>
       </div>
 
-      {motivo && (
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-destructive">{t(motivo.titulo)}</p>
-          <p className="text-xs text-muted-foreground">{t(motivo.comoResolver)}</p>
-          {motivo.ondePegarAChave && (
-            <a
-              href={motivo.ondePegarAChave}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block text-xs underline underline-offset-2"
-            >
-              {t("Gerar outra chave")}
-            </a>
+      {credential.validation_error && (
+        <p className="text-xs text-destructive" title={credential.validation_error}>
+          {erro.generico
+            ? `${t("Falha na validação")} (${credential.validation_error}).`
+            : t(erro.frase)}
+          {erro.chaveErrada && provedor && (
+            <>
+              {" "}
+              <a
+                className="underline underline-offset-4"
+                href={provedor.ondePegarAChave}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t("Pegar chave em")} {provedor.rotulo}
+              </a>
+            </>
           )}
-          {/* O motivo tecnico fica JUNTO, nunca no lugar do rotulo: quem for
-              investigar precisa dele, e a doutrina da Central de avisos e
-              mostrar os dois. Discreto porque nao e para quem so quer o
-              proximo passo. */}
-          <p
-            className="truncate font-mono text-[10px] text-muted-foreground/70"
-            title={credential.validation_error ?? undefined}
-          >
-            {t("Motivo técnico")}: {credential.validation_error}
-          </p>
-        </div>
+        </p>
+      )}
+
+      {status === "unvalidated" && (
+        <p className="text-xs text-muted-foreground">
+          {t("A validação não terminou. Clique em revalidar para testar a chave agora.")}
+        </p>
       )}
 
       <dl className="grid grid-cols-2 gap-2 text-xs">
         <div>
           <dt className="text-muted-foreground">{t("Modelos")}</dt>
-          <dd className="font-mono">{credential.models_available ?? "—"}</dd>
+          <dd className="font-mono">{credential.models_available?.length ?? "—"}</dd>
         </div>
         <div>
           <dt className="text-muted-foreground">{t("Em uso por")}</dt>
