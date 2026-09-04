@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { useT } from "@/hooks/i18n/useT";
@@ -12,9 +13,20 @@ import type { PecaDoSistema } from "@/lib/onboarding/o-que-mais-existe";
 export function DoneClient({
   itens,
   pecas,
+  iaFicouParaDepois = false,
 }: {
   itens: ItemDoResumo[];
   pecas: PecaDoSistema[];
+  /**
+   * A pessoa escolheu começar só com o CRM?
+   *
+   * Muda o texto de abertura — falar do "seu funcionário" para quem não montou
+   * nenhum é o wizard descrevendo uma tela que ela não viu — e acrescenta a
+   * porta para ligar a IA. Sem essa porta, "deixo para depois" vira "nunca":
+   * o momento em que alguém acabou de configurar tudo é justamente quando ela
+   * ainda está disposta a configurar mais uma coisa.
+   */
+  iaFicouParaDepois?: boolean;
 }) {
   const t = useT();
   const [pending, startTransition] = useTransition();
@@ -25,11 +37,27 @@ export function DoneClient({
       <div className="space-y-1 text-center">
         <h2 className="text-2xl font-semibold tracking-tight">{t("Tudo pronto!")}</h2>
         <p className="text-sm text-muted-foreground">
-          {pendentes.length === 0
-            ? t("Seu funcionário está montado. Daqui em diante é só acompanhar.")
-            : t("Seu funcionário já está de pé. O que ficou para depois continua te esperando.")}
+          {iaFicouParaDepois
+            ? t("Seu CRM está de pé. A equipe já pode atender pelo sistema.")
+            : pendentes.length === 0
+              ? t("Seu funcionário está montado. Daqui em diante é só acompanhar.")
+              : t("Seu funcionário já está de pé. O que ficou para depois continua te esperando.")}
         </p>
       </div>
+
+      {iaFicouParaDepois && (
+        <div className="mx-auto max-w-sm rounded-lg border border-primary/40 bg-primary/[0.04] p-4 text-sm">
+          <p className="font-medium">{t("Quer o atendente de IA agora?")}</p>
+          <p className="mt-1 text-muted-foreground">
+            {t(
+              "Ele responde os clientes no WhatsApp sozinho, dentro das regras que você definir. Leva alguns minutos.",
+            )}
+          </p>
+          <Button asChild variant="outline" size="sm" className="mt-3">
+            <Link href="/app/ai/agents/new">{t("Montar o atendente")}</Link>
+          </Button>
+        </div>
+      )}
 
       <ul className="mx-auto max-w-sm space-y-2 text-left text-sm">
         {itens.map((it) => (

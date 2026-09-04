@@ -47,7 +47,11 @@ export const aiAgentDefaultSchema = z.object({
 });
 export type AiAgentDefaultInput = z.infer<typeof aiAgentDefaultSchema>;
 
+export const CAMINHOS_DO_ONBOARDING = ["com_ia", "so_crm"] as const;
+export type CaminhoDoOnboarding = (typeof CAMINHOS_DO_ONBOARDING)[number];
+
 export const onboardingStepSchema = z.enum([
+  "caminho",
   "welcome",
   "whatsapp",
   "nuvemshop",
@@ -59,6 +63,24 @@ export const onboardingStepSchema = z.enum([
 export type OnboardingStep = z.infer<typeof onboardingStepSchema>;
 
 export const onboardingStateSchema = z.object({
+  /**
+   * POR ONDE A PESSOA ESCOLHEU COMEÇAR.
+   *
+   * O wizard nasceu contando uma história só — a de contratar um funcionário de
+   * IA —, e o vocabulário inteiro dele assume isso ("o telefone DELE", "ver ELE
+   * atender"). Para quem quer o CRM agora e a IA depois, esse caminho pede
+   * decisões que a pessoa ainda não tem como tomar: qual provedor, qual chave,
+   * qual prompt.
+   *
+   * `so_crm` faz os dois passos de IA (`setup-ai` e `testar`) deixarem de
+   * EXISTIR — não de serem pulados. A diferença aparece no resumo final: passo
+   * pulado vira pendência com cara de culpa, passo inexistente não vira linha.
+   * É a mesma regra que `passos.ts` já aplica à loja desligada.
+   *
+   * AUSENTE É `com_ia`, e de propósito: instalação que começou o wizard antes
+   * deste campo existir continua exatamente no caminho que já estava seguindo.
+   */
+  caminho: z.enum(CAMINHOS_DO_ONBOARDING).optional(),
   welcome: z
     .object({
       accepted_at: z.string(),

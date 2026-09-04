@@ -1334,6 +1334,50 @@ export const DICIONARIO: Traducoes = {
   "Agendamento remarcado.": { es: "Cita reprogramada." },
   "Agendamento cancelado.": { es: "Cita cancelada." },
   "Campos atualizados": { es: "Campos actualizados" },
+
+  // ─── Onboarding · a bifurcação entre começar com IA ou só com o CRM ───
+  //
+  // Os quatro RÓTULOS DE PASSO chegam à tela por variável (`t(p.rotulo(ctx))`),
+  // então o guarda de AST não os vê. Ficam aqui à mão, pelo mesmo motivo que o
+  // bloco de `motivo-da-recusa` ficava: chave que viaja por variável precisa de
+  // alguém que a cobre.
+  "Por onde começar": { es: "Por dónde empezar" },
+  "Vamos configurar o seu negócio e onde a sua equipe vai trabalhar.": {
+    es: "Vamos a configurar tu negocio y dónde va a trabajar tu equipo.",
+  },
+  "Uma linha basta. É com isso que a gente monta o quadro de clientes do seu jeito.": {
+    es: "Con una línea basta. Con eso armamos el tablero de clientes a tu manera.",
+  },
+  // "Seu WhatsApp" nao entra aqui: ja existe mais abaixo, com a mesma
+  // traducao. O rotulo do passo reusa a entrada que ja estava la.
+  "Seu funil": { es: "Tu embudo" },
+  "Sua equipe": { es: "Tu equipo" },
+  "Por onde você quer começar? Dá para mudar de ideia depois.": {
+    es: "¿Por dónde quieres empezar? Puedes cambiar de idea después.",
+  },
+  "Com o atendente de IA": { es: "Con el asistente de IA" },
+  "Você monta um funcionário que responde os clientes no WhatsApp sozinho. Precisa de uma chave de IA — dá para pegar uma gratuita.":
+    {
+      es: "Armas un empleado que responde a los clientes en WhatsApp solo. Necesita una clave de IA — hay opciones gratuitas.",
+    },
+  "Negócio · WhatsApp · Treinar · Funil · Ver ele atender · Equipe": {
+    es: "Negocio · WhatsApp · Entrenar · Embudo · Verlo atender · Equipo",
+  },
+  "Só o CRM, por enquanto": { es: "Solo el CRM, por ahora" },
+  "Sua equipe atende pelo sistema, com o funil e o histórico de cada cliente. Você liga a IA quando quiser, em Agentes.":
+    {
+      es: "Tu equipo atiende por el sistema, con el embudo y el historial de cada cliente. Activas la IA cuando quieras, en Agentes.",
+    },
+  "Negócio · WhatsApp · Funil · Equipe": { es: "Negocio · WhatsApp · Embudo · Equipo" },
+  "Seu CRM está de pé. A equipe já pode atender pelo sistema.": {
+    es: "Tu CRM está en pie. El equipo ya puede atender por el sistema.",
+  },
+  "Quer o atendente de IA agora?": { es: "¿Quieres el asistente de IA ahora?" },
+  "Ele responde os clientes no WhatsApp sozinho, dentro das regras que você definir. Leva alguns minutos.":
+    {
+      es: "Responde a los clientes en WhatsApp solo, dentro de las reglas que definas. Lleva unos minutos.",
+    },
+  "Montar o atendente": { es: "Armar el asistente" },
   "Credenciais do Google salvas.": { es: "Credenciales de Google guardadas." },
   "Falha ao avançar": { es: "No se pudo avanzar" },
   // "Lead atualizado" nao entra aqui: ja existe mais abaixo, escrita ha tempos

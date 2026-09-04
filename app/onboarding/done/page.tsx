@@ -1,7 +1,7 @@
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { redirect } from "next/navigation";
 import { loadOnboardingState } from "@/app/actions/onboarding/_shared";
-import { resumoDoOnboarding } from "@/lib/onboarding/passos";
+import { contextoDoOnboarding, resumoDoOnboarding } from "@/lib/onboarding/passos";
 import { env } from "@/lib/env";
 import { oQueMaisExiste } from "@/lib/onboarding/o-que-mais-existe";
 import { DoneClient } from "./_client";
@@ -19,7 +19,17 @@ export default async function DonePage() {
   // Antes era uma terceira lista, fixa, e por isso ela listava "Loja Nuvemshop
   // (pulado)" em instalações que nunca ofereceram esse passo — o wizard
   // acusando a pessoa de não fazer o que ninguém lhe pediu.
-  const itens = resumoDoOnboarding(state, { lojaLigada: env.NUVEMSHOP_ENABLED });
+  const ctx = contextoDoOnboarding(state, { lojaLigada: env.NUVEMSHOP_ENABLED });
+  const itens = resumoDoOnboarding(state, ctx);
 
-  return <DoneClient itens={itens} pecas={oQueMaisExiste()} />;
+  return (
+    <DoneClient
+      itens={itens}
+      pecas={oQueMaisExiste()}
+      // Quem escolheu só o CRM não viu nenhuma tela de IA — e "configuro
+      // depois" vira "nunca" quando não há porta à vista no momento em que a
+      // pessoa termina. Ver o cabeçalho de `DoneClient`.
+      iaFicouParaDepois={!ctx.comIa}
+    />
+  );
 }

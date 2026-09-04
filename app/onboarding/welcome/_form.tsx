@@ -36,7 +36,14 @@ const FUSOS: { id: string; cidade: string }[] = [
   { id: "UTC", cidade: "Outro (horário universal)" },
 ];
 
-export function WelcomeForm({ defaultOrgName }: { defaultOrgName: string }) {
+export function WelcomeForm({
+  defaultOrgName,
+  comIa = true,
+}: {
+  defaultOrgName: string;
+  /** Ver `JaEstaPronto`: sem IA escolhida, o texto não fala de funcionário. */
+  comIa?: boolean;
+}) {
   const t = useT();
   const [displayName, setDisplayName] = useState(defaultOrgName);
   const [oQueFaz, setOQueFaz] = useState("");
@@ -95,7 +102,9 @@ export function WelcomeForm({ defaultOrgName }: { defaultOrgName: string }) {
         />
         <p className="text-xs text-muted-foreground">
           {t(
-            "Uma linha basta. É com isso que seu funcionário aprende com quem ele está falando — e que a gente monta o quadro de clientes do seu jeito.",
+            comIa
+              ? "Uma linha basta. É com isso que seu funcionário aprende com quem ele está falando — e que a gente monta o quadro de clientes do seu jeito."
+              : "Uma linha basta. É com isso que a gente monta o quadro de clientes do seu jeito.",
           )}
         </p>
       </div>
