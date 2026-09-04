@@ -7,481 +7,305 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual está atualizando antes de rodar `bash update.sh`**. Mudanças que exigem ação manual aparecem sob **⚠️ Requer atenção**.
 
 ## [Não lançado]
-### Alterado
 
-- **O CRM instala em Postgres 15, não só em 17** Até agora a instalação exigia Postgres 17. Quem tentasse usar um banco 15 ou 16
-  — o padrão de boa parte dos painéis de VPS e dos templates prontos de Supabase
-  — via a montagem do banco parar no meio, e a instalação terminava sem as
-  tabelas.
+## [1.14.0] — 2026-09-04
 
-  A exigência nunca foi uma decisão de projeto. O arquivo que monta o banco é
-  gerado automaticamente a partir de um servidor de referência, e esse servidor
-  rodava a versão 17; ao ser gerado, o arquivo levou junto nove linhas com uma
-  permissão que só existe nessa versão. Nenhuma parte do sistema usa essa
-  permissão. Bastava o banco não reconhecê-la para o arquivo inteiro ser
-  recusado — e um arquivo recusado é um banco vazio, não um banco incompleto.
+### Adicionado
 
-  As nove linhas saíram. A permissão que sobrou em cada uma é exatamente a mesma
-  de antes, então nada muda no comportamento nem na proteção das tabelas de
-  auditoria, que continuam não aceitando alteração nem exclusão.
+- **A IA pode ser limitada a atender só leads de origem conhecida** Num número de WhatsApp que também é usado para falar com clientes, fornecedores
+  e contatos pessoais, a IA respondia todo mundo assim que um agente era
+  publicado. Agora dá para ligar, por canal, o modo "só atende quem eu autorizei":
+  a IA fica em silêncio por padrão e só assume a conversa quando o lead veio de
+  uma origem elegível — uma submissão nova de formulário, uma campanha
+  identificada, ou uma liberação manual pela tela. Histórico antigo, existência do
+  contato, conversa anterior ou reinício de um worker nunca autorizam sozinhos.
 
-  Quem já roda o CRM não precisa fazer nada: o Postgres 17 segue funcionando
-  igual. O que mudou é que 15 e 16 passaram a funcionar também.
+  Esse limite vale para TODOS os caminhos de resposta automática — o motor do
+  agente, o follow-up, o texto fixo de fluxo, o worker de resposta legado e a
+  passagem para humano por sentimento. Não há atalho: nenhum deles envia mensagem
+  de IA para uma conversa não autorizada.
+
+  Além disso, e independentemente desse modo: quando você responde um cliente à
+  mão pelo próprio WhatsApp (celular, ou outra plataforma na mesma conta), a IA
+  para naquela conversa para não responder junto.
+  **Essa pausa dura uma hora, e se renova a cada mensagem sua.**
+  Enquanto você estiver atendendo, a IA continua calada; quando você para, a hora
+  corre e ela volta a atender aquela conversa sozinha. Você não precisa lembrar de
+  religar nada.
+
+  Se quiser a IA de volta antes da hora, é o botão "devolver ao automático" na
+  conversa. E se quiser que ela fique parada por tempo indeterminado, é o mesmo de
+  sempre: assumir a conversa pela tela — aí ela só volta quando você devolver.
+  Nenhuma dessas coisas apaga a origem do lead.
+
+  Quem não ligar o modo "só atende quem eu autorizei" mantém o comportamento de
+  antes para todo o resto.
+
+- **Importar leads de uma planilha** A lista de clientes que já está no Excel agora entra no funil sem digitação. Em
+  **Funis**, o botão "Importar planilha" pede um arquivo CSV e cria um negócio por
+  linha, na primeira etapa do funil escolhido.
+
+  O importador reconhece os cabeçalhos usuais — nome, telefone, e-mail, valor,
+  origem, tags, observação — em português, com ou sem acento, e aceita o
+  ponto-e-vírgula que o Excel brasileiro usa. Valor escrito como "R$ 1.200,00"
+  entra certo.
+
+  Quando a planilha traz telefone, o contato é criado junto e ligado ao negócio —
+  e o mesmo número repetido em várias linhas vira um contato só, não vários.
+
+  Nada é aceito no escuro: ao terminar, a tela mostra quantos negócios entraram,
+  quantos contatos foram criados, quais colunas o importador não reconheceu e
+  quais linhas foram recusadas, com o motivo e o número da linha como você a vê na
+  planilha. Uma linha com erro não derruba as outras.
+
+  Há uma planilha modelo para baixar, para quem prefere começar do formato certo.
+
+  Isto veio da contribuição de James, da Clínica Centro do Sorriso
+  (**@clinicacentrodosorrisosc-code**).
 
 ### Corrigido
 
-- **A busca do Inbox passa a achar pelo nome e pelo telefone do cliente** Digitar o nome de um cliente na caixa de busca do Inbox não trazia a conversa
-  dele — a busca olhava só o texto das mensagens. Na prática, achar uma conversa
-  pelo nome só funcionava por acidente: se o nome tivesse sido escrito dentro de
-  alguma mensagem.
+- **A chave da OpenRouter passa a ser conferida de verdade antes de a tela dizer que está validada** Ao cadastrar uma chave da OpenRouter em **Agente de IA › Credenciais**, o sistema conferia
+  a chave contra o catálogo de modelos do provedor — um endereço que responde a
+  qualquer um, com chave errada ou sem chave nenhuma. Na prática, qualquer texto
+  colado ali era gravado como credencial validada, e o cartão passava a mostrar
+  "Validada" com o final da chave ao lado.
 
-  Para quem atende, procurar pelo nome é o caso mais comum — bem mais frequente
-  que lembrar um trecho exato de mensagem. E com alguns milhares de contatos
-  importados, a única alternativa era rolar a lista.
+  O erro só aparecia depois, na primeira mensagem que o agente tentava responder,
+  e aparecia como "User not found." — um texto que não fala em chave nem em
+  credencial. Quem procurava a causa olhava o modelo, o provedor, o próprio
+  atendimento; a tela, enquanto isso, afirmava que a peça quebrada estava boa.
 
-  Agora a busca cobre nome, telefone e o texto das mensagens ao mesmo tempo. O
-  campo passa a dizer isso, em vez de prometer só mensagens.
+  Agora a prova é feita contra o endereço que exige a credencial. O catálogo
+  continua sendo lido em seguida, porque é dele que sai a lista de modelos que a
+  tela mostra — ali ele é dado, não prova. E catálogo fora do ar não recusa mais
+  uma chave que já provou ser válida: seria trocar um erro de credencial por um de
+  indisponibilidade, e mandar quem opera caçar defeito na chave certa.
 
-  Contato anonimizado continua fora da busca por nome — anonimizar é definitivo.
+  Uma ressalva sobre em que versão isto entrou: a correção já está no ar desde a
+  **1.13.0**. O que chega atrasado é esta nota — a mudança foi publicada sem ela,
+  e por isso não apareceu na lista daquela versão.
 
-- **A inteligência artificial não se cala mais por três horas depois de responder** Sempre que o CRM enviava uma mensagem pelo WhatsApp, o próprio WhatsApp
-  devolvia um eco dela de volta. O sistema lia esse eco como se um atendente
-  humano tivesse respondido pelo celular, e **desligava a IA por três horas.**
+  Chave boa continua sendo aceita do mesmo jeito, e não há passo de atualização.
+  A única coisa que vale conferir é o que foi cadastrado antes: se a sua chave da
+  OpenRouter é anterior à 1.13.0 e o atendimento falha sem motivo aparente, abra
+  **Agente de IA › Credenciais** e use o botão de revalidar — as setas em círculo, no
+  cartão da credencial. A resposta que ele dá agora é real.
 
-  Ou seja: a IA se calava por ter falado. O cliente ficava sem resposta e a tela
-  mostrava **"Automático pausado"** — estado legítimo, que ninguém investiga,
-  porque é exatamente o que aparece quando alguém assume a conversa de propósito.
+  Isto veio da contribuição de **@Elevstudio-Dev**.
 
-  Atingia qualquer instalação e qualquer conversa, sem depender de configuração.
+- **O aviso de erro da importação de planilha volta ao raio de borda do produto** A caixa de aviso da tela de importar leads estava com o canto arredondado pela
+  metade — 4px em vez dos 8px que o resto do produto usa. É pequeno e é visível:
+  ela fica ao lado de outros blocos com o raio certo.
 
-  Agora o sistema distingue o eco do próprio envio de uma digitação de verdade. E
-  a distinção só protege o silêncio: a mensagem continua sendo gravada como
-  sempre, porque perder uma mensagem é pior do que registrar uma a mais.
+  A causa é da migração para o Tailwind 4, que mudou o significado de `rounded`
+  puro. Quem escreveu a tela usou o nome que valia antes.
 
-  Quando o atendente responde mesmo pelo celular, a IA continua se calando — essa
-  parte não mudou.
+- **A troca de senha pela linha de comando volta a encontrar o usuário** Quem perde o acesso a uma instalação sem SMTP — o estado normal de um self-host
+  recém-instalado — só tem um caminho de volta: o `reset-password.sh` do kit. Ele
+  não funcionava para **ninguém**. Não era intermitente nem dependia do e-mail:
+  qualquer endereço, existente ou não, recebia a mesma resposta seca de "usuário
+  não encontrado", e a pessoa ficava trancada do lado de fora do próprio sistema.
 
-- **A proteção de envio volta a salvar sem a data do número** Em **Conexões › Proteção de envio**, ajustar o horário de envio e salvar sem
-  preencher "este número é usado desde" devolvia *"Falha ao salvar os knobs."* e
-  não gravava nada — nem os campos que você tinha acabado de mudar.
+  A causa era uma consulta escrita na sintaxe errada. O script pedia ao servidor de
+  autenticação um filtro no formato do banco (`email.eq.<endereço>`), e esse
+  servidor não fala esse formato — ele usa a expressão inteira como texto de busca.
+  Como nenhum e-mail contém o pedaço `email.eq.`, a busca não achava nada, sempre.
 
-  Isso atingia toda instalação nova, porque essa data começa em branco. E a
-  armadilha era dupla: sem os limites salvos, o sistema trata o número como
-  recém-criado e libera pouco por dia — exatamente o teto que a pessoa abriu a
-  tela para corrigir.
+  Agora a consulta vai no formato que o servidor entende. E, como a busca dele é por
+  trecho do endereço, o script passou a exigir o e-mail **inteiro** antes de aceitar
+  o resultado: pedir `ana@empresa.com` também traz `mariana@empresa.com`, e entregar
+  a pessoa errada a um comando que TROCA SENHA seria pior que não achar ninguém. Na
+  dúvida ele não devolve nada — quem chama vê "não encontrado", que é ruim mas se
+  resolve; a senha de outra pessoa trocada, não.
 
-  Agora o campo em branco significa o que a tela sempre prometeu: em número novo,
-  ele é tratado como recém-criado. E, se você já tinha informado uma data antes,
-  limpar o campo não a apaga — para trocá-la, informe outra. O texto de ajuda da
-  tela passa a dizer isso.
-
-  Junto vai um conserto de diagnóstico: quando o banco recusa um campo, o motivo
-  passa a viajar junto do erro em vez de virar um "falha ao salvar" sem dono.
-
-- **A atualização volta a chegar quando alguém aprova outra coisa durante o fechamento da versão** Uma versão do sistema é fechada em duas etapas: primeiro o time monta a lista do
-  que entrou, depois aprova essa lista. Entre uma coisa e outra, qualquer outra
-  melhoria aprovada no meio do caminho fazia o fechamento **desistir em silêncio**
-  — a versão aparecia na lista de novidades, mas nunca era publicada de verdade.
-
-  O efeito para quem tem o sistema instalado era o pior tipo: nada de errado
-  aparecia em lugar nenhum. O painel não acusava, o histórico de versões mostrava
-  a versão nova como se existisse, e a atualização simplesmente nunca chegava. Foi
-  o que aconteceu com a versão 1.11.1: ela consta no histórico desde 31 de agosto e
-  nunca existiu como pacote — nenhuma instalação a recebeu.
-
-  Agora o fechamento reconhece a si mesmo por outro sinal, que não depende de o
-  resto do time parar de trabalhar enquanto a versão fecha. E, se alguma coisa
-  estranha acontecer nesse momento, o processo **falha alto** em vez de passar
-  batido — que é o que teria feito alguém perceber a 1.11.1 no mesmo dia, e não
-  duas semanas depois.
-
-  Para quem opera uma instalação, nada muda no dia a dia: nenhuma configuração
-  nova, nenhum passo de atualização. O que muda é que "a versão saiu" volta a
-  significar que ela saiu.
-
-- **Áudio que demora para transcrever não faz mais o agente dizer "não entendi"** Um cliente mandou um áudio perguntando sobre troca de peça de uma moto elétrica. A
-  transcrição terminou certinha — mas 18 segundos tarde demais: o agente já tinha
-  respondido "recebi seu áudio, mas não consegui identificar o conteúdo", e o cliente
-  teve que digitar a pergunta de novo.
-
-  A causa era um teto fixo de 45 segundos de espera pela transcrição antes de o turno
-  seguir sem o texto. Medindo as transcrições reais desta instalação, 45s não é raro
-  de estourar em áudios normais — só é curto demais para a cauda longa (minutos, quando
-  há retry por falha transitória), que nenhum teto razoável cobre sem o cliente esperando
-  minutos pela primeira resposta.
-
-  O teto passou para 120 segundos, o suficiente para cobrir esse tipo de atraso comum sem
-  impor uma espera longa em todo áudio. Para quem opera uma instalação, nada muda no dia
-  a dia.
-
-- **Uma instabilidade passageira do provedor de IA deixa de matar o atendimento na primeira rajada** Quando o provedor de IA responde "calma, você está mandando rápido demais" — um
-  limite temporário que costuma passar sozinho em menos de um minuto —, o sistema
-  tenta de novo. Ele tinha direito a cinco tentativas, e usava as cinco no mesmo
-  segundo: a conversa voltava para a fila já liberada, era pega outra vez na
-  mesma volta, e assim por diante. O limite não teve um instante sequer para
-  ceder, e a conversa ia para a lista de casos que precisam de gente com um aviso
-  crítico na Central.
-
-  Medido numa instalação real em 31/08: 49 atendimentos descartados em rajadas de
-  poucos segundos, todos pelo mesmo motivo passageiro.
-
-  Agora cada nova tentativa espera mais que a anterior — 10 segundos, depois 20,
-  depois 40, depois 80 —, o que dá ao provedor tempo de se recuperar antes da
-  próxima. Na prática, a instabilidade que antes queimava as cinco chances em um
-  segundo agora tem mais de dois minutos para passar, e o atendimento continua
-  sozinho quando ela passa.
-
-  Para quem opera, nada muda: não há configuração nova, nenhum passo de
-  atualização e nenhum ajuste no arquivo de ambiente. O que muda é a Central
-  ficar com os avisos que importam, em vez de encher de casos que se resolveriam
-  sozinhos.
-
-- **O endereço interno do seu servidor deixa de aparecer na página pública de saúde** O sistema tem um endereço público que responde se ele está de pé — usado por
-  monitoramento e pelo suporte. Ele já era cuidadoso: escondia de quem não tem a
-  chave interna o endereço da conexão do WhatsApp e do serviço de fila, porque
-  esse endereço é justamente o que alguém precisaria para tentar bater na porta
-  deles.
-
-  O cuidado tinha um furo. Quando o arquivo de configuração ficava com o endereço
-  numa forma inválida — sem o `https://` na frente, ou com aspas sobrando, que são
-  os dois erros mais comuns de quem instala —, a mensagem técnica da falha vinha
-  com o endereço dentro, e essa mensagem **saía por inteiro** para qualquer pessoa
-  que abrisse a página. O sistema fechava a porta da frente e deixava a mesma
-  informação na janela do lado.
-
-  Agora quem não tem a chave interna vê apenas que a consulta falhou, e **por quê**:
-  se não achou o servidor, se foi recusado, se demorou demais, se a
-  credencial não passou. Isso é o que serve para monitorar. O texto técnico
-  completo continua saindo inteiro para quem tem a chave, que é quem precisa dele
-  para consertar.
-
-  Para quem opera, nada muda: nenhuma configuração nova, nenhum passo de
-  atualização. Se você tinha algum alerta lendo o texto da mensagem de erro, ele
-  passa a ler o motivo em vez do texto.
-
-  O achado é de @prevprocesso-maker, que percebeu o furo instalando o sistema para
-  um cliente.
-
-- **Instalar pelo canal padrão não mistura mais versões entre os serviços** O DeskcommCRM roda três serviços que saem do mesmo código — o aplicativo, o
-  trabalhador de fundo e o agendador. Quem instala pelo canal padrão espera os
-  três na mesma versão.
-
-  Até agora cada um deles avançava o canal por conta própria, ao terminar de ser
-  publicado, sem saber se os irmãos tinham conseguido. Quando a publicação de um
-  falhava por um problema de infraestrutura, os outros dois seguiam em frente — e
-  quem instalasse naquela janela recebia uma instalação **misturada**, com peças
-  de versões diferentes. Aconteceu de verdade no fechamento da versão anterior.
-
-  Agora o canal só avança depois que as três imagens estão publicadas e o
-  aplicativo provou que sobe. Se qualquer uma falhar, o canal fica onde estava —
-  uma versão inteira e velha, em vez de uma nova pela metade.
-
-  E o fechamento de cada versão passa a conferir isso antes de dar por concluído:
-  não basta as imagens existirem, o canal precisa apontar para elas.
-
-  Nada muda para quem já tem uma instalação funcionando.
-
-- **Loja com catálogo grande volta a achar o próprio produto** Numa loja com muitos produtos cadastrados, o atendente de IA podia responder
-  **"não temos"** para um produto que a loja tem. E não havia como perceber: a
-  resposta era educada, o sistema não registrava erro nenhum, e o mesmo produto às
-  vezes aparecia na busca seguinte.
-
-  A causa é que a busca consultava um lote do catálogo sem definir a ordem. Sem
-  ordem, o banco devolve as linhas que quiser — e o produto pedido podia
-  simplesmente não estar no lote que veio. O limite real também era metade do que
-  o sistema pedia.
-
-  Agora a busca percorre o catálogo em páginas, na ordem do código, até encontrar
-  ou terminar. E, se o catálogo for grande demais para varrer inteiro, o atendente
-  **para de dizer que a loja não tem**: ele diz que não encontrou no que
-  conseguiu consultar e que vai confirmar com a equipe.
-
-  A diferença importa para quem está comprando: "não temos" encerra a conversa,
-  "vou confirmar" não.
-
-- **Fechar um negócio parou de avisar duas vezes, e o card não some mais numa coluna arquivada** Toda vez que alguém marcava um negócio como ganho ou perdido, o sistema
-  registrava o acontecimento **duas vezes**: uma pelo banco, que já fazia isso
-  sozinho, e outra pelo aplicativo, que não sabia que o banco já tinha feito.
-  Enquanto ninguém escutava esse registro, a duplicata era só ruído guardado. Ela
-  deixou de ser inofensiva quando as notificações no navegador passaram a escutar
-  exatamente esse aviso — daí em diante, um único negócio fechado tocava duas
-  vezes no celular de quem estava acompanhando.
-
-  Junto vinham duas coisas menores e do mesmo tipo, do jeito silencioso que
-  incomoda mais do que erro barulhento:
-
-  - Um funil cujo estágio de fechamento tinha sido **arquivado** continuava sendo
-    usado. O negócio era fechado numa coluna que ninguém mais vê, sem aviso
-    nenhum. Agora o sistema recusa e diz que falta um estágio de fechamento no
-    funil, que é o que de fato está acontecendo.
-  - O card fechado caía em **posição aleatória** na coluna final, em vez de ir para
-    o fim dela. Quem trabalha olhando o quadro perdia o negócio de vista.
-
-  Para quem opera, nada muda no dia a dia: nenhuma configuração nova, nenhum passo
-  de atualização, nenhum dado a corrigir. O que muda é que o aviso passa a sair uma
-  vez, e que fechar num funil mal configurado avisa em vez de sumir.
-
-  O achado é de @prevprocesso-maker, que instalou o sistema para um cliente e
-  percebeu a emissão em dobro lendo o próprio código.
-
-- **O atendente de IA passa a enxergar os compromissos já marcados do cliente** O atendente de IA marcava uma reunião e, minutos depois, agia como se ela não
-  existisse: dizia que o horário estava ocupado por outra pessoa quando o ocupante
-  era a reunião do próprio cliente.
-
-  A causa é simples: o contexto que o agente recebe a cada mensagem trazia o
-  histórico, as anotações e o estágio do funil — e **nenhuma agenda**. Ele só
-  sabia dos compromissos se fosse consultá-los, e não tinha por que desconfiar de
-  que precisava.
-
-  Agora o contexto de cada conversa traz os compromissos futuros daquele contato,
-  com data, horário e título. Se houver mais do que cabe, ele diz que a lista está
-  incompleta em vez de deixar o agente concluir que aquilo é tudo.
-
-  Compromissos cancelados ficam de fora: um compromisso desmarcado nessa lista
-  faria o agente confirmar ao cliente uma reunião que não existe mais.
-
-- **O agente para de dizer que o cliente não tem nada marcado quando tem** O atendente de IA podia marcar uma reunião e, minutos depois, dizer ao próprio
-  cliente que **ela não existia** — pedindo desculpas por tê-la marcado. Não havia
-  erro em lugar nenhum: a consulta era válida e devolvia "nenhum compromisso", que
-  é uma resposta legítima.
-
-  A causa é um nome. Dentro do motor, o campo que identifica **a pessoa** da
-  conversa se chama `lead_id` — mas nas ferramentas de agenda esse mesmo nome
-  significa **o negócio no funil**, que é outra coisa. O agente passava o
-  identificador da pessoa no lugar do negócio, a busca não encontrava vínculo
-  nenhum e respondia "nada marcado".
-
-  Agora, quando o identificador não corresponde a um negócio do funil, a resposta
-  deixa de ser "nada marcado" e passa a ser uma **recusa que ensina o caminho certo**
-  — e que instrui o agente a dizer que vai confirmar com a equipe, nunca
-  que o cliente não tem nada.
-
-  Um negócio de verdade sem compromissos continua respondendo "nada marcado", que
-  é a resposta certa.
-
-- **O agente para de repetir uma pergunta que o cliente já respondeu** Numa conversa real, o agente pediu o e-mail do cliente **quatro vezes** — com o
-  cliente respondendo três. Para quem está do outro lado, isso não parece um
-  sistema: parece desatenção.
-
-  Eram duas causas somadas.
-
-  A primeira: ao fechar cada turno, o agente anota qual é a "próxima ação". Como
-  essa anotação é escrita logo depois de ele perguntar e antes de a resposta
-  chegar, ele anotava como próxima ação **a pergunta que acabara de fazer**. No
-  turno seguinte essa anotação voltava no topo das instruções, acima do histórico
-  — e mandava perguntar de novo o que o histórico logo abaixo já respondia.
-
-  A segunda: o cadastro do contato aparecia com o e-mail em branco, e o agente lia
-  isso como um fato ("não tem e-mail"), com mais autoridade do que a mensagem em
-  que o cliente tinha acabado de digitá-lo. E como esse campo nunca é preenchido
-  sozinho, o pedido se repetia indefinidamente.
-
-  Agora a anotação diz explicitamente que se refere ao **depois** da resposta, o
-  bloco avisa que foi escrito antes da última mensagem do cliente — e que, em caso
-  de desacordo, vale o histórico —, e o cadastro em branco vem com a ressalva de
-  que a informação pode já ter sido dada na conversa.
-
-- **Os avisos coloridos do sistema voltam a ter cor** Boa parte dos avisos do produto — o fundo avermelhado de um erro, o âmbar de uma
-  pendência, a borda suave de um cartão — era escrita para aparecer com transparência
-  e simplesmente **não pintava**: a regra nunca chegava a ser gerada, em silêncio.
-  Eram 62 marcações distintas, em 252 lugares das telas. Agora pintam.
-
-  Junto vem o respiro entre o rótulo e o campo nos formulários, que havia encolhido
-  no mesmo mecanismo, e a sombra da aba selecionada, que passara a usar um preto
-  fixo em vez do tom do tema — visível para quem usa o sistema no modo escuro.
-
-  Onde a transparência era aplicada ao TEXTO, ela foi retirada em vez de passar a
-  valer: em 20 lugares o texto ficaria claro demais para ser lido com conforto — os
-  rótulos de grupo do menu lateral, entre outros. Esses continuam exatamente com a
-  aparência que sempre tiveram na tela.
-
-  Quem opera uma VPS não precisa fazer nada: é só atualizar. Nenhuma configuração
+  Quem opera uma VPS não precisa fazer nada além de atualizar. Nenhuma configuração
   muda, nenhum arquivo precisa ser editado à mão.
 
-- **Um fluxo de retorno publicado não abre mais vazio na tela** Um fluxo de retorno que estava **no ar e funcionando** podia abrir **em branco**
-  no construtor. A automação rodava normalmente e conversava com os clientes; a
-  tela é que não mostrava nada.
+- **Anonimizar um contato retoma de onde parou, em vez de dizer que já foi** A anonimização de um contato remove os dados pessoais em três lugares: o
+  cadastro do contato, os títulos dos negócios dele e o histórico de atividades.
+  Se a operação era interrompida no meio — o navegador desistindo, o servidor
+  reiniciando —, o primeiro lugar ficava pronto e os outros dois não.
 
-  Acontecia quando o fluxo foi publicado por fora do construtor — restauração de
-  backup, instalação assistida, importação de outra instalação. Nesses casos o
-  sistema guarda a versão publicada mas não guarda uma cópia de trabalho, e a tela
-  só sabia abrir a cópia de trabalho.
+  E não havia como terminar: clicar em "Anonimizar" de novo respondia **"já anonimizado"**
+  e não fazia mais nada. O contato ficava para sempre com nome de
+  cliente visível dentro dos negócios e do histórico — que é exatamente o dado que
+  a anonimização existe para remover, e que a lei dá prazo para remover.
 
-  **O risco era maior do que a tela vazia.** Quem abrisse, mexesse em qualquer
-  coisa e salvasse estaria salvando por cima — com o desenho vazio que a tela
-  mostrou. Um "publicar" depois disso trocaria o fluxo que está funcionando por
-  esse vazio, sem aviso nenhum.
+  Pior: nesse estado a tela **não mostra botão nenhum** — assim que o contato
+  consta como anonimizado, o botão dá lugar a um aviso. Não havia como pedir a
+  retomada nem sabendo que ela era necessária.
 
-  Agora, quando não existe cópia de trabalho, a tela abre **exatamente o que está no ar**.
-  Quem nunca editou vê o fluxo publicado; quem tem trabalho salvo e não publicado
-  continua vendo o seu trabalho, que segue tendo prioridade.
+  Agora a verificação diária do sistema encontra sozinha as anonimizações que
+  ficaram pela metade e termina o serviço, sem ninguém precisar procurar contato
+  por contato. Como a lei dá prazo, esse conserto não podia depender de alguém
+  lembrar de clicar. Rodar de novo num contato já inteiro não escreve nada, e o
+  registro de auditoria mostra o que foi realmente feito, em qual contato e em que
+  dia — separado da execução original, para a data em que o titular exerceu o
+  direito não ser sobrescrita.
+
+- **A proteção de envio volta a aceitar a data de hoje** Em **Conexões › Proteção de envio**, informar hoje em "este número é usado
+  desde" era recusado durante a manhã inteira: até as 9h no relógio de quem
+  opera no Brasil, salvar devolvia *"Campos inválidos."* e não gravava nada — nem
+  a janela de horário, nem o intervalo entre envios, nem o teto diário que você
+  tinha acabado de mudar na mesma tela.
+
+  O motivo: o campo pergunta um DIA, mas a verificação o comparava com a hora
+  exata em Londres. Um dia não tem hora — ele começa em horários diferentes em
+  cada parte do mundo —, e por isso "hoje" só era aceito depois do meio-dia
+  londrino. Agora a verificação compara dias com dias, e só recusa a data que
+  ainda não chegou em canto nenhum do planeta.
+
+  O calendário do campo também parou de oferecer o dia errado: depois das 21h ele
+  mostrava amanhã como escolha possível.
+
+  Data futura continua recusada, e data antiga continua sendo o caso normal — é
+  informando a data antiga que um número usado há meses deixa de ser tratado como
+  recém-criado e sai do teto de 20 envios por dia.
+
+- **O painel de IA para de avisar que um modelo não enxerga imagens quando ele enxerga** Duas informações erradas no painel de provedores, e as duas faziam quem opera
+  tomar decisão contra o que o sistema realmente faz.
+
+  **A primeira:** o painel avisava que um modelo "não enxerga imagens" e que fotos
+  e comprovantes do cliente seriam ignorados — sobre modelos que enxergam, e num
+  sistema onde a leitura estava funcionando. Na mesma instalação em que o aviso
+  aparecia, o print que o cliente enviou virou descrição correta para o atendente.
+
+  O painel lia uma tabela de catálogo; o atendimento lia outra coisa. Agora os
+  dois respondem pela mesma fonte, e o painel não pode mais discordar do que
+  acontece de verdade. Onde o sistema não conhece o modelo — o seu, ou um de um
+  serviço próprio —, o catálogo continua sendo a resposta, e a falta de informação
+  continua sendo dita como falta de informação, não como "não funciona".
+
+  **A segunda:** quem usa a OpenRouter tinha o problema INVERTIDO — e ele é pior,
+  porque não tem sintoma. Ali o sistema não sabia dizer se um modelo enxerga: ele
+  olhava só o começo do nome. Como `openai/gpt-4o` enxerga e `openai/gpt-3.5-turbo`
+  não, e os dois começam igual, um palpite pelo começo do nome erra metade das
+  vezes — e a OpenRouter já informa a resposta certa, modelo por modelo, quando o
+  catálogo é sincronizado na instalação.
+
+  O efeito prático era duplo. O painel deixava de avisar quando o aviso era
+  verdadeiro, então quem opera achava que o comprovante do cliente estava sendo
+  lido e não estava. E o atendimento chegava a enviar a imagem para um modelo que
+  não a aceita, o que fazia a resposta daquela mensagem falhar. Agora, quando a
+  OpenRouter informa a capacidade, é ela que vale — e quando não informa, o
+  sistema volta a dizer que não sabe, em vez de afirmar.
+
+  **A terceira:** o ponto "Ouvir o áudio do cliente" mostrava um modelo de
+  conversa, com "usando o padrão da organização" — ao lado do próprio texto do
+  ponto, que diz que a transcrição usa o padrão da OpenAI. A mesma tela afirmava
+  duas coisas incompatíveis, e modelo de conversa não transcreve áudio.
+
+  Agora ele mostra o que de fato transcreve. Trocar o modelo de conversa nunca
+  mudou nada ali; o que muda é a tela parar de sugerir que mudaria.
 
   Para quem opera uma instalação, nada muda no dia a dia: nenhuma configuração
-  nova, nenhum passo de atualização.
+  nova, nenhum passo de atualização. O que muda é que o painel volta a descrever
+  o sistema que está rodando.
 
-- **O limiar de sentimento passa a vir do agente que atende aquela conversa** Quem opera mais de um agente ajustava o campo "limiar de sentimento" de um deles
-  e via o comportamento do outro. Os dois campos existiam, os dois aceitavam
-  valor, e só um fazia efeito — o do agente mais antigo da organização, porque a
-  conversa que disparou o alerta não entrava na conta.
+- **Salvar o rascunho de um agente para de escrever por cima de um rascunho antigo** Na tela de um agente, "Salvar rascunho" podia gravar numa versão **diferente**
+  da que estava aberta na tela — e apagar, no caminho, um rascunho antigo que a
+  própria tela prometia estar guardado.
 
-  Com um agente só, o resultado era certo por acidente. Com dois, o limiar em
-  vigor dependia da ordem em que eles foram criados, e não havia nada na tela que
-  explicasse por quê.
+  O estado que produzia isso é comum e tem um gatilho conhecido: quem tinha
+  trabalho em andamento num rascunho e usou o botão **Reverter**, na aba
+  Histórico. Reverter cria uma versão nova e a publica na hora; o rascunho que
+  existia fica, a partir dali, "atrás" da versão publicada. A tela sabe disso e
+  avisa, no selo ao lado do nome do agente: *"o rascunho v5 é anterior a esta
+  versão e foi superado por ela — ele continua no Histórico."*
 
-  E o limiar certo é genuinamente diferente por agente: numa clínica, cliente
-  triste é sinal de problema; numa assistência técnica, cliente triste é o cliente
-  normal. Um número único para os dois erra nos dois sentidos — escala demais num
-  caso, de menos no outro.
+  Só que o servidor não sabia. Ele procurava "o rascunho de maior número" e
+  gravava ali. Duas consequências, nenhuma delas com mensagem de erro:
 
-  Agora vale o limiar do agente que está atendendo aquela conversa. Quando não dá
-  para dizer com certeza qual é — dois agentes e nenhum vínculo com a conversa —,
-  vale o padrão do sistema, nunca o número do vizinho.
+  - **O trabalho parecia sumir.** O aviso verde dizia "Rascunho v5 salvo.", a
+    página recarregava, e a tela voltava a mostrar o texto anterior — porque ela
+    não reabre um rascunho superado, e o botão de publicar também não o oferece.
+    Quem estava editando via "salvo" e nada mudando, sem ter o que fazer a
+    respeito.
+  - **O Histórico perdia conteúdo, em silêncio.** Aquele rascunho v5 é um
+    retrato: a linha dele no Histórico existe para mostrar o que estava escrito
+    ali. Regravá-lo trocava esse conteúdo por um texto que ninguém rascunhou
+    naquele momento, sem aviso e sem volta.
 
-  O alerta gerado passa a registrar qual agente decidiu e por quê, para que a
-  pergunta "por que este alerta saiu?" tenha resposta na própria linha.
+  Agora o servidor decide em qual versão escrever pela **mesma regra** que a tela
+  usa para decidir qual versão abrir. Quando o rascunho existente está superado,
+  a gravação nasce numa versão nova — que é a que a tela reabre e o botão publica
+  — e o rascunho antigo fica intacto no Histórico, como estava prometido.
 
-- **O nome, a descrição e a ordem do agente passam a ser salvos de verdade** Na tela de um agente, trocar o **Nome** não mudava nada. A pessoa digitava,
-  salvava, publicava — e o nome continuava o mesmo, no editor e na lista.
-  **Descrição** e **Ordem de preferência** sumiam do mesmo jeito.
+  Junto vem um cuidado que não aparece na tela mas decide o resultado: quem é a
+  versão publicada passa a ser sempre o **ponteiro que o atendimento executa**, e
+  não o rótulo "publicada" gravado na linha da versão. Os dois já se contradizem
+  em instalações reais, e a resposta otimista era a errada.
 
-  O que tornava isso difícil de perceber é que nada falhava: o campo aceitava a
-  digitação, o aviso verde dizia "Rascunho salvo", e a publicação respondia com
-  sucesso. Todas essas mensagens eram verdadeiras — a respeito da **versão**, que
-  era a única coisa realmente gravada. Recarregar a página não ajudava, porque o
-  valor nunca chegou a ser gravado.
+  Para quem opera uma instalação, nada muda no dia a dia: nenhuma configuração
+  nova, nenhum passo de atualização, nenhuma mudança no banco. O que muda é que
+  "salvei" volta a significar "está salvo onde você está vendo".
 
-  Agora os três são salvos junto com o rascunho, e a lista de agentes reflete o
-  nome novo na hora.
+- **Os e-mails de acesso deixam de apontar para um endereço que não existe** Numa instalação feita pelo caminho documentado, os e-mails de recuperação de
+  senha, de confirmação de cadastro e de aceite de convite chegavam com um link
+  para `localhost:3000` — um endereço que só existe na máquina de quem programa.
+  O e-mail chegava, a pessoa clicava, e o navegador dizia que a página não existe.
+  Na prática, **ninguém conseguia redefinir a própria senha.**
 
-  Dois detalhes que vêm junto: apagar a descrição realmente a apaga (antes o campo
-  vazio seria interpretado como "não mexi"), e uma ordem de preferência fora de
-  0 a 1000 é avisada embaixo do campo, em vez de virar erro genérico depois.
+  O endereço certo mora no painel do Supabase, e o instalador já sabia configurá-lo
+  sozinho — só que precisava de um token que ele nunca pedia. O aviso existia, mas
+  saía no meio de um registro de dez minutos, logo antes de uma tela verde dizendo
+  "Instalação concluída". Ninguém voltava para ler.
 
-- **"Quero 2 iPhone 15" volta a encontrar o iPhone 15** Quando o cliente escrevia um número que não é característica do produto — a
-  quantidade que ele quer, quanto pretende gastar —, o atendente de IA respondia
-  que **não encontrou nada**. "Quero 2 iPhone 15" e "tenho 3.000 pra gastar num
-  iPhone" voltavam vazias, mesmo com o produto no catálogo.
+  Agora o instalador pergunta esse token. Ele é opcional e **não fica salvo** —
+  abre a conta inteira do Supabase, então é usado uma vez e descartado, e nem
+  sequer entra no rascunho que guarda suas respostas para o caso de a instalação
+  ser interrompida. Por isso, se você recomeçar uma instalação, ele é a única
+  pergunta que volta a ser feita; a tela diz isso na hora, e apertar Enter pula.
 
-  É o pior momento para dizer "não encontrei": a pessoa estava comprando.
+  Quem preferir pular continua podendo: a instalação termina repetindo o passo que
+  falta, com o seu domínio já preenchido, em vez de deixar a descoberta para o dia
+  em que alguém esquecer a senha. E quando o passo automático roda mas o endereço
+  não fica como este sistema precisa — porque o seu projeto já tinha outro
+  endereço escolhido, por exemplo —, ele passou a dizer isso em vez de terminar
+  com um "pronto" verde.
 
-  A causa era a regra que impede o erro mais caro da busca — quem pergunta do
-  128GB não pode receber o preço do 256GB. Para isso, o número que o cliente diz
-  precisa bater exatamente. Só que **todo** número era tratado assim, inclusive os
-  que não descrevem produto nenhum.
+  **Se você já tinha instalado antes desta versão**, a próxima atualização mostra
+  esse mesmo passo uma vez, com o seu domínio preenchido, e não repete depois.
 
-  Agora o próprio catálogo decide: um número só restringe a busca se ele existir
-  em algum produto. "128" existe, então continua separando os modelos. "2" não
-  existe em produto nenhum, então é quantidade — e quantidade não esconde nada.
+### Do projeto de origem
 
-  A proteção continua inteira no caso que importa: quem pede uma capacidade que a
-  loja não tem continua recebendo "não temos", e nunca o modelo parecido com
-  preço diferente.
+Esta versão traz junto a 1.13.0 do DeskcommCRM, o projeto do qual o Elev CRM
+deriva — 229 mudanças de código. Os itens abaixo estão em uma linha cada; a
+explicação longa de cada um está no CHANGELOG daquele projeto.
 
-  Para quem opera uma instalação, nada muda no dia a dia.
+**Alterado**
 
-- **O prompt que você salva passa a ser o que o agente realmente executa** Editar as instruções de um agente **já publicado** e salvar mostrava o texto novo
-  na tela — enquanto o agente continuava atendendo no WhatsApp com o texto
-  anterior. Não havia erro, nem aviso: quem editava concluía que a mudança estava
-  no ar, e ela não estava.
 
-  A causa é que existem dois lugares onde as instruções podem morar: o cadastro do
-  agente e a **versão publicada**. Quem atende o cliente é a versão. A tela mandava
-  alguns agentes para o editor antigo, que grava no cadastro — o lugar que o
-  atendimento não lê quando há versão publicada.
+- O CRM instala em Postgres 15, não só em 17.
 
-  Agora quem tem versão publicada é levado direto ao editor de versões, que grava
-  onde o atendimento lê. E, se alguma outra ferramenta tentar mudar as instruções
-  ou o modelo pelo caminho antigo, a resposta passa a ser um erro que explica o
-  caminho certo, em vez de um sucesso que não teve efeito.
+**Corrigido**
 
-  Agente sem versão publicada continua exatamente como estava.
 
-- **Título de novidade com aspas no meio chega inteiro à tela de atualização** O texto que descreve cada novidade é lido por quem opera a instalação, na tela
-  de atualização, antes de decidir atualizar. Um título que citasse uma frase
-  entre aspas chegava lá **torto**: a aspa de abertura sumia e a do meio ficava
-  solta, como se o texto estivesse cortado.
-
-  Num sistema de atendimento, citar o que o cliente escreve é o caso natural de um
-  título — não a exceção. O primeiro título que precisou disso já saiu errado.
-
-  Agora aspas no meio do texto são preservadas, e só somem quando envolvem o
-  título inteiro — que é como alguém escreveria para "escapar" o texto.
-
-  Nada muda no dia a dia de quem opera: nenhuma configuração nova, nenhum passo de
-  atualização.
-
-- **Um WhatsApp fora do ar deixa de pendurar a tela até o navegador desistir** Quando o serviço que conversa com o WhatsApp fica indisponível, o CRM ficava
-  esperando por ele sem limite. A tela de conexão girava, o envio não voltava, e o
-  único desfecho era o navegador ou o servidor desistirem sozinhos, minutos depois
-  e sem explicação.
-
-  O caso ruim não é o serviço recusar a conexão — isso já dava erro na hora. É o
-  serviço aceitar e nunca responder, que é o que acontece quando ele está
-  sobrecarregado ou travando: dali não vinha erro nenhum, só espera.
-
-  Agora toda conversa com esse serviço tem prazo. Passou do prazo, o CRM desiste e
-  diz que foi o tempo — em vez de deixar você olhando para uma tela parada sem
-  saber se funcionou.
-
-  Envio de áudio e vídeo tem prazo maior, de propósito: eles são convertidos antes
-  de sair, e cortá-los no mesmo tempo de uma mensagem de texto faria mensagem
-  legítima deixar de ser enviada.
-
-- **Planilha exportada do Excel com acento entra inteira, sem virar caractere estranho** O Excel em português salva planilha num formato de texto antigo, e é o padrão
-  dele — quem exporta a lista de produtos ou de contatos quase sempre manda esse
-  arquivo. O sistema lia todos como se fossem do formato moderno, e o resultado
-  dependia de onde estava o acento.
-
-  Quando o acento estava nos **dados**, era o pior caso: a importação dizia
-  "pronto, N produtos importados" e o catálogo ficava com nomes como
-  `A��o C�nica` — sem um erro sequer. É esse nome corrompido que o atendente de IA
-  lia em voz alta para o cliente, e ninguém confere linha a linha numa lista de
-  300 itens.
-
-  Quando o acento estava no **cabeçalho**, o arquivo inteiro era recusado com uma
-  mensagem ilegível.
-
-  Agora o sistema identifica o formato pelo próprio conteúdo do arquivo e lê os
-  dois corretamente — sem você precisar reexportar nada. Vale para a importação de
-  produtos e para a de contatos.
-
-  E um arquivo que não é planilha de texto (um `.xlsx` renomeado, por exemplo)
-  passa a ser recusado com a instrução do que fazer, em vez de virar centenas de
-  linhas ilegíveis no seu catálogo.
-
-- **Quem não é administrador volta a ver a lista de credenciais de IA** Um membro da equipe que não é administrador abria **IA › Provedores** e via a
-  lista **vazia** — concluindo que a organização não tinha nenhuma chave
-  cadastrada, quando tinha.
-
-  Não havia erro nem aviso: a tela respondia normalmente, só que sem nenhuma
-  linha. É a pior forma de falhar, porque parece uma informação verdadeira.
-
-  A causa foi um ajuste de segurança anterior, que fechou a **escrita** dessas
-  credenciais para quem não é administrador — e, sem querer, fechou a **leitura**
-  junto. A tela de provedores é somente-leitura para esses papéis e nunca deveria
-  ter sido afetada.
-
-  Agora a leitura volta a valer para todo membro da organização, e a escrita
-  continua restrita a administrador, como estava.
-
-  A chave em si segue protegida: ela nunca foi exposta por essa tela, e continua
-  inalcançável para qualquer papel — inclusive para quem passou a enxergar a
-  lista.
-
-- **A tela de chaves de IA explica o que deu errado e mostra quantos modelos a chave alcança** Quem colava uma chave de IA e errava via um código (`auth_failed_401`) no
-  lugar de uma explicação, e quem acertava via a lista de modelos inteira colada
-  por vírgula onde deveria haver um número. Se o servidor reiniciasse no meio da
-  validação, o cartão dizia "Validando…" para sempre.
-
-  Agora o cartão diz em português o que aconteceu ("O provedor recusou a chave.
-  Confira se copiou inteira ou gere uma nova."), com o link para gerar outra;
-  mostra a contagem de modelos; e, passados dois minutos sem resposta, troca
-  "Validando…" por "Não validada" com a dica de revalidar. O diálogo de adicionar
-  passa a dizer quando usar cada provedor, onde a chave mora e como ela começa.
-  O botão de excluir só fica bloqueado quando a chave está de fato numa versão
-  publicada de agente — a mesma regra que a API já usava.
-
-  Nenhuma configuração nova, nenhum passo de atualização.
+- A busca do Inbox passa a achar pelo nome e pelo telefone do cliente.
+- A inteligência artificial não se cala mais por três horas depois de responder.
+- A proteção de envio volta a salvar sem a data do número.
+- A atualização volta a chegar quando alguém aprova outra coisa durante o fechamento da versão.
+- Áudio que demora para transcrever não faz mais o agente dizer "não entendi".
+- Uma instabilidade passageira do provedor de IA deixa de matar o atendimento na primeira rajada.
+- O endereço interno do seu servidor deixa de aparecer na página pública de saúde.
+- Instalar pelo canal padrão não mistura mais versões entre os serviços.
+- Loja com catálogo grande volta a achar o próprio produto.
+- Fechar um negócio parou de avisar duas vezes, e o card não some mais numa coluna arquivada.
+- O atendente de IA passa a enxergar os compromissos já marcados do cliente.
+- O agente para de dizer que o cliente não tem nada marcado quando tem.
+- O agente para de repetir uma pergunta que o cliente já respondeu.
+- Os avisos coloridos do sistema voltam a ter cor.
+- Um fluxo de retorno publicado não abre mais vazio na tela.
+- O limiar de sentimento passa a vir do agente que atende aquela conversa.
+- O nome, a descrição e a ordem do agente passam a ser salvos de verdade.
+- "Quero 2 iPhone 15" volta a encontrar o iPhone 15.
+- O prompt que você salva passa a ser o que o agente realmente executa.
+- Título de novidade com aspas no meio chega inteiro à tela de atualização.
+- Um WhatsApp fora do ar deixa de pendurar a tela até o navegador desistir.
+- Planilha exportada do Excel com acento entra inteira, sem virar caractere estranho.
+- Quem não é administrador volta a ver a lista de credenciais de IA.
+- A tela de chaves de IA explica o que deu errado e mostra quantos modelos a chave alcança.
 
 ## [1.13.0] — 2026-09-04
 
@@ -2403,7 +2227,8 @@ Primeira versão marcada do DeskcommCRM. O projeto vinha sendo desenvolvido publ
 
 - **Node 22 é obrigatório para desenvolvimento.** A suíte de invariantes instancia o cliente do Supabase, que exige o `WebSocket` global — nativo apenas a partir do Node 22. Isso não afeta quem apenas hospeda: a VPS roda a imagem pronta.
 
-[Não lançado]: https://github.com/melgarafael/DeskcommCRM/compare/v1.13.0...HEAD
+[Não lançado]: https://github.com/melgarafael/DeskcommCRM/compare/v1.14.0...HEAD
+[1.14.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.11.1...v1.12.0
 [1.11.1]: https://github.com/melgarafael/DeskcommCRM/compare/v1.11.0...v1.11.1
