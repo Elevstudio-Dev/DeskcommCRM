@@ -317,7 +317,10 @@ export function ConnectWhatsappClient({
         await markWhatsappConfigured(sessionName, "WORKING");
       } catch (err) {
         if (isRedirectError(err)) throw err;
-        toast.error("Falha ao avançar: " + String(err));
+        // O detalhe tecnico vai para a descricao em vez de ser colado no titulo:
+        // titulo curto e o que a pessoa le, e o `String(err)` de um erro de
+        // servidor pode ter varias linhas.
+        toast.error(t("Falha ao avançar"), { description: String(err) });
       }
     });
   }, [status, sessionName, t]);

@@ -1318,6 +1318,28 @@ export const DICIONARIO: Traducoes = {
     es: "Revise la clave en el panel del proveedor y péguela de nuevo.",
   },
   "Motivo técnico": { es: "Motivo técnico" },
+
+  // ─── Avisos que moram em hooks/ e components/, fora do alcance do guarda ───
+  //
+  // O guarda de AST varre TELAS; estes vivem em hooks e em componentes, e
+  // passavam por baixo dele — mostravam portugues a quem escolheu espanhol.
+  // "Cita" e "Tenant Suspendido" nao sao invencao: e o vocabulario que este
+  // arquivo ja fixou em "Agendamento" e "Tenant Suspenso".
+  "Incidente resolvido com sucesso": { es: "Incidente resuelto con éxito" },
+  "Erro ao resolver incidente": { es: "Error al resolver el incidente" },
+  "Tenant suspenso com sucesso": { es: "Tenant suspendido con éxito" },
+  "Erro ao suspender tenant": { es: "Error al suspender el tenant" },
+  "Tenant reativado com sucesso": { es: "Tenant reactivado con éxito" },
+  "Erro ao reativar tenant": { es: "Error al reactivar el tenant" },
+  "Agendamento criado.": { es: "Cita creada." },
+  "Agendamento remarcado.": { es: "Cita reprogramada." },
+  "Agendamento cancelado.": { es: "Cita cancelada." },
+  "Campos atualizados": { es: "Campos actualizados" },
+  "Credenciais do Google salvas.": { es: "Credenciales de Google guardadas." },
+  "Falha ao avançar": { es: "No se pudo avanzar" },
+  // "Lead atualizado" nao entra aqui: ja existe mais abaixo, escrita ha tempos
+  // e nunca usada, porque o componente chamava toast.success sem t(). Este
+  // conserto so LIGOU a traducao que ja estava pronta.
   "Gerar outra chave": { es: "Generar otra clave" },
   "Salvar e validar": { es: "Guardar y validar" },
   "Obrigatório": { es: "Obligatorio" },

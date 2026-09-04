@@ -147,7 +147,7 @@ export function FormularioDoGoogle({
                   toast.error(r.error);
                   return;
                 }
-                toast.success("Credenciais do Google salvas.");
+                toast.success(t("Credenciais do Google salvas."));
                 setClientSecret("");
                 router.refresh();
               })

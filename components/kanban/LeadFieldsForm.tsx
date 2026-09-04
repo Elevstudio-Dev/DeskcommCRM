@@ -112,7 +112,7 @@ export function LeadFieldsForm({ lead, pipelineId, fieldDefs = [], onSaved, onCa
         leadId: lead.id,
         patch: parsed.data as UpdateLeadInput,
       });
-      toast.success("Lead atualizado");
+      toast.success(t("Lead atualizado"));
       onSaved?.();
     } catch {
       // toast already shown
