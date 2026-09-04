@@ -1,7 +1,15 @@
 # Inbox com cara de WhatsApp — o que mudou, na tela
 
 Capturas feitas em 2026-09-04, 1600×900, contra o build de produção com o banco
-de e2e. O objetivo do trabalho está em
+de e2e e **com a marca da instalação aplicada** (`APP_ACCENT_HEX=#7a5cd6`).
+
+> As primeiras capturas deste trabalho saíram VERDES, e a pergunta do dono —
+> "por que está verde?" — achou um detalhe que vale registrar: o servidor de
+> e2e não recebe `APP_ACCENT_HEX`, e sem cor configurada o produto usa a dele.
+> Em produção a variável chega, porque `docker-compose.prod.yml` usa
+> `env_file: .env` e o `install.sh` grava a cor lá. Medido subindo o mesmo
+> servidor com a variável exportada: o bloco `#marca-instalacao` aparece e
+> `--color-accent-500` vira `#7a5cd6`. O objetivo do trabalho está em
 [`docs/superpowers/specs/2026-09-04-inbox-cara-de-whatsapp-design.md`](../../docs/superpowers/specs/2026-09-04-inbox-cara-de-whatsapp-design.md).
 
 ## Conversa de entrada — o chão, o agrupamento e a lista

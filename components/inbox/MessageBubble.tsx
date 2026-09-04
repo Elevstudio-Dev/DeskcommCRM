@@ -148,7 +148,18 @@ export function MessageBubble({
                 primeiraDoGrupo &&
                   cn("inbox-bolha-rabinho", isOutbound ? "rounded-tr-none" : "rounded-tl-none"),
               ),
-          isFailed && "border border-destructive",
+          // A MOLDURA DA FALHA SEGUE A MESMA REGRA DO TEXTO "Falhou".
+          //
+          // `border-destructive` é vermelho-tijolo (#a94a3c). Sobre a bolha de
+          // entrada, que é clara, ele lê como erro. Sobre a de SAÍDA, que é a
+          // cor da marca trocada em runtime, ele deixa de ler: medido com a
+          // marca roxa (#604aa6 aplicado), o resultado é um contorno que parece
+          // artefato, não alarme — e eu mesmo li como lavanda antes de medir.
+          //
+          // Do lado de saída a moldura herda o texto da bolha, que por
+          // construção contrasta com ela. Quem diz "falhou" ali é o selo com
+          // ícone, não a cor da borda.
+          isFailed && (isOutbound ? "border border-[var(--chat-out-fg)]/60" : "border border-destructive"),
         )}
       >
         {/*
