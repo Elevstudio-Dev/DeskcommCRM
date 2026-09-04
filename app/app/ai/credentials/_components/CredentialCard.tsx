@@ -33,6 +33,7 @@ import {
   credentialsListQueryKey,
   type CredentialRow,
 } from "@/hooks/ai/useCredentials";
+import { motivoDaRecusa } from "@/lib/ai/credenciais/motivo-da-recusa";
 import { useT } from "@/hooks/i18n/useT";
 
 interface Props {
@@ -63,6 +64,7 @@ export function CredentialCard({ credential, canWrite, usageCount }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const status = credentialStatus(credential);
+  const motivo = motivoDaRecusa(credential.provider, credential.validation_error);
   const last4 = credential.api_key_last4 ?? "????";
   const inUse = usageCount > 0;
 
@@ -123,10 +125,31 @@ export function CredentialCard({ credential, canWrite, usageCount }: Props) {
         </div>
       </div>
 
-      {credential.validation_error && (
-        <p className="line-clamp-2 text-xs text-destructive" title={credential.validation_error}>
-          {credential.validation_error}
-        </p>
+      {motivo && (
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-destructive">{t(motivo.titulo)}</p>
+          <p className="text-xs text-muted-foreground">{t(motivo.comoResolver)}</p>
+          {motivo.ondePegarAChave && (
+            <a
+              href={motivo.ondePegarAChave}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-xs underline underline-offset-2"
+            >
+              {t("Gerar outra chave")}
+            </a>
+          )}
+          {/* O motivo tecnico fica JUNTO, nunca no lugar do rotulo: quem for
+              investigar precisa dele, e a doutrina da Central de avisos e
+              mostrar os dois. Discreto porque nao e para quem so quer o
+              proximo passo. */}
+          <p
+            className="truncate font-mono text-[10px] text-muted-foreground/70"
+            title={credential.validation_error ?? undefined}
+          >
+            {t("Motivo técnico")}: {credential.validation_error}
+          </p>
+        </div>
       )}
 
       <dl className="grid grid-cols-2 gap-2 text-xs">

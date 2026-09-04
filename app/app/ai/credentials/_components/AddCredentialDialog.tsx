@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { refreshCredentialsView } from "../_actions";
 
+import { motivoDaRecusa } from "@/lib/ai/credenciais/motivo-da-recusa";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -107,7 +108,12 @@ export function AddCredentialDialog({ open, onOpenChange }: Props) {
             `${t("Validada")} — ${justCreated.models_available} ${t("modelos disponíveis.")}`,
           );
         } else if (justCreated?.validation_error) {
-          toast.error(`${t("Validação falhou")}: ${justCreated.validation_error}`);
+          // O toast some sozinho, entao ele leva o proximo passo — nao o
+          // codigo. O codigo fica no cartao, que nao some.
+          const motivo = motivoDaRecusa(justCreated.provider, justCreated.validation_error);
+          toast.error(motivo ? t(motivo.titulo) : t("Validação falhou"), {
+            description: motivo ? t(motivo.comoResolver) : justCreated.validation_error,
+          });
         }
       }, 3000);
 

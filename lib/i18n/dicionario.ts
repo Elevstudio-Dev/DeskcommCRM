@@ -1283,6 +1283,42 @@ export const DICIONARIO: Traducoes = {
   "Credencial salva. Validação em segundo plano.": { es: "Credencial guardada. Validación en segundo plano." },
   "modelos disponíveis.": { es: "modelos disponibles." },
   "Validação falhou": { es: "La validación falló" },
+
+  // ─── Por que a credencial foi recusada, e o que fazer ───
+  //
+  // Chegam na tela por VARIAVEL (`t(motivo.titulo)`), entao o guarda de AST
+  // nao as ve. Quem cobra que existam aqui e
+  // `lib/ai/credenciais/motivo-da-recusa.test.ts`, cruzando TEXTOS_DE_RECUSA
+  // com este dicionario.
+  "A chave foi recusada pelo provedor": { es: "El proveedor rechazó la clave" },
+  "O provedor limitou o uso desta chave": { es: "El proveedor limitó el uso de esta clave" },
+  "O provedor está fora do ar": { es: "El proveedor está fuera de servicio" },
+  "Não consegui falar com o provedor": { es: "No pude comunicarme con el proveedor" },
+  "Este provedor ainda não tem validação automática": {
+    es: "Este proveedor todavía no tiene validación automática",
+  },
+  "O provedor recusou a consulta": { es: "El proveedor rechazó la consulta" },
+  "Gere outra chave no painel do provedor e cole aqui.": {
+    es: "Genere otra clave en el panel del proveedor y péguela aquí.",
+  },
+  "Espere alguns minutos e valide de novo. Se continuar, confira o limite de uso na sua conta do provedor.":
+    {
+      es: "Espere unos minutos y valide de nuevo. Si continúa, revise el límite de uso en su cuenta del proveedor.",
+    },
+  "Não é a sua chave: o problema está do lado deles. Valide de novo daqui a alguns minutos.": {
+    es: "No es su clave: el problema está del lado de ellos. Valide de nuevo en unos minutos.",
+  },
+  "Confira se este servidor tem saída para a internet e valide de novo.": {
+    es: "Verifique que este servidor tenga salida a internet y valide de nuevo.",
+  },
+  "A chave foi guardada, mas não dá para conferir por aqui se ela funciona.": {
+    es: "La clave fue guardada, pero desde aquí no se puede verificar si funciona.",
+  },
+  "Confira a chave no painel do provedor e cole de novo.": {
+    es: "Revise la clave en el panel del proveedor y péguela de nuevo.",
+  },
+  "Motivo técnico": { es: "Motivo técnico" },
+  "Gerar outra chave": { es: "Generar otra clave" },
   "Salvar e validar": { es: "Guardar y validar" },
   "Obrigatório": { es: "Obligatorio" },
   "API key muito curta": { es: "API key demasiado corta" },
