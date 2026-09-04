@@ -169,15 +169,30 @@ export function InboxFilters({ value, onChange }: Props) {
         value={value.tab}
         onValueChange={(v) => onChange({ ...value, tab: v as InboxTab })}
       >
-        <TabsList
-          className="grid h-8 w-full"
-          style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
-        >
+        {/*
+          FLEX, e não grade de colunas iguais.
+
+          A grade dava a cada aba `minmax(0, 1fr)` — o mesmo espaço para "Fila"
+          e para "Automático". Na coluna do inbox, que é estreita, o rótulo
+          longo não cabia na célula e transbordava por cima do vizinho:
+          "FechadasAutomático" era o que aparecia na tela. Medido em 1600px de
+          largura, que não é tela pequena.
+
+          O `TabsList` do design system já traz `max-w-full overflow-x-auto`
+          justamente para fila de aba que cresce — era a grade que anulava isso.
+          Com flex, cada aba ocupa o que precisa e a fila rola se faltar espaço,
+          que é degradar em vez de quebrar.
+        */}
+        <TabsList className="flex h-8 w-full justify-start">
           {tabs.map((tab) => {
             const meta = INBOX_TABS.find((t) => t.value === tab)!;
             const count = countFor[tab];
             return (
-              <TabsTrigger key={tab} value={tab} className="gap-1 text-[11px]">
+              <TabsTrigger
+                key={tab}
+                value={tab}
+                className="shrink-0 gap-1 whitespace-nowrap text-[11px]"
+              >
                 {t(meta.label)}
                 {typeof count === "number" && count > 0 && (
                   <span className="text-[10px] tabular-nums text-muted-foreground">

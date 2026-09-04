@@ -158,13 +158,19 @@ export function ConversationListItem({
       data-conversation-id={conversation.id}
       onClick={() => onSelect(conversation.id)}
       className={cn(
-        "group flex w-full items-start gap-3 border-b border-border px-3 py-3 text-left transition-colors hover:bg-accent/40",
+        // O DIVISOR SAIU DAQUI e foi para o bloco de texto (abaixo): assim ele
+        // começa DEPOIS do avatar, como no WhatsApp. Divisor cortando a linha
+        // inteira empilha retângulos; começando no texto, ele lê como uma lista
+        // de pessoas.
+        "group flex w-full items-start gap-3 px-3 py-2 text-left transition-colors hover:bg-accent/40",
         isSelected && "bg-accent/60",
       )}
       aria-current={isSelected ? "true" : undefined}
     >
       <div className="relative shrink-0">
-        <Avatar className="h-10 w-10">
+        {/* 48px: é o tamanho que o WhatsApp usa, e o rosto é o que a pessoa
+            procura primeiro numa lista de conversa. */}
+        <Avatar className="h-12 w-12">
           {/* Só monta a <img> quando existe arquivo: sem isso o browser pediria
               a rota para TODO contato da lista e levaria 404 em cada um sem
               foto — que é a maioria. O AvatarFallback do Radix já cobre o caso
@@ -189,20 +195,14 @@ export function ConversationListItem({
         />
       </div>
 
-      <div className="min-w-0 flex-1">
-        {queuePosition !== undefined && (
-          <div className="mb-1 flex items-center gap-1.5">
-            <span
-              className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/10 px-1 text-[10px] font-medium tabular-nums text-primary"
-              aria-label={`${t("Posição")} ${queuePosition} ${t("na fila")}`}
-            >
-              {queuePosition}º
-            </span>
-            <span className="text-[10px] text-muted-foreground">
-              {waitingLabel(conversation, t, localeDaData)}
-            </span>
-          </div>
-        )}
+      <div className="min-w-0 flex-1 border-b border-border pb-2">
+        {/*
+          A POSIÇÃO NA FILA DESCEU. Ela ocupava a primeira linha, acima do nome,
+          e empurrava para baixo justamente o que se procura numa lista de
+          conversa — quem é. O dado não some: ele desce para a faixa de
+          detalhes, junto das tags e do canal, onde o olho vai quando já achou
+          a pessoa certa.
+        */}
         <div className="flex items-baseline justify-between gap-2">
           <span
             className={cn(
@@ -222,7 +222,18 @@ export function ConversationListItem({
           {truncated}
         </p>
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+        <div className="mt-1 flex flex-wrap items-center gap-1">
+          {queuePosition !== undefined && (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] text-muted-foreground"
+              aria-label={`${t("Posição")} ${queuePosition} ${t("na fila")}`}
+            >
+              <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/10 px-1 font-medium tabular-nums text-primary">
+                {queuePosition}º
+              </span>
+              {waitingLabel(conversation, t, localeDaData)}
+            </span>
+          )}
           {visibleTags.map((t) => (
             <Badge key={t} variant="secondary" className="h-4 px-1.5 text-[10px]">
               {t}

@@ -31,6 +31,14 @@
    ───────────────────────────────────────────────────────────────────────── */
 
 :root {
+  /* ── Inbox · a área de conversa (ver o bloco no fim do arquivo) ── */
+  --chat-bg: #e8e1d5;
+  --chat-in: #ffffff;
+  --chat-in-fg: var(--color-text);
+  --chat-out: var(--color-accent);
+  --chat-out-fg: var(--color-accent-fg);
+  --chat-pattern: rgba(28, 26, 22, 0.05);
+  --chat-bolha-sombra: 0 1px 0.5px rgba(28, 26, 22, 0.13);
   /* Surfaces (light) */
   --color-bg: #faf9f6;
   --color-surface: #ffffff;
@@ -250,6 +258,14 @@
    (lib/branding/css.ts), que só ganha consumidor com a tela de marca.
    ───────────────────────────────────────────────────────────────────────── */
 [data-theme="light"] {
+  /* ── Inbox · a área de conversa (ver o bloco no fim do arquivo) ── */
+  --chat-bg: #e8e1d5;
+  --chat-in: #ffffff;
+  --chat-in-fg: var(--color-text);
+  --chat-out: var(--color-accent);
+  --chat-out-fg: var(--color-accent-fg);
+  --chat-pattern: rgba(28, 26, 22, 0.05);
+  --chat-bolha-sombra: 0 1px 0.5px rgba(28, 26, 22, 0.13);
   --color-bg: #faf9f6;
   --color-surface: #ffffff;
   --color-surface-elevated: #f5f3ee;
@@ -327,6 +343,14 @@
 }
 
 [data-theme="dark"] {
+  /* ── Inbox · a área de conversa (ver o bloco no fim do arquivo) ── */
+  --chat-bg: #100f0b;
+  --chat-in: #22211a;
+  --chat-in-fg: var(--color-text);
+  --chat-out: color-mix(in srgb, var(--color-accent) 42%, #0b0a07);
+  --chat-out-fg: #f1f0e9;
+  --chat-pattern: rgba(245, 244, 239, 0.035);
+  --chat-bolha-sombra: 0 1px 0.5px rgba(0, 0, 0, 0.45);
   /* Surfaces (dark — drawn) */
   --color-bg: #161510;
   --color-surface: #1d1c17;
@@ -903,4 +927,69 @@
     transition: none;
     transform: none;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * INBOX · a área de conversa tem chão próprio
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * POR QUE ISTO EXISTE. O thread usava o mesmo fundo do resto do app, e o olho
+ * não separava "conversa" de "formulário". Quem atende passa o dia aqui e vem
+ * do WhatsApp Web; a distância entre as duas telas custava tempo de leitura em
+ * cada troca de conversa.
+ *
+ * O QUE FOI COPIADO E O QUE NÃO FOI. A FORMA é do WhatsApp — bolha com rabinho
+ * no primeiro item de cada bloco, hora e recibo dentro, chão distinto atrás.
+ * Isso é vocabulário de interface de bate-papo, não arte de ninguém. O fundo
+ * quadriculado DELES é desenho proprietário e não está aqui: o padrão abaixo é
+ * uma malha de pontos gerada em CSS, nossa.
+ *
+ * A COR CONTINUA SENDO A DA MARCA. `--chat-out` deriva de `--color-accent`, que
+ * o revendedor substitui em runtime (`<style id="marca-instalacao">`). Pintar a
+ * bolha de verde WhatsApp apagaria o white-label na superfície mais vista do
+ * produto — decisão do dono, tomada em 2026-09-04.
+ *
+ * TUDO POR TOKEN, nos dois temas. Cor escrita direto no componente é a que
+ * ninguém troca depois.
+ */
+/* O chão da conversa. A malha é de PONTOS e não de traços diagonais de
+ * propósito: traço tem direção, e direção compete com a leitura do texto. */
+.inbox-conversa {
+  background-color: var(--chat-bg);
+  background-image:
+    radial-gradient(var(--chat-pattern) 1px, transparent 1px),
+    radial-gradient(var(--chat-pattern) 1px, transparent 1px);
+  background-size: 26px 26px;
+  background-position: 0 0, 13px 13px;
+}
+
+/* A bolha. `position: relative` porque o rabinho é filho posicionado. */
+.inbox-bolha {
+  position: relative;
+  box-shadow: var(--chat-bolha-sombra);
+}
+
+/* O RABINHO, e ele só existe na PRIMEIRA bolha de cada bloco.
+ *
+ * É assim no WhatsApp e não é enfeite: o rabinho marca onde a fala começa.
+ * Repetido em toda bolha, ele vira ruído e o bloco perde a leitura de "isto
+ * tudo é a mesma pessoa falando seguido". */
+.inbox-bolha-rabinho::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 9px;
+  height: 13px;
+}
+
+.inbox-bolha-entrada.inbox-bolha-rabinho::after {
+  left: -8px;
+  background: var(--chat-in);
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+}
+
+.inbox-bolha-saida.inbox-bolha-rabinho::after {
+  right: -8px;
+  background: var(--chat-out);
+  clip-path: polygon(0 0, 0 100%, 100% 0);
 }

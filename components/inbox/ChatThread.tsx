@@ -202,7 +202,7 @@ export function ChatThread({ conversationId, onResponder }: Props) {
 
   return (
     <div {...sinalDoCanal} className="flex h-full flex-col">
-      <div ref={scrollerRef} className="flex-1 overflow-y-auto py-2">
+      <div ref={scrollerRef} className="inbox-conversa flex-1 overflow-y-auto py-2">
         {q.hasNextPage && (
           <div className="flex justify-center py-2">
             <Button
@@ -217,14 +217,37 @@ export function ChatThread({ conversationId, onResponder }: Props) {
         )}
 
         {groups.map((g) => (
-          <div key={g.key} className="space-y-1">
-            <div className="sticky top-0 z-10 flex justify-center py-1">
-              <span className="rounded-full bg-background/80 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground backdrop-blur">
+          <div key={g.key}>
+            <div className="sticky top-0 z-10 flex justify-center py-1.5">
+              <span className="rounded-md bg-[var(--chat-in)] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground shadow-[var(--chat-bolha-sombra)]">
                 {dayLabel(g.date, t, localeDaData)}
               </span>
             </div>
-            {g.items.map((item) =>
-              item.kind === "note" ? (
+            {g.items.map((item, indice) => {
+              /**
+               * Esta linha ABRE um bloco de falas seguidas?
+               *
+               * Abre quando é a primeira do dia, quando a anterior é uma nota
+               * interna (outro tipo de conteúdo), quando o lado muda, ou quando
+               * houve silêncio de mais de cinco minutos.
+               *
+               * O silêncio entra na conta porque duas falas do mesmo lado com
+               * meia hora entre elas não são a mesma fala: sem esse corte, uma
+               * conversa de um dia inteiro vira um bloco único com um rabinho
+               * lá em cima, e o olho perde onde cada retomada começou. Cinco
+               * minutos é a convenção de agrupamento de bate-papo — não tem
+               * relação com o piso de SLA de `tempo-sem-resposta`, que responde
+               * outra pergunta.
+               */
+              const anterior = indice > 0 ? g.items[indice - 1] : undefined;
+              const primeiraDoGrupo =
+                item.kind !== "note" &&
+                (anterior === undefined ||
+                  anterior.kind === "note" ||
+                  anterior.data.direction !== item.data.direction ||
+                  new Date(item.ts).getTime() - new Date(anterior.ts).getTime() > 5 * 60_000);
+
+              return item.kind === "note" ? (
                 <NoteCard
                   key={`note-${item.data.id}`}
                   note={item.data}
@@ -247,9 +270,10 @@ export function ChatThread({ conversationId, onResponder }: Props) {
                   // citada é antiga demais e ficou fora da página, o fio some —
                   // que é melhor que segurar a conversa esperando.
                   citada={porId.get(item.data.reply_to_message_id ?? "") ?? null}
+                  primeiraDoGrupo={primeiraDoGrupo}
                 />
-              ),
-            )}
+              );
+            })}
           </div>
         ))}
 
