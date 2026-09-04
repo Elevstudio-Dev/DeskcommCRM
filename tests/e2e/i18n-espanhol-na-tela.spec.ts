@@ -85,6 +85,17 @@ const TELAS = ["/app/inbox", "/app/kanban", "/app/contacts", "/app/metrics", "/a
  */
 const DADO_DO_TENANT = new Set([
   "Entregue", // crm_stages.name, do seed de e2e
+  // `crm_stages.name`, criadas por `pipelines-gestao.spec.ts:108`, que monta um
+  // funil com ["Novo", "Em andamento", "Ganho", "Perdido"]. O banco do e2e e
+  // compartilhado entre specs, entao essas etapas sobrevivem e aparecem em
+  // /app/metrics, que lista o funil pelo nome que o tenant cadastrou.
+  //
+  // Sao DADO, e dado nao se traduz: um funil chamado "Novo" continua "Novo" em
+  // espanhol, porque quem o nomeou foi o operador. "Em andamento" e "Perdido"
+  // nao entram nesta lista porque nao sao chaves do dicionario — a regua so
+  // acusa o que ela saberia traduzir.
+  "Novo", // crm_stages.name, criado por pipelines-gestao.spec.ts
+  "Ganho", // crm_stages.name, criado por pipelines-gestao.spec.ts
 ]);
 
 const CHAVES_QUE_MUDAM = new Set(
