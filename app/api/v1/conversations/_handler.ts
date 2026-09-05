@@ -124,6 +124,11 @@ export async function listConversationsHandler(
     query = query.not("status", "in", `(${CONVERSATION_TERMINAL_STATUSES.join(",")})`);
   }
   if (q.channel_session_id) query = query.eq("channel_session_id", q.channel_session_id);
+  // `!== undefined` e nao truthiness: `false` e um pedido legitimo aqui ("me da
+  // so o que NAO e grupo"), e e justamente o que toda visao que nao a de Grupos
+  // manda. Um `if (q.is_group)` devolveria a lista inteira, com os grupos no
+  // meio, sem erro nenhum na tela.
+  if (q.is_group !== undefined) query = query.eq("is_group", q.is_group);
   if (q.tag) query = query.contains("tags", [q.tag]); // tags @> array[tag] (GIN)
 
   if (q.assigned_to === "me") {

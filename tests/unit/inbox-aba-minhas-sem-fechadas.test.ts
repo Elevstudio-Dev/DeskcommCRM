@@ -25,12 +25,28 @@ import { CONVERSATION_TERMINAL_STATUSES, listConversationsQuerySchema } from "@/
 // ---------------------------------------------------------------------------
 
 describe("tabToFilter — o que cada aba significa", () => {
-  it("Minhas pede as minhas SEM as terminais", () => {
-    expect(tabToFilter("mine")).toEqual({ assigned_to: "me", exclude_finished: true });
+  /**
+   * `is_group: false` entrou em TODAS as visões de cliente em 2026-09-05.
+   *
+   * Os grupos ganharam vínculo (migration 0210) e visão própria. A decisão do
+   * dono foi que eles não se misturam: um grupo de 40 pessoas produz dezenas de
+   * mensagens por hora e empurraria para fora da primeira pagina justamente o
+   * cliente que está esperando resposta. `toEqual` (e nao `toMatchObject`) é
+   * deliberado aqui — é o que faz a exclusão ser MEDIDA, e não suposta.
+   */
+  it("Minhas pede as minhas SEM as terminais e SEM grupo", () => {
+    expect(tabToFilter("mine")).toEqual({
+      assigned_to: "me",
+      exclude_finished: true,
+      is_group: false,
+    });
   });
 
-  it("Fechadas continua mostrando as fechadas — senão não sobra onde vê-las", () => {
-    expect(tabToFilter("closed")).toEqual({ status: "closed" });
+  it("Arquivadas continua mostrando as arquivadas — senão não sobra onde vê-las", () => {
+    // O VALOR continua `closed`: e contrato com a API e com o banco. Só o
+    // RÓTULO virou "Arquivadas" (2026-09-04), porque a conversa nunca foi
+    // apagada e "Fechar" sugeria o contrário.
+    expect(tabToFilter("closed")).toEqual({ status: "closed", is_group: false });
   });
 
   it("a Fila pergunta QUEM MANDA, não o status — e o valor mudou por medição", () => {
@@ -46,7 +62,7 @@ describe("tabToFilter — o que cada aba significa", () => {
     //
     // `comandosDaFila` responde a pergunta certa e continua cobrindo a conversa
     // escalada (ela é `aguardando`, por causa do silêncio, não do status).
-    expect(tabToFilter("unassigned")).toEqual({ comando: ["aguardando"] });
+    expect(tabToFilter("unassigned")).toEqual({ comando: ["aguardando"], is_group: false });
   });
 
   it("numa org SEM automático, a Fila também traz o que ninguém está atendendo", () => {
@@ -55,6 +71,7 @@ describe("tabToFilter — o que cada aba significa", () => {
     // que é o pior estado possível na primeira impressão.
     expect(tabToFilter("unassigned", false)).toEqual({
       comando: ["aguardando", "automatico"],
+      is_group: false,
     });
   });
 
@@ -62,13 +79,30 @@ describe("tabToFilter — o que cada aba significa", () => {
     // `ai_handling` é escrito por UM caminho só em produção (a volta pelo botão
     // "Devolver ao automático"), e por isso a aba mostrava 2 enquanto o robô
     // atendia 47.
-    expect(tabToFilter("ai")).toEqual({ comando: ["automatico"] });
+    expect(tabToFilter("ai")).toEqual({ comando: ["automatico"], is_group: false });
   });
 
   it("as outras abas não ganham o filtro de tabela", () => {
     expect(tabToFilter("unassigned").exclude_finished).toBeUndefined();
     expect(tabToFilter("all").exclude_finished).toBeUndefined();
     expect(tabToFilter("ai").exclude_finished).toBeUndefined();
+  });
+
+  /**
+   * A visão Grupos é a ÚNICA que inverte o filtro — e os dois lados são medidos
+   * junto de propósito. Dar aos grupos uma visão própria SEM tirá-los das demais
+   * daria o trabalho e não o benefício; tirá-los das demais SEM a visão própria
+   * os esconderia para sempre. Uma asserção só, com as duas metades, é o que
+   * impede alguém de "consertar" metade.
+   */
+  it("Grupos é a única visão que pede grupo — e é a única que pede", () => {
+    expect(tabToFilter("grupos")).toEqual({ is_group: true });
+    for (const outra of ["unassigned", "mine", "all", "ai", "closed"] as const) {
+      expect(
+        tabToFilter(outra).is_group,
+        `a visão ${outra} deixou de excluir grupo — um grupo movimentado vai empurrar cliente para fora da lista`,
+      ).toBe(false);
+    }
   });
 });
 

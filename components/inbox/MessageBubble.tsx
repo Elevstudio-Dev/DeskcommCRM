@@ -79,6 +79,28 @@ export function MessageBubble({
     if (message.sent_via === "ai") return "IA";
     return null;
   })();
+  /**
+   * QUEM FALOU, dentro de um grupo.
+   *
+   * Numa conversa de grupo o `contact_id` da mensagem é o GRUPO, não a pessoa —
+   * quem escreveu vem no metadata, gravado pela ingestão (`lib/waha/ingest.ts`,
+   * `grupo_participante_nome`). Sem esta linha, dez pessoas falando num grupo
+   * apareceriam como uma só, que é o mesmo que não mostrar grupo nenhum.
+   *
+   * Só no que ENTRA: no que sai, quem falou foi esta empresa, e o rótulo de
+   * quem enviou já é o `senderLabel` acima.
+   */
+  const participanteDoGrupo = (() => {
+    if (isOutbound) return null;
+    const m = message.metadata as Record<string, unknown> | null | undefined;
+    const nome = m?.grupo_participante_nome;
+    if (typeof nome === "string" && nome.trim()) return nome.trim();
+    // Sem nome, o número é melhor que nada: "5511..." ao menos distingue duas
+    // pessoas falando. `@s.whatsapp.net`/`@c.us` fora, que é ruído de protocolo.
+    const id = m?.grupo_participante;
+    if (typeof id === "string" && id.trim()) return id.replace(/@.*$/, "");
+    return null;
+  })();
 
   return (
     <div
@@ -195,6 +217,23 @@ export function MessageBubble({
                 ? t("Esta mensagem foi apagada")
                 : citada.body?.trim() || t("(sem texto)")}
             </div>
+          </div>
+        )}
+        {/*
+          O nome de quem falou, só na PRIMEIRA bolha do bloco.
+          Repetir em cada mensagem seguida da mesma pessoa é exatamente o que o
+          agrupamento existe para evitar — e é assim que o WhatsApp faz.
+
+          Cor própria e não `opacity`: sobre o fundo claro da bolha de entrada,
+          um cinza esmaecido some, e o nome é a informação que faz a conversa de
+          grupo ser legível.
+        */}
+        {participanteDoGrupo && primeiraDoGrupo && (
+          <div
+            className="mb-0.5 truncate text-xs font-semibold text-[var(--chat-out)]"
+            title={participanteDoGrupo}
+          >
+            {participanteDoGrupo}
           </div>
         )}
         {senderLabel && (

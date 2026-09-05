@@ -71,6 +71,12 @@ export const crmListConversations: McpToolDefinition<typeof listInputShape> = {
         // é erro de tipo. A tool do MCP não expõe filtro por comando (quem
         // pergunta é a tela), então ela não filtra por ele.
         comando: undefined,
+        // Idem: `undefined` EXPLICITO. E aqui `undefined` é a resposta certa, não
+        // so a exigida pelo tipo — a tool do MCP já devolve `is_group` em cada
+        // linha (ver o `select` abaixo), então ela sempre enxergou grupo e deve
+        // continuar enxergando. Quem separa grupo de cliente é a TELA, por
+        // decisão de produto; a API não esconde nada de quem consulta direto.
+        is_group: undefined,
         limit: input.limit,
         cursor: input.cursor,
       },

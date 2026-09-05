@@ -88,6 +88,12 @@ export interface ConversationsFilters {
   search?: string;
   channel_session_id?: string;
   tag?: string;
+  /**
+   * `true` = so grupos; `false` = so conversas de pessoa; ausente = tudo.
+   * A visao Grupos manda `true`, todas as outras mandam `false` (decisao do
+   * dono: grupo nao se mistura com cliente esperando resposta).
+   */
+  is_group?: boolean;
 }
 
 interface ListResponse {
@@ -124,6 +130,10 @@ export function useConversationsRealtime(
       if (filters.search) qs.set("search", filters.search);
       if (filters.channel_session_id) qs.set("channel_session_id", filters.channel_session_id);
       if (filters.tag) qs.set("tag", filters.tag);
+      // `!== undefined`, nao truthiness: `false` e o valor que quase toda visao
+      // manda, e um `if (filters.is_group)` o engoliria em silencio — a lista
+      // voltaria com os grupos no meio da Fila e nada apontaria para aqui.
+      if (filters.is_group !== undefined) qs.set("is_group", String(filters.is_group));
       if (pageParam) qs.set("cursor", pageParam);
       qs.set("limit", "50");
       try {

@@ -151,6 +151,7 @@ function bancoDeMentira(preexistentes: Array<Partial<LinhaMessage>> = []): Duplo
       // Sem os ids de retorno o ingest desiste antes do insert e o teste
       // passaria por não ter exercitado nada.
       if (fn === "fn_upsert_wa_contact") return { data: "contato-1", error: null };
+      if (fn === "fn_upsert_wa_group_contact") return { data: "grupo-1", error: null };
       if (fn === "fn_upsert_wa_conversation") return { data: "conversa-1", error: null };
       return { data: null, error: null };
     },
@@ -245,8 +246,22 @@ describe("mensagem digitada no celular do dono (fromMe)", () => {
 });
 
 describe("controles — o que tem que continuar sendo descartado", () => {
-  it("grupo continua fora do CRM mesmo quando o chat vem do id", async () => {
-    const { admin, messages } = bancoDeMentira();
+  /**
+   * ESTE CASO FOI INVERTIDO EM 2026-09-05, e a inversão é deliberada.
+   *
+   * Ele dizia "grupo continua fora do CRM mesmo quando o chat vem do id", e
+   * guardava a doutrina antiga: `@g.us` era descarte. O dono pediu os grupos na
+   * tela, a migration 0210 deu identidade própria a eles, e o descarte virou
+   * vínculo. Apagar o caso perderia a metade que CONTINUA valendo, e que era o
+   * verdadeiro achado dele: sem `to`, o chat sai do ID COMPOSTO da mensagem —
+   * foi o defeito #108, e é o que faz esta mensagem chegar em algum lugar.
+   *
+   * Então o que se mede agora é a mesma extração, com o desfecho novo: o chat
+   * saiu do id, e o que ele produziu foi um vínculo de GRUPO — não um contato
+   * de pessoa, que seria o erro caro (um "cliente" chamado 120363000000000000).
+   */
+  it("sem `to`, o chat de grupo sai do id — e vira vínculo de GRUPO, não de pessoa", async () => {
+    const { admin, messages, rpcs } = bancoDeMentira();
 
     await dispatchWahaEvent(
       admin as never,
@@ -260,7 +275,15 @@ describe("controles — o que tem que continuar sendo descartado", () => {
       "req-1",
     );
 
-    expect(messages, "grupo não faz binding CRM").toHaveLength(0);
+    expect(messages, "a mensagem que o dono digitou no grupo tem de entrar").toHaveLength(1);
+    expect(
+      rpcs.some((c) => c.fn === "fn_upsert_wa_group_contact"),
+      "o grupo tem de nascer pela RPC de GRUPO",
+    ).toBe(true);
+    expect(
+      rpcs.some((c) => c.fn === "fn_upsert_wa_contact"),
+      "um grupo virando contato de pessoa é o defeito que a 0027 matou: id de grupo como se fosse cliente",
+    ).toBe(false);
   });
 
   it("id de 4 segmentos (grupo, formato documentado do WAHA) não cria contato", async () => {

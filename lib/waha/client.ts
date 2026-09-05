@@ -36,12 +36,22 @@ import { classificarFalhaDeAlcance, explicarFalhaDeAlcance } from "@/lib/net/alc
  * contêiner e entrado no banco DELE. Cortar na fonte é a única versão que
  * economiza as três coisas.
  *
- * ─── Grupos entram na lista, e isso não muda o produto ──────────────────────
+ * ─── Grupos SAÍRAM da lista em 2026-09-05 ───────────────────────────────────
  *
- * O CLAUDE.md manda pular o vínculo de CRM quando o chat termina em `@g.us`.
- * Já hoje nenhuma mensagem de grupo vira conversa, contato ou lead: o
- * comportamento visível é idêntico com ou sem esta linha. O que muda é parar
- * de pagar por elas. Quem um dia quiser grupos inverte a chave.
+ * Esta linha dizia "quem um dia quiser grupos inverte a chave". O dia chegou:
+ * a migration 0210 deu identidade própria ao grupo (índice
+ * `uniq_contacts_org_wa_group` + `fn_upsert_wa_group_contact`) e
+ * `handleInbound` passou a vinculá-lo, então o WAHA precisa voltar a ENTREGAR
+ * o evento — `ignore` impede processamento E armazenamento, então enquanto
+ * `groups: true` estivesse aqui nenhum `if` nosso adiantaria.
+ *
+ * O custo volta junto: grupo movimentado gera evento, e evento custa
+ * transporte e banco do contêiner. É o preço de ver o grupo na tela, e foi uma
+ * decisão do dono.
+ *
+ * A IA segue calada em grupo por PADRÃO — `lib/ai/dispatcher/triggers.ts:86`,
+ * `ignore_groups` que só é `false` se alguém desmarcar na tela do agente. Isso
+ * não mudou aqui e não deve mudar por acidente.
  */
 export const CONVERSAS_IGNORADAS = {
   /** Os "estados" que os contatos publicam. Sozinhos eram 69% do arquivo. */
@@ -50,8 +60,8 @@ export const CONVERSAS_IGNORADAS = {
   broadcast: true,
   /** Canais / newsletters. */
   channels: true,
-  /** Ver o parágrafo acima: o CRM já os descarta na entrada. */
-  groups: true,
+  /** Ver o parágrafo acima: o CRM passou a vinculá-los (0210). */
+  groups: false,
 } as const;
 
 /**
@@ -447,6 +457,54 @@ export class WahaClient {
       throw new Error(`waha_${res.status}: ${body.slice(0, 200)}`);
     }
     return res.json() as Promise<{ numberExists: boolean; chatId?: string | null; pn?: string | null }>;
+  }
+
+  /**
+   * Os grupos que a conta JÁ participa — a lista que o aparelho tem.
+   *
+   * Existe porque a ingestão sozinha só faz aparecer o grupo em que ALGUÉM
+   * escreveu depois que ligamos a chave. Um grupo parado há uma semana ficaria
+   * invisível, e "cadê os meus grupos?" é a primeira coisa que quem liga isso
+   * pergunta.
+   *
+   * A forma do `id` varia entre as engines do WAHA (NOWEB devolve string,
+   * WEBJS devolve `{_serialized}`), e o nome vem ora em `subject`, ora em
+   * `name`. Normalizar aqui, e não em cada chamador, é o que impede a diferença
+   * de engine de virar bug de tela.
+   */
+  async listGroups(session: string): Promise<Array<{ chatId: string; subject: string | null }>> {
+    const url = new URL(`${this.baseUrl}/api/${encodeURIComponent(session)}/groups`);
+    const res = await this.fetchComTeto(url, {
+      headers: { "X-Api-Key": this.apiKey, Accept: "application/json" },
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`waha_${res.status}: ${body.slice(0, 200)}`);
+    }
+    const cru: unknown = await res.json();
+    if (!Array.isArray(cru)) return [];
+    const saida: Array<{ chatId: string; subject: string | null }> = [];
+    for (const item of cru) {
+      if (!item || typeof item !== "object") continue;
+      const g = item as { id?: unknown; subject?: unknown; name?: unknown };
+      const id =
+        typeof g.id === "string"
+          ? g.id
+          : g.id && typeof g.id === "object" && typeof (g.id as { _serialized?: unknown })._serialized === "string"
+            ? (g.id as { _serialized: string })._serialized
+            : null;
+      // Sem `@g.us` não é grupo — e deixar passar aqui criaria um contato-grupo
+      // com identidade de outra coisa, que o índice único não desfaz depois.
+      if (!id || !id.endsWith("@g.us")) continue;
+      const nome =
+        typeof g.subject === "string" && g.subject.trim()
+          ? g.subject.trim()
+          : typeof g.name === "string" && g.name.trim()
+            ? g.name.trim()
+            : null;
+      saida.push({ chatId: id, subject: nome });
+    }
+    return saida;
   }
 
   async sendContactVcard(

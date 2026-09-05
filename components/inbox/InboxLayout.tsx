@@ -68,7 +68,16 @@ export function tabToFilter(
   tab: InboxFiltersValue["tab"],
   automaticoDaOrg?: boolean,
 ): Partial<ConversationsFilters> {
+  // GRUPO SO APARECE NA VISAO DE GRUPO — e o outro lado da mesma decisao.
+  //
+  // Dar aos grupos uma visao propria sem tira-los das demais seria dar o
+  // trabalho e nao o beneficio: um grupo de 40 pessoas produz dezenas de
+  // mensagens por hora e empurraria para fora da primeira pagina da Fila
+  // justamente o cliente que esta esperando. Por isso toda visao que nao a de
+  // Grupos pede `is_group: false` explicitamente, e nao "o que vier".
+  if (tab === "grupos") return { is_group: true };
   switch (tab) {
+    // Todos os `return` abaixo levam `is_group: false` — ver o comentario acima.
     case "unassigned":
       // A FILA PERGUNTA POR QUEM MANDA, NÃO POR STATUS.
       //
@@ -80,26 +89,26 @@ export function tabToFilter(
       //
       // `comandosDaFila` é quem cruza isso com o fato org-wide: numa instalação
       // sem nenhum agente no ar, `automatico` também é "esperando gente".
-      return { comando: comandosDaFila(automaticoDaOrg) };
+      return { comando: comandosDaFila(automaticoDaOrg), is_group: false };
     case "mine":
       // Sem `exclude_finished` a aba mostra tudo que o atendente JÁ atendeu —
       // `Fechar` muda o status mas não solta o dono (de propósito: quem atendeu
       // é histórico). O lugar de "minhas fechadas" é a aba Fechadas.
-      return { assigned_to: "me", exclude_finished: true };
+      return { assigned_to: "me", exclude_finished: true, is_group: false };
     case "closed":
-      return { status: "closed" };
+      return { status: "closed", is_group: false };
     case "ai":
       // `ai_handling` é escrito por UM caminho só em produção (a volta pelo botão
       // "Devolver ao automático"), então a aba vivia mostrando 2 enquanto o robô
       // atendia 47. Agora ela pergunta a régua do MOTOR.
-      return { comando: ["automatico"] };
+      return { comando: ["automatico"], is_group: false };
     case "all":
     default:
-      return {};
+      return { is_group: false };
   }
 }
 
-const FILTER_TABS: InboxTab[] = ["unassigned", "mine", "all", "closed", "ai"];
+const FILTER_TABS: InboxTab[] = ["unassigned", "mine", "all", "closed", "ai", "grupos"];
 
 /**
  * Lê ?filter= (G4-02, deep-link). ?filter=all é HONRADO mesmo para agent — a

@@ -54,6 +54,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     // Achado por @jmpo, no cabeçalho do teste que ele escreveu no PR #199.
     tag: url.searchParams.get("tag") ?? undefined,
     channel_session_id: url.searchParams.get("channel_session_id") ?? undefined,
+    is_group: url.searchParams.get("is_group") ?? undefined,
     search: url.searchParams.get("search") ?? undefined,
     cursor: url.searchParams.get("cursor") ?? undefined,
     limit: url.searchParams.get("limit") ?? undefined,

@@ -49,12 +49,28 @@ beforeEach(() => { chamadas = []; });
 afterEach(() => { globalThis.fetch = fetchOriginal; });
 
 describe("a sessão nasce ignorando o que o CRM não atende", () => {
-  it("a criação leva as quatro categorias", async () => {
+  /**
+   * ERA "as quatro categorias". VIROU tres, em 2026-09-05, e a mudança é uma
+   * DECISÃO DE PRODUTO, não um afrouxamento do filtro.
+   *
+   * O dono pediu os grupos na tela. A migration 0210 deu identidade própria a
+   * eles e `handleInbound` passou a vinculá-los — mas `ignore` do WAHA impede
+   * "event processing AND database storage", então enquanto `groups: true`
+   * estivesse aqui nenhum código nosso adiantaria: a mensagem nunca chegaria.
+   *
+   * O custo medido volta junto: 17.970 eventos / 89 MB no levantamento de
+   * 20/08/2026. É o preço de ver o grupo, e está escrito para que ninguém o
+   * pague por acidente — quem "otimizar" isto de volta apaga um recurso.
+   *
+   * As outras três continuam valendo e somam 306 dos 395 MB. Elas são o que o
+   * CRM continua NÃO atendendo, e por isso continuam pagas a zero.
+   */
+  it("a criação leva as três categorias que o CRM não atende — e não mais os grupos", async () => {
     espionar({});
     await new WahaClient("http://w", "k").startSession("s1");
     const criacao = chamadas.find((c) => c.url.endsWith("/api/sessions") && c.metodo === "POST");
     expect((criacao?.corpo as { config?: { ignore?: unknown } })?.config?.ignore).toEqual({
-      status: true, broadcast: true, channels: true, groups: true,
+      status: true, broadcast: true, channels: true, groups: false,
     });
   });
 
@@ -62,6 +78,18 @@ describe("a sessão nasce ignorando o que o CRM não atende", () => {
     // 271 MB de 395 MB, sozinhos. Se alguém "aliviar" o filtro, é por aqui que
     // o banco volta a crescer 23 MB/dia.
     expect(CONVERSAS_IGNORADAS.status, "os estados voltaram a ser recebidos").toBe(true);
+  });
+
+  it("grupo tem de continuar CHEGANDO — o `ignore` do WAHA apaga o recurso na fonte", () => {
+    // O contrário das outras três, e por isso tem caso próprio: aqui `true` é o
+    // defeito. `ignore` impede processamento E armazenamento no contêiner, então
+    // a visão Grupos do inbox ficaria vazia para sempre, sem nenhum erro em log
+    // e sem nada na tela dizendo por que. Um "otimizar o filtro" bem
+    // intencionado desliga um recurso inteiro daqui.
+    expect(
+      CONVERSAS_IGNORADAS.groups,
+      "os grupos voltaram a ser ignorados no WAHA — a visão Grupos vai ficar vazia calada",
+    ).toBe(false);
   });
 });
 

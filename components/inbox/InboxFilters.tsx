@@ -23,9 +23,13 @@ import { channelLabel, useChannelSessions } from "@/hooks/channels/useChannelSes
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { useConversationTagVocabulary } from "@/hooks/inbox/useConversationTags";
 import { useConversationCounts } from "@/hooks/inbox/useConversationCounts";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { apiClient } from "@/lib/api/client";
+import { showApiError } from "@/components/feedback/ApiErrorToast";
 import type { Role, VisibilityMode } from "@/lib/auth/types";
 
-export type InboxTab = "unassigned" | "mine" | "all" | "closed" | "ai";
+export type InboxTab = "unassigned" | "mine" | "all" | "closed" | "ai" | "grupos";
 
 const INBOX_TABS: { value: InboxTab; label: string }[] = [
   { value: "unassigned", label: "Fila" },
@@ -34,6 +38,7 @@ const INBOX_TABS: { value: InboxTab; label: string }[] = [
   // "Arquivadas", não "Fechadas": o botão do cabeçalho virou "Arquivar" em
   // 2026-09-04, e duas palavras para a mesma coisa ensinam que são coisas
   // diferentes. O VALOR (`closed`) não muda — ele é contrato de API e de banco.
+  { value: "grupos", label: "Grupos" },
   { value: "closed", label: "Arquivadas" },
   // "Automático", não "IA": a palavra deste ator já é contrato em quatro arquivos
   // e no dicionário, e `handoff-por-orcamento.test.ts` usa literalmente "Voltar
@@ -67,6 +72,65 @@ interface Props {
   onChange: (next: InboxFiltersValue) => void;
 }
 
+/**
+ * Traz para o CRM os grupos que a conta JÁ participa.
+ *
+ * Mora aqui, e não na tela de Conexões, porque é aqui que a pergunta nasce: a
+ * pessoa abre a visão Grupos, vê pouca coisa (ou nada) e quer os seus grupos.
+ * Um botão numa tela de configuração que ela não abriu não seria encontrado.
+ *
+ * Só aparece na visão Grupos — nas outras seria ruído, e um botão que cria
+ * dezenas de conversas não deve estar a um clique de distância de quem está
+ * atendendo cliente.
+ */
+function ImportarGrupos() {
+  const t = useT();
+  const qc = useQueryClient();
+  const [importando, setImportando] = useState(false);
+
+  async function importar() {
+    setImportando(true);
+    try {
+      const r = await apiClient.post<{ encontrados: number; vinculados: number; falharam: number }>(
+        "/api/v1/whatsapp/groups/import",
+        {},
+      );
+      // O texto diz o NÚMERO, não "pronto": quem tem 12 grupos e vê "3
+      // importados" precisa saber disso na hora, e não depois de procurar os
+      // outros nove na lista.
+      if (r.falharam > 0) {
+        toast.warning(
+          t("Grupos importados com falhas") +
+            `: ${r.vinculados}/${r.encontrados}` +
+            ` (${r.falharam} ${t("não entraram")})`,
+        );
+      } else if (r.vinculados === 0) {
+        toast.info(t("Nenhum grupo encontrado neste número."));
+      } else {
+        toast.success(`${r.vinculados} ${t("grupos importados")}`);
+      }
+      await qc.invalidateQueries({ queryKey: ["conversations"] });
+    } catch (err) {
+      showApiError(err);
+    } finally {
+      setImportando(false);
+    }
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-8 w-full"
+      onClick={importar}
+      disabled={importando}
+      data-testid="importar-grupos"
+    >
+      {importando ? t("Importando…") : t("Importar grupos do WhatsApp")}
+    </Button>
+  );
+}
+
 export function InboxFilters({ value, onChange }: Props) {
   const t = useT();
   const [searchInput, setSearchInput] = useState(value.search);
@@ -90,6 +154,7 @@ export function InboxFilters({ value, onChange }: Props) {
     ai: counts?.automatico,
     mine: counts?.mine,
     all: counts?.all,
+    grupos: counts?.grupos,
   };
   // Filtrar por um número que saiu da lista (o operador acabou de excluir o
   // canal) deixa o inbox mostrando um subconjunto — às vezes vazio — sem nada na
@@ -226,6 +291,8 @@ export function InboxFilters({ value, onChange }: Props) {
           })}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {value.tab === "grupos" && <ImportarGrupos />}
 
       <div className="flex items-center justify-between">
         <Label htmlFor="only-unread" className="text-xs text-muted-foreground">

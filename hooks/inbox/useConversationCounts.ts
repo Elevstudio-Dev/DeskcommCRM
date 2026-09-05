@@ -15,6 +15,13 @@ export interface ConversationCounts {
   unassigned: number;
   mine: number;
   all: number;
+  /**
+   * Opcional pelo mesmo motivo que `fila` e `automatico` são: a página pode
+   * estar lendo um cache de react-query gravado ANTES do deploy que criou o
+   * campo. Sem o `?`, o badge da visão Grupos apareceria como `undefined` por
+   * alguns segundos em vez de simplesmente não aparecer.
+   */
+  grupos?: number;
 }
 
 /**

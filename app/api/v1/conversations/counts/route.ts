@@ -36,11 +36,23 @@ export async function GET(): Promise<Response> {
   }
 
   const org = activeOrg.orgId;
+  /**
+   * A contagem de uma visão de CLIENTE — grupo fora, sempre.
+   *
+   * `tabToFilter` passou a pedir `is_group: false` em toda visão que não a de
+   * Grupos (decisão do dono: grupo não disputa espaço com cliente esperando).
+   * Se o badge não acompanhasse, a tela se contradiria sozinha — Fila dizendo
+   * 40 e listando 12 —, que e exatamente o defeito de 2026-08-30 que fez
+   * `badge-espelha-a-aba.test.ts` existir. Aqui o `is_group` mora no HELPER, e
+   * não em cada chamada, porque esquecer um `.eq` numa das quatro devolveria
+   * um número errado sem quebrar nada.
+   */
   const countExact = () =>
     supabase
       .from("conversations")
       .select("id", { count: "exact", head: true })
-      .eq("organization_id", org);
+      .eq("organization_id", org)
+      .eq("is_group", false);
 
   // Espelha tabToFilter (InboxLayout): unassigned = fila aberta sem dono;
   // mine = atribuídas a mim e ainda ABERTAS; all = tudo que o usuário VÊ.
@@ -53,7 +65,7 @@ export async function GET(): Promise<Response> {
   // convenção da regra: assume que há automático.
   const automaticoDaOrg = await orgTemAutomatico(supabase, org);
 
-  const [fila, automatico, mine, all] = await Promise.all([
+  const [fila, automatico, mine, all, grupos] = await Promise.all([
     // A FILA DEIXOU DE SER "sem dono + status de espera".
     //
     // Aquele par contava como trabalho humano pendente tudo que o robô estava
@@ -70,9 +82,17 @@ export async function GET(): Promise<Response> {
       .eq("assigned_to_user_id", user.id)
       .not("status", "in", `(${CONVERSATION_TERMINAL_STATUSES.join(",")})`),
     countExact(),
+    // A visão Grupos é a ÚNICA que inverte o filtro, então ela não usa
+    // `countExact` — usá-lo e depois sobrescrever `is_group` daria certo hoje e
+    // erraria calado no dia em que o helper ganhasse outra cláusula.
+    supabase
+      .from("conversations")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", org)
+      .eq("is_group", true),
   ]);
 
-  const firstErr = fila.error ?? automatico.error ?? mine.error ?? all.error;
+  const firstErr = fila.error ?? automatico.error ?? mine.error ?? all.error ?? grupos.error;
   if (firstErr) {
     return fail("internal_error", firstErr.message, 500, { requestId });
   }
@@ -88,6 +108,7 @@ export async function GET(): Promise<Response> {
       unassigned: fila.count ?? 0,
       mine: mine.count ?? 0,
       all: all.count ?? 0,
+      grupos: grupos.count ?? 0,
     },
     { requestId },
   );

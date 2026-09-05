@@ -314,6 +314,23 @@ export const listConversationsQuerySchema = z.object({
   channel_session_id: z.string().uuid().optional(),
   tag: conversationTagSchema.optional(),
   search: z.string().optional(),
+  /**
+   * GRUPO ou NAO-GRUPO — nunca "tanto faz" vindo da tela.
+   *
+   * Os grupos ganharam vinculo em 2026-09-05 (migration 0210) e uma visao
+   * propria no inbox. A decisao do dono foi que eles NAO se misturam com as
+   * conversas de cliente: um grupo movimentado empurraria cliente para fora da
+   * primeira pagina da Fila, que e a tela onde alguem esta esperando resposta.
+   *
+   * Por isso o parametro e TRES-ESTADOS e nao um booleano de um lado so:
+   * `true` = so grupos (a visao Grupos), `false` = so conversas de pessoa
+   * (todas as outras visoes), ausente = tudo, que e o que a API sempre fez e
+   * continua fazendo para quem chama de fora sem pedir nada.
+   */
+  is_group: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true")),
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
