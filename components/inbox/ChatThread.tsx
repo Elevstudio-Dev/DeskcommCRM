@@ -10,6 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MessageBubble } from "./MessageBubble";
 import { NoteCard } from "./NoteCard";
+import { EventoDeResponsavel } from "./EventoDeResponsavel";
+import {
+  useConversationAssignmentEvents,
+  type AssignmentEvent,
+} from "@/hooks/inbox/useConversationAssignmentEvents";
 import { useMessagesRealtime } from "@/hooks/inbox/useMessagesRealtime";
 import { useConversationNotes } from "@/hooks/inbox/useConversationNotes";
 import { useDeleteNote } from "@/hooks/inbox/useDeleteNote";
@@ -27,13 +32,23 @@ interface Props {
 /** Onda 5.2: union de item do thread — mensagem real ou nota interna (nunca vai ao cliente). */
 export type ThreadItem =
   | { kind: "message"; ts: string; data: Message }
-  | { kind: "note"; ts: string; data: Note };
+  | { kind: "note"; ts: string; data: Note }
+  | { kind: "responsavel"; ts: string; data: AssignmentEvent };
 
 /** Intercala mensagens e notas por timestamp asc (puro, sem I/O — testado em thread-merge.test.ts). */
-export function mergeThreadItems(messages: Message[], notes: Note[]): ThreadItem[] {
+export function mergeThreadItems(
+  messages: Message[],
+  notes: Note[],
+  eventos: AssignmentEvent[] = [],
+): ThreadItem[] {
   const items: ThreadItem[] = [
     ...messages.map((data): ThreadItem => ({ kind: "message", ts: data.sent_at, data })),
     ...notes.map((data): ThreadItem => ({ kind: "note", ts: data.created_at, data })),
+    // Terceira fonte da MESMA linha do tempo, e não uma lista ao lado: "Fulano
+    // assumiu" só significa alguma coisa no ponto do histórico em que
+    // aconteceu. Numa seção separada, a pessoa teria de cruzar horários de
+    // cabeça para saber o que veio antes da troca de dono.
+    ...eventos.map((data): ThreadItem => ({ kind: "responsavel", ts: data.created_at, data })),
   ];
   // Sort estável (Array#sort é estável no V8/Node): empate mantém a ordem de
   // inserção acima — mensagens antes de notas no mesmo instante.
@@ -52,6 +67,7 @@ export function ChatThread({ conversationId, onResponder }: Props) {
   const t = useT();
   const q = useMessagesRealtime(conversationId);
   const notes = useConversationNotes(conversationId);
+  const eventosDeResponsavel = useConversationAssignmentEvents(conversationId);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const paginasVistas = useRef(0);
@@ -77,8 +93,8 @@ export function ChatThread({ conversationId, onResponder }: Props) {
   const porId = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
 
   const items: ThreadItem[] = useMemo(
-    () => mergeThreadItems(messages, notes),
-    [messages, notes],
+    () => mergeThreadItems(messages, notes, eventosDeResponsavel),
+    [messages, notes, eventosDeResponsavel],
   );
 
   const paginas = q.data?.pages.length ?? 0;
@@ -240,14 +256,24 @@ export function ChatThread({ conversationId, onResponder }: Props) {
                * outra pergunta.
                */
               const anterior = indice > 0 ? g.items[indice - 1] : undefined;
+              // Nota e evento de responsável INTERROMPEM o bloco pelo mesmo
+              // motivo: os dois são outra coisa no meio da fala. Depois de
+              // "Fulano assumiu", a próxima mensagem começa uma fala nova e leva
+              // rabinho — sem isso ela colaria no bloco anterior atravessando o
+              // aviso, e o agrupamento diria uma coisa que a tela desmente.
+              const quebraOBloco = (i: ThreadItem | undefined) =>
+                i === undefined || i.kind === "note" || i.kind === "responsavel";
               const primeiraDoGrupo =
-                item.kind !== "note" &&
-                (anterior === undefined ||
-                  anterior.kind === "note" ||
-                  anterior.data.direction !== item.data.direction ||
-                  new Date(item.ts).getTime() - new Date(anterior.ts).getTime() > 5 * 60_000);
+                item.kind === "message" &&
+                (quebraOBloco(anterior) ||
+                  (anterior!.kind === "message" &&
+                    (anterior!.data.direction !== item.data.direction ||
+                      new Date(item.ts).getTime() - new Date(anterior!.ts).getTime() >
+                        5 * 60_000)));
 
-              return item.kind === "note" ? (
+              return item.kind === "responsavel" ? (
+                <EventoDeResponsavel key={`resp-${item.data.id}`} evento={item.data} />
+              ) : item.kind === "note" ? (
                 <NoteCard
                   key={`note-${item.data.id}`}
                   note={item.data}
