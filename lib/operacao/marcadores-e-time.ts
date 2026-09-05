@@ -18,7 +18,7 @@
  * antes do escritor.
  */
 import { ApiError } from "@/lib/api/types";
-import { canonicalConversationTagsSchema } from "@/lib/schemas/settings";
+import { canonicalConversationTagsSchema, nomesDosMarcadores } from "@/lib/schemas/settings";
 import type { DepsDaOperacao } from "@/lib/operacao/entradas-automaticas";
 
 export interface MarcadorEmUso {
@@ -54,9 +54,15 @@ export async function listarMarcadores(
     .maybeSingle();
   if (orgErr) throw new ApiError(500, "internal_error", undefined, deps.requestId, orgErr.message);
 
+  // `nomesDosMarcadores` porque o vocabulário passou a guardar `{ nome, cor }`
+  // (2026-09-05). Aqui só o NOME importa: esta função conta e compara, não
+  // desenha — e o que sai daqui entra no contexto de um modelo, onde a cor de um
+  // marcador não ajuda a decidir nada e só gastaria tokens.
   const oficiais = new Set<string>(
-    canonicalConversationTagsSchema.parse(
-      (org?.settings as Record<string, unknown> | null)?.["canonical_conversation_tags"] ?? [],
+    nomesDosMarcadores(
+      canonicalConversationTagsSchema.parse(
+        (org?.settings as Record<string, unknown> | null)?.["canonical_conversation_tags"] ?? [],
+      ),
     ),
   );
 

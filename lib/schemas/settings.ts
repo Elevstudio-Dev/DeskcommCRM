@@ -35,17 +35,82 @@ export type AiDispatchMode = (typeof AI_DISPATCH_MODES)[number];
 export const aiDispatchModeSchema = z.enum(AI_DISPATCH_MODES).catch("native");
 
 /**
+ * As CORES que um marcador pode ter.
+ *
+ * Lista fechada, e não hex livre, por duas razões medidas neste repo:
+ *
+ *  1. contraste. A tela tem tema claro E escuro, e a marca do cliente troca a
+ *     cor de destaque em runtime. Hex livre deixaria qualquer pessoa gravar
+ *     `#ffff00` e produzir um marcador ilegível em metade das instalações —
+ *     o mesmo problema que `lib/branding/contraste.ts` existe para resolver do
+ *     lado da marca, e que aqui é mais barato prevenir do que corrigir;
+ *  2. o valor gravado vira CLASSE de tema, não estilo inline. Um hex no banco
+ *     obrigaria `style={{}}` em cada chip, fora do sistema de tokens.
+ *
+ * Oito é o suficiente para separar o que uma operação separa (urgência, área,
+ * origem) sem virar um seletor que ninguém consegue usar com consistência.
+ */
+export const CORES_DE_MARCADOR = [
+  "cinza",
+  "vermelho",
+  "laranja",
+  "amarelo",
+  "verde",
+  "azul",
+  "roxo",
+  "rosa",
+] as const;
+export type CorDeMarcador = (typeof CORES_DE_MARCADOR)[number];
+export const COR_DE_MARCADOR_PADRAO: CorDeMarcador = "cinza";
+
+/**
  * G3-05: vocabulário canônico de tags de conversa, persistido em
  * organizations.settings.canonical_conversation_tags (spec 13 §3.3 — org-scoped,
- * não pipeline-scoped). Schema declarativo; usado para validar o que o inbox lê
- * como sugestões.
+ * não pipeline-scoped).
+ *
+ * ## A forma mudou em 2026-09-05, e o schema aceita AS DUAS
+ *
+ * Era `string[]`. Virou `{ nome, cor }[]` quando o dono pediu marcador com cor.
+ * Toda instalação que já usa marcadores tem `string[]` gravado — e nenhuma
+ * migration alcança `organizations.settings`, que é jsonb livre. Recusar a forma
+ * antiga apagaria o vocabulário de quem atualizasse; `.catch([])` transformaria
+ * isso em "a empresa nunca teve marcador", que é pior ainda porque parece
+ * intencional.
+ *
+ * Então a união normaliza: string vira `{ nome, cor: 'cinza' }`. Quem gravou
+ * antes continua vendo os seus marcadores, sem cor, e ganha a cor quando alguém
+ * escolher uma. A forma antiga nunca mais é ESCRITA — só lida.
  */
+const marcadorDeConversaSchema = z.union([
+  conversationTagSchema.transform((nome) => ({ nome, cor: COR_DE_MARCADOR_PADRAO })),
+  z.object({
+    nome: conversationTagSchema,
+    // `.catch` na cor, e não no marcador inteiro: cor desconhecida (renomeada,
+    // ou escrita à mão no banco) deve degradar para cinza, nunca derrubar o
+    // marcador — perder a COR é cosmético, perder o NOME é perder o filtro.
+    cor: z.enum(CORES_DE_MARCADOR).catch(COR_DE_MARCADOR_PADRAO),
+  }),
+]);
+
 export const canonicalConversationTagsSchema = z
-  .array(conversationTagSchema)
+  .array(marcadorDeConversaSchema)
   .max(50)
-  .transform((tags) => Array.from(new Set(tags)))
+  // Dedupe POR NOME: duas entradas com o mesmo nome e cores diferentes são um
+  // marcador só, e a primeira ganha. `new Set` sobre objetos não deduplicaria
+  // nada — objetos distintos nunca são iguais por identidade.
+  .transform((marcadores) => {
+    const vistos = new Map<string, { nome: string; cor: CorDeMarcador }>();
+    for (const m of marcadores) if (!vistos.has(m.nome)) vistos.set(m.nome, m);
+    return [...vistos.values()];
+  })
   .catch([]);
 export type CanonicalConversationTags = z.infer<typeof canonicalConversationTagsSchema>;
+export type MarcadorDeConversa = CanonicalConversationTags[number];
+
+/** Só os nomes — para quem filtra, compara ou conta, e não desenha. */
+export function nomesDosMarcadores(marcadores: CanonicalConversationTags): string[] {
+  return marcadores.map((m) => m.nome);
+}
 export type Locale = (typeof LOCALES)[number];
 
 /**

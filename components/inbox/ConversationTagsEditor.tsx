@@ -9,6 +9,9 @@ import {
   useUpdateConversationTags,
   useConversationTagVocabulary,
 } from "@/hooks/inbox/useConversationTags";
+import { CLASSE_DE_COR } from "@/lib/marcadores/cores";
+import { COR_DE_MARCADOR_PADRAO } from "@/lib/schemas/settings";
+import { cn } from "@/lib/utils";
 
 interface Props {
   conversationId: string;
@@ -39,7 +42,21 @@ export function ConversationTagsEditor({ conversationId, orgId, tags }: Props) {
     apply(tags.filter((v) => v !== tag));
   }
 
-  const suggestions = (vocabulary ?? []).filter((v) => !tags.includes(v)).slice(0, 8);
+  const suggestions = (vocabulary ?? []).filter((m) => !tags.includes(m.nome)).slice(0, 8);
+
+  /**
+   * A cor de um marcador APLICADO.
+   *
+   * `conversations.tags` guarda só o NOME (text[]) — a cor mora no vocabulário
+   * da empresa. Marcador que a operação inventou digitando ("urgente-2") não
+   * está no vocabulário e não tem cor: cai no cinza, e isso é um SINAL útil, não
+   * um defeito. Ver o cabeçalho de `lib/operacao/marcadores-e-time.ts`: é
+   * exatamente a diferença entre o vocabulário oficial e o que nasceu no uso.
+   */
+  const corDe = (nome: string) =>
+    CLASSE_DE_COR[
+      (vocabulary ?? []).find((m) => m.nome === nome)?.cor ?? COR_DE_MARCADOR_PADRAO
+    ];
 
   return (
     <section>
@@ -50,7 +67,15 @@ export function ConversationTagsEditor({ conversationId, orgId, tags }: Props) {
       <div className="mt-2 flex flex-wrap gap-1">
         {tags.length > 0 ? (
           tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="h-5 gap-1 px-1.5 text-[10px]">
+            <Badge
+              key={tag}
+              variant="secondary"
+              className={cn(
+                "h-5 gap-1 border-transparent px-1.5 text-[10px]",
+                corDe(tag).fundo,
+                corDe(tag).texto,
+              )}
+            >
               {tag}
               <button
                 type="button"
@@ -98,15 +123,19 @@ export function ConversationTagsEditor({ conversationId, orgId, tags }: Props) {
 
       {suggestions.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
-          {suggestions.map((tag) => (
+          {suggestions.map((marcador) => (
             <button
-              key={tag}
+              key={marcador.nome}
               type="button"
-              onClick={() => add(tag)}
+              onClick={() => add(marcador.nome)}
               disabled={mutation.isPending || tags.length >= 20}
-              className="rounded-full border border-dashed border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-solid hover:text-foreground disabled:opacity-50"
+              className="flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-solid hover:text-foreground disabled:opacity-50"
             >
-              + {tag}
+              <span
+                className={cn("size-1.5 rounded-full", CLASSE_DE_COR[marcador.cor].ponto)}
+                aria-hidden
+              />
+              + {marcador.nome}
             </button>
           ))}
         </div>

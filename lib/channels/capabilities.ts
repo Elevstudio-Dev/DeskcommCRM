@@ -59,6 +59,40 @@ export const CHANNEL_CAPABILITIES: Record<ChannelProvider, ChannelCapabilities> 
   //
   // O detalhe que engana: mandar um template NÃO abre a janela. Só o cliente
   // abre, respondendo. Quem ler o 200 como "enviado" acha que funciona.
+  /**
+   * O DIRECT DO INSTAGRAM — a hetero-restrição mais dura das quatro.
+   *
+   * ⚠️ DECLARADO PELA DOC, NÃO MEDIDO. Nenhuma destas linhas foi verificada
+   * contra a API real: ela exige app aprovado no App Review da Meta, e o do
+   * cliente ainda não passou. Onde eu só pude ler a documentação, está escrito.
+   *
+   *  - `freeformOutsideWindow: false` — a janela de 24h existe e é a mesma
+   *    ideia da Cloud API. A DIFERENÇA que morde: lá um template aprovado
+   *    reabre o assunto; aqui NÃO HÁ template. Fora da janela ninguém fala
+   *    (fora tags específicas que este adapter não implementa).
+   *  - `requiresTemplates: false` e `canManageTemplates: false` — não há
+   *    definição aprovada a listar nem a criar. `false` aqui não significa
+   *    "livre": significa que a trava é outra, e ela é o `freeformOutsideWindow`.
+   *  - `banRisk: false` — quem restringe é a plataforma, pela API, e não um
+   *    algoritmo antiabuso olhando padrão de uso. Ligar o anti-ban aqui gastaria
+   *    throttle e warm-up contra um risco que nao existe deste lado.
+   *  - `groups: "none"` — o Direct TEM conversa em grupo na interface, e a API
+   *    de mensagens NÃO endereça grupo. "none" é a resposta honesta; "limited"
+   *    prometeria uma saída que não existe.
+   *  - `costPerMessage: false` — não há cobrança por mensagem entregue, ao
+   *    contrário da Cloud API. O custo do canal é o App Review, que não é por
+   *    mensagem e não entra em decisão de envio.
+   */
+  instagram: {
+    freeformOutsideWindow: false,
+    requiresTemplates: false,
+    canManageTemplates: false,
+    banRisk: false,
+    minIntervalMs: null,
+    voiceNote: "opus-only",
+    groups: "none",
+    costPerMessage: false,
+  },
   zernio: {
     freeformOutsideWindow: false,
     requiresTemplates: true,
@@ -89,6 +123,35 @@ export const DEFAULT_CHANNEL_PROVIDER: ChannelProvider = "waha";
  */
 export const CHANNEL_PROVIDER_WAHA: ChannelProvider = "waha";
 export const CHANNEL_PROVIDER_META: ChannelProvider = "meta_cloud";
+
+/**
+ * Os providers cujo NOME é uma marca que o cliente final usa.
+ *
+ * Existe por um defeito medido, e o mecanismo dele ja estava documentado em
+ * `lib/agent-engine/guardrails/vazamento-interno.ts`: o detector de vocabulário
+ * interno DERIVA a lista de providers daqui, de propósito, para "provider novo
+ * entrar na cobertura sozinho". Ótima regra enquanto todo nome de provider era
+ * jargão que nenhum cliente diz.
+ *
+ * Aí entrou um cujo nome o cliente diz o tempo todo. A guarda
+ * `vazamento-interno-detector` reprovou na hora: `instagram.com/loja_da_ana`
+ * — um endereço legítimo — passou a ser tratado como vazamento interno, e a
+ * resposta do agente sairia com a palavra tapada. "Vi vocês no Instagram" é a
+ * frase mais comum de quem escreve para uma loja.
+ *
+ * É exatamente o mesmo defeito que aquele arquivo já registra para `role`:
+ * palavra do sistema que TAMBÉM é palavra legítima de quem está conversando.
+ * A cura lá foi tirar da alternação simples; aqui é declarar quais nomes são
+ * publicos.
+ *
+ * ⚠️ O critério é "o CLIENTE FINAL diria isto numa conversa?", e não "eu
+ * conheço a marca". `zernio` é marca, e fica FORA desta lista: nenhum cliente
+ * de uma loja sabe que existe um intermediário, e deixar o nome vazar contaria
+ * a ele um detalhe do encanamento que não lhe diz respeito.
+ */
+export const PROVIDERS_DE_MARCA_PUBLICA: ReadonlySet<ChannelProvider> = new Set<ChannelProvider>([
+  "instagram",
+]);
 export const CHANNEL_PROVIDER_ZERNIO: ChannelProvider = "zernio";
 
 export function capabilitiesOf(provider: ChannelProvider): ChannelCapabilities {

@@ -52,7 +52,7 @@
  * resíduo de falso-positivo ACEITO — congelado, não escondido. Regressão reprova o CI.
  */
 import { TOOL_CATALOG, catalogEntry } from '@/lib/mcp/tools/catalog';
-import { CHANNEL_CAPABILITIES } from '@/lib/channels/capabilities';
+import { CHANNEL_CAPABILITIES, PROVIDERS_DE_MARCA_PUBLICA } from '@/lib/channels/capabilities';
 
 /** Categoria da regra que pegou o termo — vai ao trace (rótulo nosso, nunca o corpo). */
 export type CategoriaVazamento = 'snake_case' | 'tool' | 'papel' | 'arquitetura' | 'erro_cru';
@@ -134,7 +134,13 @@ const PALAVRAS_ARQUITETURA = [
  * mentindo. `lib/channels/capabilities.ts` importa só tipos — não arrasta peso
  * para dentro deste módulo puro.
  */
-const PROVIDERES_DE_CANAL = Object.keys(CHANNEL_CAPABILITIES);
+const PROVIDERES_DE_CANAL = Object.keys(CHANNEL_CAPABILITIES).filter(
+  // Menos os que são MARCA PÚBLICA — o cliente final diz esses nomes, e tapá-los
+  // muda a resposta do agente. A lista mora em `lib/channels/` pelo mesmo motivo
+  // que a derivação existe: nome de provider não se escreve aqui. Ver o
+  // cabeçalho de `PROVIDERS_DE_MARCA_PUBLICA` para o defeito medido.
+  (p) => !PROVIDERS_DE_MARCA_PUBLICA.has(p as never),
+);
 
 /**
  * (C) PAPEL/PERMISSÃO — o vocabulário de controle de acesso. Nenhuma destas é palavra

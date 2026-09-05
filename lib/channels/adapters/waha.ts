@@ -95,6 +95,15 @@ export const wahaAdapter: ChannelAdapter = {
    * Só para identidade OPACA: `phone:` já traz o número, e perguntar seria
    * gastar uma chamada para receber de volta o que já se tem.
    */
+  /** A lista que o aparelho tem. `[]` quando o transporte está fora do ar. */
+  async listGroups(input: {
+    sessionRef: string;
+  }): Promise<Array<{ chatId: string; subject: string | null }>> {
+    const client = getWahaClient();
+    if (!client) return [];
+    return client.listGroups(input.sessionRef);
+  },
+
   async resolvePhoneForIdentity(input: {
     sessionRef: string;
     identity: string;

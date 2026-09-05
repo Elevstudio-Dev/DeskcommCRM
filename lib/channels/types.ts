@@ -9,7 +9,7 @@ import type { OutboundMedia } from "@/lib/waha/media-send";
 
 export type { OutboundMedia };
 
-export type ChannelProvider = "waha" | "meta_cloud" | "zernio";
+export type ChannelProvider = "waha" | "meta_cloud" | "zernio" | "instagram";
 
 export interface ChannelCapabilities {
   /** Pode enviar texto livre a qualquer momento? false = exige template fora da janela. */
@@ -212,6 +212,28 @@ export interface ChannelAdapter {
   resolvePhoneForIdentity?(
     input: ChannelTenantScope & { sessionRef: string; identity: string },
   ): Promise<string | null>;
+
+  /**
+   * Os GRUPOS que esta conta já participa.
+   *
+   * OPCIONAL pelo mesmo motivo dos anteriores, e aqui a assimetria é grande:
+   * a capability `groups` já diz "full" | "limited" | "none", e um canal com
+   * "none" não implementa isto. Quem chama testa a presença do método — e foi
+   * exatamente por NÃO fazer isso que a primeira versão da importação de grupos
+   * nomeou o provider dentro de uma rota, violando o invariante 1 e sendo pega
+   * pelo `lint:channels`.
+   *
+   * Existe porque a ingestão passiva só faz aparecer o grupo em que ALGUÉM
+   * escreveu depois que o canal passou a entregar evento de grupo. Um grupo
+   * parado ficaria invisível, e "cadê os meus grupos?" é a primeira pergunta de
+   * quem liga isso.
+   *
+   * `subject` é `null` quando a plataforma não devolve o nome — é melhor um id
+   * do que um nome errado.
+   */
+  listGroups?(
+    input: ChannelTenantScope & { sessionRef: string },
+  ): Promise<Array<{ chatId: string; subject: string | null }>>;
 
   /**
    * Gestão das definições aprovadas — criar, editar, apagar.

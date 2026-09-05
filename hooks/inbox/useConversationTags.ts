@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import type { Conversation } from "@/lib/types/messaging";
+import type { MarcadorDeConversa } from "@/lib/schemas/settings";
 
 interface UpdateTagsArgs {
   conversation_id: string;
@@ -39,8 +40,17 @@ export function useConversationTagVocabulary(orgId: string | null) {
     queryKey: ["conversation-tag-vocabulary", orgId],
     enabled: !!orgId,
     staleTime: 5 * 60_000,
-    queryFn: async (): Promise<string[]> => {
-      const res = await apiClient.get<{ data: string[] }>("/api/v1/conversation-tags");
+    /**
+     * Devolve `{ nome, cor }[]` desde 2026-09-05.
+     *
+     * A ROTA normaliza a forma antiga (`string[]`, gravada por toda instalação
+     * anterior a esta) — ver `canonicalConversationTagsSchema`. Aqui o tipo é
+     * só o que chega; quem só precisa dos nomes usa `.map((m) => m.nome)`.
+     */
+    queryFn: async (): Promise<MarcadorDeConversa[]> => {
+      const res = await apiClient.get<{ data: MarcadorDeConversa[] }>(
+        "/api/v1/conversation-tags",
+      );
       return res.data;
     },
   });

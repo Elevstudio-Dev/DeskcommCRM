@@ -27,6 +27,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/client";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
+import { CLASSE_DE_COR } from "@/lib/marcadores/cores";
+import { cn } from "@/lib/utils";
 import type { Role, VisibilityMode } from "@/lib/auth/types";
 
 export type InboxTab = "unassigned" | "mine" | "all" | "closed" | "ai" | "grupos";
@@ -92,7 +94,7 @@ function ImportarGrupos() {
     setImportando(true);
     try {
       const r = await apiClient.post<{ encontrados: number; vinculados: number; falharam: number }>(
-        "/api/v1/whatsapp/groups/import",
+        "/api/v1/channels/groups/import",
         {},
       );
       // O texto diz o NÚMERO, não "pronto": quem tem 12 grupos e vê "3
@@ -230,9 +232,15 @@ export function InboxFilters({ value, onChange }: Props) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("Todas as tags")}</SelectItem>
-            {tagVocabulary?.map((tag) => (
-              <SelectItem key={tag} value={tag}>
-                {tag}
+            {tagVocabulary?.map((marcador) => (
+              <SelectItem key={marcador.nome} value={marcador.nome}>
+                <span className="flex items-center gap-2">
+                  <span
+                    className={cn("size-2 shrink-0 rounded-full", CLASSE_DE_COR[marcador.cor].ponto)}
+                    aria-hidden
+                  />
+                  {marcador.nome}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>

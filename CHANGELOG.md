@@ -10,6 +10,65 @@ Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual es
 
 ### Adicionado
 
+- **Os grupos de WhatsApp aparecem no CRM** Até agora toda mensagem de grupo era descartada na entrada, e o grupo nem
+  existia no sistema. Agora ele vira conversa como qualquer outra, com uma visão
+  **Grupos** própria na caixa de entrada — separada de propósito: um grupo de 40
+  pessoas produz dezenas de mensagens por hora e empurraria para fora da
+  primeira página justamente o cliente que está esperando resposta.
+
+  Dentro do grupo, cada mensagem mostra **quem escreveu**, como no WhatsApp. E o
+  que você digita no grupo pelo próprio celular também aparece aqui — sem isso,
+  o CRM mostraria meia conversa, o que é pior do que nenhuma porque parece
+  completa.
+
+  Para os grupos que você **já participa** e que estão parados, há o botão
+  **"Importar grupos do WhatsApp"** dentro da visão Grupos. Ele também é quem
+  traz o nome de cada um: a mensagem de grupo carrega o nome de quem escreveu, e
+  não o assunto do grupo. Dá para rodar quantas vezes quiser — reimportar
+  conserta nomes e renomeia os grupos que mudaram de assunto no WhatsApp.
+
+  **A IA continua calada em grupo**, como já era: o agente ignora grupos por
+  padrão, e isso segue configurável na tela dele. A importação **não traz
+  histórico**: o grupo entra vazio e recebe o que chegar dali em diante.
+
+- **A conversa avisa quem assumiu** Duas pessoas com a mesma conversa aberta é o normal num time, e nada na tela
+  dizia que alguém já tinha assumido — quem chegava depois respondia por cima do
+  colega. Agora aparece uma linha no meio da conversa: *"Fulano assumiu esta
+  conversa"*, junto com transferências, liberações e a passagem do automático
+  para uma pessoa.
+
+  O aviso é discreto de propósito — cinza e centrado, como o "Fulano entrou no
+  grupo" do WhatsApp. Se tivesse o mesmo destaque da nota interna, uma conversa
+  com quatro trocas de responsável viraria uma parede amarela e a nota de
+  verdade, escrita por alguém, perderia a atenção que tem hoje.
+
+- **Marcadores com cor, criados pelo gerente** Os marcadores de conversa existiam e dava para filtrar por eles, mas **não
+  havia tela para criar nenhum** — só quem tivesse acesso ao banco conseguia
+  definir o vocabulário da empresa. Agora tem: **Funis › Marcadores**, onde o
+  gerente cria, renomeia, escolhe uma cor entre oito e vê **quantas conversas
+  carregam cada marcador**.
+
+  Quem atende continua aplicando marcador na conversa como sempre; criar o
+  vocabulário oficial é do gerente, e a diferença importa: é ela que faz a
+  contagem significar alguma coisa em vez de dividir "urgente" em quatro
+  grafias.
+
+  A tela mostra também uma lista que não existia em lugar nenhum: **"Em uso, mas
+  fora da lista"** — os marcadores que alguém digitou direto na conversa e que
+  não estão no vocabulário. São eles que quebram o filtro e dividem a contagem
+  sem aparecer. Um clique promove qualquer um deles a oficial.
+
+- **Instagram Direct — a base pronta, a conexão em breve** O canal já existe no sistema, ao lado do WhatsApp: a caixa de entrada, os
+  marcadores, a fila e as regras de silêncio da IA vão funcionar para ele sem
+  nada de novo. A aba **Instagram** em Conexões mostra o que falta.
+
+  ⚠️ **Ainda não dá para conectar**, e o que falta não depende deste sistema: a
+  conta precisa ser Profissional e ligada a uma Página do Facebook, e a Meta
+  precisa aprovar o aplicativo para ler e responder mensagens (App Review),
+  às vezes com verificação da empresa por documento. Esses passos levam de dias
+  a semanas. Assim que a aprovação sair, a tela ganha o botão de conectar.
+
+
 - **O onboarding pergunta primeiro se você quer a IA** Quem chegava para cadastrar a empresa caía direto na configuração do atendente
   de IA, mesmo querendo só o CRM. Agora a primeira tela oferece dois caminhos:
   **começar com o atendente de IA** (o caminho de sempre, com a configuração e o

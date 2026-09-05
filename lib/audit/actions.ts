@@ -298,6 +298,18 @@ export const AUDIT_ACTIONS = [
   // "quem mexeu no cadastro dela?". Fundir as duas obrigaria a ler o metadata
   // para saber qual das duas coisas aconteceu.
   "org.branding_updated",
+  // O VOCABULÁRIO DE MARCADORES da organização
+  // (`organizations.settings.canonical_conversation_tags`).
+  //
+  // Auditável porque um marcador removido não apaga só uma palavra: as conversas
+  // que o carregam continuam com ele em `conversations.tags`, mas ele sai do
+  // filtro e sai da contagem. O efeito é um número que muda sem que nada na tela
+  // explique, e a pergunta "por que 'urgente' sumiu do relatório?" só tem
+  // resposta aqui.
+  //
+  // Ação própria, e não `org.updated`, pelo mesmo motivo que `org.branding_updated`
+  // é separada: fundir obrigaria a ler o metadata para saber o que aconteceu.
+  "conversation_tags.updated",
 
   // ── Vindos da `main` durante a continuação do épico ──────────────────
   // Chegaram pelo painel (`action-codes.ts`) no mesmo intervalo em que este

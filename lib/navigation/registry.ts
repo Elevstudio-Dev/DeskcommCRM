@@ -34,6 +34,7 @@ import {
   Signpost,
   Storefront,
   UserCircle,
+  Tag,
   Users,
   UsersThree,
   WebhooksLogo,
@@ -263,6 +264,29 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     label: "Etapas do funil",
     description: "As colunas de cada funil, o vocabulário do negócio e os motivos de perda.",
     icon: Funnel,
+    group: "crm",
+    minRole: "manager",
+    sidebar: true,
+  },
+  {
+    /**
+     * A SUPERFÍCIE QUE FALTAVA, e ela era uma lacuna DOCUMENTADA.
+     *
+     * `lib/operacao/marcadores-e-time.ts` dizia, em letras maiúsculas: o
+     * vocabulário de marcadores tem rota de leitura e "nenhuma tela para ver ou
+     * mudar" — o que viola o invariante 6 ("toda configuração tem superfície") e
+     * deixava o filtro por marcador funcionando só para quem tivesse acesso ao
+     * Postgres.
+     *
+     * `crm` e não `organizacao`: marcador serve para separar CONVERSA, e a
+     * pergunta que ele responde ("quantos clientes urgentes eu tenho?") é da
+     * operação, não do cadastro da empresa. Fica ao lado de "Etapas do funil",
+     * que é o outro vocabulário que o manager define.
+     */
+    href: "/app/settings/tenant/marcadores",
+    label: "Marcadores",
+    description: "As etiquetas das conversas: o que dá para filtrar e o que dá para medir.",
+    icon: Tag,
     group: "crm",
     minRole: "manager",
     sidebar: true,

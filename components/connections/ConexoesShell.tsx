@@ -2,6 +2,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InstagramEmBreve } from "./InstagramEmBreve";
 
 import { CanalOficialClient } from "./CanalOficialClient";
 import { CanalParceiroClient } from "./CanalParceiroClient";
@@ -38,7 +39,14 @@ export function ConexoesShell({ wahaConfigured }: { wahaConfigured: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
   const abaParam = params.get("aba");
-  const aba = abaParam === "oficial" ? "oficial" : abaParam === "parceiro" ? "parceiro" : "numeros";
+  const aba =
+    abaParam === "oficial"
+      ? "oficial"
+      : abaParam === "parceiro"
+        ? "parceiro"
+        : abaParam === "instagram"
+          ? "instagram"
+          : "numeros";
   const sub = params.get("sub") === "templates" ? "templates" : "conexao";
 
   const irPara = (proximaAba: string, proximaSub?: string): void => {
@@ -71,6 +79,11 @@ export function ConexoesShell({ wahaConfigured }: { wahaConfigured: boolean }) {
             porque no dia em que houver um segundo parceiro esta aba não muda.
             Aqui fica o CONCEITO; lá dentro o cartão diz de quem se trata. */}
         <TabsTrigger value="parceiro">{t("Provedor parceiro")}</TabsTrigger>
+        {/* A aba EXISTE e a conexão não — e isso é deliberado, não um meio
+            caminho. Escondê-la até a Meta aprovar o app deixaria o cliente
+            perguntando se o sistema faz ou não faz; mostrá-la com o botão
+            desligado responde a pergunta e diz o que falta. */}
+        <TabsTrigger value="instagram">{t("Instagram")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="numeros" className="mt-0">
@@ -95,6 +108,10 @@ export function ConexoesShell({ wahaConfigured }: { wahaConfigured: boolean }) {
             <TemplatesParceiroClient />
           </TabsContent>
         </Tabs>
+      </TabsContent>
+
+      <TabsContent value="instagram" className="mt-0">
+        <InstagramEmBreve />
       </TabsContent>
 
       <TabsContent value="oficial" className="mt-0">

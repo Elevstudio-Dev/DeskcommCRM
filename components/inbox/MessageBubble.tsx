@@ -83,8 +83,8 @@ export function MessageBubble({
    * QUEM FALOU, dentro de um grupo.
    *
    * Numa conversa de grupo o `contact_id` da mensagem é o GRUPO, não a pessoa —
-   * quem escreveu vem no metadata, gravado pela ingestão (`lib/waha/ingest.ts`,
-   * `grupo_participante_nome`). Sem esta linha, dez pessoas falando num grupo
+   * quem escreveu vem no metadata, gravado pela ingestão do canal
+   * (`grupo_participante_nome`). Sem esta linha, dez pessoas falando num grupo
    * apareceriam como uma só, que é o mesmo que não mostrar grupo nenhum.
    *
    * Só no que ENTRA: no que sai, quem falou foi esta empresa, e o rótulo de

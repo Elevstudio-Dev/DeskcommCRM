@@ -42,6 +42,11 @@ const FONTE: Record<ChannelProvider, FonteDeTemplates | null> = {
   waha: null,
   meta_cloud: "oficial",
   zernio: "parceiro",
+  // Não há definição aprovada no Direct: fora da janela de 24h a plataforma
+  // simplesmente não entrega, e não existe template para reabrir. `null` é a
+  // resposta certa, e não um "ainda não implementei" — oferecer um seletor de
+  // template aqui prometeria uma saída que o canal não tem.
+  instagram: null,
 };
 
 /** `null` quando este canal não trabalha com definições aprovadas. */
