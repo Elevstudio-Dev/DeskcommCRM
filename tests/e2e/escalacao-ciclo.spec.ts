@@ -48,7 +48,8 @@ interface Creds {
   password: string;
   org_id: string;
   users: Record<string, { id: string; email: string; role: string }>;
-  escalacao: {
+  /** Pode faltar: `seed-e2e-credentials` reescreve o arquivo INTEIRO e leva o bloco junto. */
+  escalacao?: {
     conversation_id: string;
     contact_id: string;
     contact_name: string;
@@ -134,10 +135,37 @@ function blocoDeAberturaDoTurno(orgId: string, contactId: string): string {
   }
 }
 
+/**
+ * O chamado gravado na fixture ainda está ABERTO?
+ *
+ * `agent_cases.status` aceita `awaiting_human | awaiting_lead | resolved |
+ * escalated | cancelled`. A tela de chamados lista os que ainda esperam alguém;
+ * um `resolved` (o desfecho que ESTA spec produz) some de lá.
+ *
+ * Devolve `false` também quando o bloco falta ou a linha sumiu — os três casos
+ * pedem a mesma coisa: semear de novo. Erro de banco também devolve `false`:
+ * semear à toa custa uma conversa de teste; NÃO semear custa um vermelho que
+ * culpa a jornada por um problema da fixture, e foi esse o preço já pago.
+ */
+async function aFixtureAindaServe(bloco: Creds["escalacao"] | undefined): Promise<boolean> {
+  if (!bloco?.case_id) return false;
+  try {
+    const { data, error } = await admin
+      .from("agent_cases")
+      .select("status")
+      .eq("id", bloco.case_id)
+      .maybeSingle();
+    if (error || !data) return false;
+    return !["resolved", "cancelled"].includes((data as { status: string }).status);
+  } catch {
+    return false;
+  }
+}
+
 test.describe("IA 360 W3 — o agente para, a pessoa continua, o agente retoma sabendo", () => {
   test.describe.configure({ timeout: 180_000 });
 
-  test.beforeAll(() => {
+  test.beforeAll(async () => {
     creds = JSON.parse(fs.readFileSync(CREDS_PATH, "utf8")) as Creds;
 
     // A PRECONDIÇÃO É SEMEADA AQUI, não pressuposta.
@@ -154,9 +182,34 @@ test.describe("IA 360 W3 — o agente para, a pessoa continua, o agente retoma s
     // quebrou foi o arquivo de fixtures debaixo dela. Depender de um seed que outra
     // spec deixou é depender da ordem dos arquivos, que já mordeu este repo antes.
     //
-    // Só semeia quando falta: o seed cria uma conversa nova a cada execução
-    // (`e2e-escalacao-${Date.now()}`), então rodá-lo sempre deixaria lixo por corrida.
-    if (!creds.escalacao) {
+    // ─── SEMEIA QUANDO FALTA **OU QUANDO NÃO SERVE MAIS** ──────────────────
+    //
+    // A versão anterior semeava só na AUSÊNCIA do bloco, para não deixar lixo a
+    // cada corrida — o seed cria uma conversa nova (`e2e-escalacao-${Date.now()}`).
+    // A intenção estava certa e o efeito era este: **a spec só passava uma vez**.
+    //
+    // Ela RESOLVE o chamado — é literalmente o que ela testa. Na execução
+    // seguinte o bloco continuava lá, apontando para um chamado já resolvido,
+    // que não aparece na tela de chamados abertos. O vermelho dizia "o chamado
+    // aberto pelo agente tem de aparecer na tela", como se a jornada estivesse
+    // quebrada; o que estava velho era a fixture. Medido em 2026-09-07, duas
+    // execuções seguidas: a primeira verde, a segunda vermelha, sem nenhuma
+    // mudança de código entre elas.
+    //
+    // A pergunta certa não é "o bloco existe?" e sim "o chamado ainda serve?".
+    //
+    // ⚠️ NA PRÁTICA ISSO SEMEIA A CADA CORRIDA, e o número é honesto: como o
+    // caso RESOLVE o chamado, ele nunca serve para a execução seguinte. Medido:
+    // duas execuções seguidas, as duas semearam, as duas verdes.
+    //
+    // Ou seja, o custo que a versão anterior queria evitar volta — uma conversa
+    // `e2e-escalacao-*` por corrida. É o preço certo: entre acumular fixture
+    // nomeada e reconhecível num banco de teste, e ter uma spec que só passa
+    // uma vez na vida, a primeira é barata e a segunda é uma spec que não
+    // serve. O ramo de reaproveitamento não é decorativo: ele vale quando uma
+    // execução morre ANTES de resolver o chamado, e aí a corrida seguinte
+    // reusa em vez de somar mais uma.
+    if (!(await aFixtureAindaServe(creds.escalacao))) {
       execFileSync("npx", ["tsx", "scripts/seed-e2e-escalacao.ts"], { stdio: "inherit" });
       creds = JSON.parse(fs.readFileSync(CREDS_PATH, "utf8")) as Creds;
     }
@@ -171,7 +224,13 @@ test.describe("IA 360 W3 — o agente para, a pessoa continua, o agente retoma s
   test("ciclo completo: chamado → decisão da pessoa → devolução → o agente volta citando", async ({
     page,
   }) => {
-    const e = creds.escalacao;
+    // `beforeAll` garante o bloco (semeia se faltar, e lança se ainda faltar
+    // depois de semear). O `expect` aqui não duplica a garantia: ele a torna
+    // LEGÍVEL para o TypeScript, que não enxerga a promessa feita no hook — e,
+    // se um dia alguém afrouxar o hook, o vermelho aponta para cá em vez de
+    // estourar `undefined` trinta linhas abaixo.
+    expect(creds.escalacao, "beforeAll deveria ter semeado a fixture").toBeDefined();
+    const e = creds.escalacao!;
     await login(page, creds.users.agent!.email, creds.password);
 
     // ---------------------------------------------------------------------
