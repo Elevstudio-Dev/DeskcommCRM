@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useT } from "@/hooks/i18n/useT";
 import type { InfiniteData, UseInfiniteQueryResult } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,6 @@ interface Props {
   /** Optional client-side filter (e.g. only-unread). */
   clientFilter?: (c: ConversationWithContact) => boolean;
   /** Notifies parent when the visible list changes (used by keyboard nav). */
-  onVisibleChange?: (ids: string[]) => void;
 }
 
 export function ConversationList({
@@ -38,7 +37,6 @@ export function ConversationList({
   selectedId,
   onSelect,
   clientFilter,
-  onVisibleChange,
 }: Props) {
   const t = useT();
   // Só mostra POR ONDE a conversa entrou quando há mais de um número. Com um
@@ -66,11 +64,6 @@ export function ConversationList({
     return clientFilter ? all.filter(clientFilter) : all;
   }, [q.data, clientFilter]);
 
-  // Notify parent of currently-visible IDs (for j/k nav). Must use effect
-  // (not render-time call) — invoking onVisibleChange during render triggers
-  // setState in InboxLayout from inside ConversationList's render phase,
-  // which React 19 forbids.
-
   /**
    * O badge de atendente só entra quando DISCRIMINA — mesma regra do badge de
    * canal, e pelo mesmo motivo escrito lá: rótulo que se repete em toda linha
@@ -93,11 +86,6 @@ export function ConversationList({
     );
     return donos.size > 1;
   }, [filters.assigned_to, filters.comando, items]);
-
-  useEffect(() => {
-    if (onVisibleChange) onVisibleChange(items.map((i) => i.id));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items]);
 
   if (q.isLoading) {
     return (

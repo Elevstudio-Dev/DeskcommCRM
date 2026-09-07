@@ -5,8 +5,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { estadoDaJanela, formatarDecorrido } from "@/lib/channels/janela";
 import { JanelaFechadaAviso } from "@/components/inbox/JanelaFechadaAviso";
-import { useClaimConversation } from "@/hooks/inbox/useClaimConversation";
-import { useCloseConversation } from "@/hooks/inbox/useCloseConversation";
 import { useMarkAsRead } from "@/hooks/inbox/useMarkAsRead";
 import {
   useConversationsRealtime,
@@ -22,9 +20,7 @@ import { ConversationHeader } from "./ConversationHeader";
 import { RetentionNotice } from "./RetentionNotice";
 import { CRMSidePanel } from "./CRMSidePanel";
 import type { Message as ConversationMensagem } from "@/lib/types/messaging";
-import { InboxKeyboardShortcuts } from "./InboxKeyboardShortcuts";
 
-import { ShortcutsHelpDialog } from "./ShortcutsHelpDialog";
 import { OpenConversationProvider } from "@/hooks/notifications/OpenConversationContext";
 // ADR-05: ícone de feature sai do mapa canônico, nunca do pacote direto.
 import { CaretLeft, IdentificationCard } from "@/lib/ui/icons";
@@ -152,8 +148,6 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
   );
 
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
-  const [visibleIds, setVisibleIds] = useState<string[]>([]);
-  const [helpOpen, setHelpOpen] = useState(false);
   /** A ficha do contato como painel deslizante — só existe abaixo do `xl`. */
   const [fichaAberta, setFichaAberta] = useState(false);
   /**
@@ -220,9 +214,6 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
 
   const colunas = colunasDoCelular(Boolean(selectedId));
 
-  const claim = useClaimConversation();
-  const close = useCloseConversation();
-
   // A leitura da conversa aberta é do upstream e fica: sem ela o contador de
   // não-lidas nunca zera para quem abre a conversa.
   useMarkAsRead(
@@ -244,19 +235,11 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
     // a citação junto — e a resposta sairia citando mensagem de outro cliente.
     setRespondendo(null);
   }, []);
-  const handleVisibleChange = useCallback((ids: string[]) => setVisibleIds(ids), []);
-  const handleFocusReply = useCallback(() => composerRef.current?.focus(), []);
-  const handleClaim = useCallback(() => {
-    if (!selectedConversation) return;
-    claim.mutate({
-      conversation_id: selectedConversation.id,
-      expected_assignee: selectedConversation.assigned_to_user_id,
-    });
-  }, [claim, selectedConversation]);
-  const handleClose = useCallback(() => {
-    if (!selectedConversation) return;
-    close.mutate({ conversation_id: selectedConversation.id });
-  }, [close, selectedConversation]);
+  // `handleClaim` e `handleClose` viviam aqui e SÓ os atalhos de tecla os
+  // chamavam. Assumir e arquivar continuam existindo — pelos botões do
+  // cabeçalho da conversa, que tem os próprios `useClaimConversation` /
+  // `useCloseConversation`. Manter as duas copias mortas aqui seria deixar duas
+  // réguas para a mesma ação, esperando divergir.
 
   // A janela vence SOZINHA com a aba aberta. Sem este relógio, quem deixa o
   // inbox aberto a tarde inteira seguiria com o composer liberado numa conversa
@@ -388,7 +371,6 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
             selectedId={selectedId}
             onSelect={handleSelect}
             clientFilter={clientFilter}
-            onVisibleChange={handleVisibleChange}
           />
         </div>
       </div>
@@ -486,16 +468,29 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
         <CRMSidePanel conversation={selectedConversation} />
       </div>
 
-      <InboxKeyboardShortcuts
-        visibleIds={visibleIds}
-        selectedId={selectedId}
-        onSelect={handleSelect}
-        onFocusReply={handleFocusReply}
-        onClaim={handleClaim}
-        onClose={handleClose}
-        onToggleHelp={() => setHelpOpen((v) => !v)}
-      />
-      <ShortcutsHelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
+      {/*
+        OS ATALHOS DE UMA TECLA SAÍRAM EM 2026-09-05, a pedido do dono.
+        Eram `j` `k` `r` `a` `e` e `?`, globais na pagina do inbox. O relato foi
+        direto: "quando eu aperto E, aparece para fechar a conversa, não quero
+        isso".
+
+        O defeito não era o `e` — era a CLASSE. Atalho de uma letra sem
+        modificador dispara em qualquer lugar da página que não seja um campo de
+        texto, e no inbox a mão está o tempo todo entre a lista e o composer.
+        Encostar numa tecla com o foco fora do campo virava uma pergunta
+        "Fechar conversa?" que ninguém pediu — e `e` fica ao lado de `r` e `a`,
+        que TAMBÉM agiam (focar resposta, assumir).
+
+        O diálogo de ajuda (`?`) saiu junto: ele existia para documentar estes
+        atalhos. Enter e Shift+Enter NÃO eram dele — são comportamento do campo
+        de texto, continuam valendo, e a dica vive no `title` do próprio campo
+        (ver o comentário em `Composer.tsx`).
+
+        `mod+k` (busca) e `mod+shift+l` (tema) ficam: exigem modificador, então
+        não disparam sozinhos enquanto alguém trabalha.
+
+        Vigiado por `tests/unit/inbox-sem-atalho-de-uma-tecla.test.ts`.
+      */}
     </div>
     </OpenConversationProvider>
   );

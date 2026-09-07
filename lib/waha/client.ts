@@ -473,6 +473,20 @@ export class WahaClient {
    * de engine de virar bug de tela.
    */
   async listGroups(session: string): Promise<Array<{ chatId: string; subject: string | null }>> {
+    // A CONFIG DA SESSAO CONVERGE ANTES DE LISTAR — e não é detalhe.
+    //
+    // `ignore.groups` foi para `false` no codigo, mas `convergirConfigDaSessao`
+    // só roda dentro de `startSession`. Uma sessão que já estava no ar mantém a
+    // config ANTIGA para sempre: os grupos aparecem na importação e nenhuma
+    // mensagem nova deles chega depois — meia funcionalidade, e a metade que
+    // falta é silenciosa. MEDIDO na instalação do dono: sessão WORKING com
+    // `ignore.groups=true` depois do deploy.
+    //
+    // Pedir a lista de grupos É dizer "quero grupos", então este é o momento
+    // certo de garantir o transporte. Converge uma vez; nas seguintes a própria
+    // função percebe que já está como queremos e não reinicia nada.
+    await this.convergirConfigDaSessao(session);
+
     const url = new URL(`${this.baseUrl}/api/${encodeURIComponent(session)}/groups`);
     const res = await this.fetchComTeto(url, {
       headers: { "X-Api-Key": this.apiKey, Accept: "application/json" },
@@ -482,9 +496,26 @@ export class WahaClient {
       throw new Error(`waha_${res.status}: ${body.slice(0, 200)}`);
     }
     const cru: unknown = await res.json();
-    if (!Array.isArray(cru)) return [];
+
+    // ⚠️ MAPA, NÃO ARRAY — e a primeira versão disto estava errada.
+    //
+    // Eu escrevi `if (!Array.isArray(cru)) return []` a partir da documentação,
+    // sem exercitar contra o WAHA real. MEDIDO depois, no engine NOWEB:
+    //
+    //   { "120363401969475450@g.us": { id, subject, participants, ... }, ... }
+    //
+    // Um objeto indexado pelo chatId. O `return []` devolvia zero grupo com
+    // HTTP 200 — o pior desfecho possível: sem erro, sem log, e a tela dizendo
+    // que importou. Aceitar as DUAS formas porque o array é o que a doc mostra
+    // e outro engine pode entregar assim; o que não se aceita mais é presumir.
+    const itens: unknown[] = Array.isArray(cru)
+      ? cru
+      : cru && typeof cru === "object"
+        ? Object.values(cru as Record<string, unknown>)
+        : [];
+
     const saida: Array<{ chatId: string; subject: string | null }> = [];
-    for (const item of cru) {
+    for (const item of itens) {
       if (!item || typeof item !== "object") continue;
       const g = item as { id?: unknown; subject?: unknown; name?: unknown };
       const id =

@@ -2,6 +2,7 @@
 
 import { format } from "date-fns";
 
+import { useUser } from "@/hooks/auth/AuthProvider";
 import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
 import { useT } from "@/hooks/i18n/useT";
 import type { AssignmentEvent } from "@/hooks/inbox/useConversationAssignmentEvents";
@@ -37,9 +38,10 @@ interface Props {
 export function EventoDeResponsavel({ evento }: Props) {
   const localeDaData = useLocaleDeData();
   const t = useT();
+  const eu = useUser();
   const hora = format(new Date(evento.created_at), "HH:mm", { locale: localeDaData });
 
-  const conteudo = descrever(evento, t);
+  const conteudo = descrever(evento, t, eu.id);
   // `routing` sem nome não diz nada a ninguém ("alguém foi designado por alguém").
   // Sumir com a linha é melhor que uma linha vazia de informação.
   if (!conteudo) return null;
@@ -70,9 +72,26 @@ export function EventoDeResponsavel({ evento }: Props) {
 function descrever(
   e: AssignmentEvent,
   t: (texto: string) => string,
+  meuId: string,
 ): { texto: string; icone: React.ReactNode } | null {
-  const quemEntrou = e.to_user_name;
-  const quemSaiu = e.from_user_name;
+  /**
+   * "VOCÊ" ANTES DO NOME, e não como último recurso.
+   *
+   * Medido na instalação do dono: o usuário dele não tem `full_name` no
+   * cadastro, então `nomesDosAtendentes` devolve `null` e a linha saía como
+   * "Alguém do time assumiu esta conversa" — para uma ação que ele mesmo tinha
+   * acabado de fazer. A tela sabia quem era e dizia que não sabia.
+   *
+   * Preencher o nome no perfil resolve o caso dele; isto resolve a CLASSE, e é
+   * o que qualquer aplicativo de conversa faz: para quem agiu, a primeira
+   * pessoa lê melhor que o próprio nome, mesmo quando o nome existe.
+   */
+  const nomeDe = (userId: string | null, nome: string | null): string | null => {
+    if (userId && userId === meuId) return t("Você");
+    return nome;
+  };
+  const quemEntrou = nomeDe(e.to_user_id, e.to_user_name);
+  const quemSaiu = nomeDe(e.from_user_id, e.from_user_name);
 
   switch (e.reason) {
     case "claim":

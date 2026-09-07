@@ -93,10 +93,15 @@ function ImportarGrupos() {
   async function importar() {
     setImportando(true);
     try {
-      const r = await apiClient.post<{ encontrados: number; vinculados: number; falharam: number }>(
-        "/api/v1/channels/groups/import",
-        {},
-      );
+      // `{ data: … }` e não o objeto direto: TODA rota deste repo responde pelo
+      // envelope de `ok()`. Sem o `.data`, `r.vinculados` é `undefined` — e o
+      // toast saiu literalmente "undefined grupos importados" na tela do dono,
+      // porque `undefined > 0` e `undefined === 0` são ambos falsos e a mensagem
+      // caiu no ramo de sucesso. Os outros hooks do inbox já faziam certo
+      // (`apiClient.get<{ data: Note[] }>`); este foi escrito sem olhar para eles.
+      const { data: r } = await apiClient.post<{
+        data: { encontrados: number; vinculados: number; falharam: number };
+      }>("/api/v1/channels/groups/import", {});
       // O texto diz o NÚMERO, não "pronto": quem tem 12 grupos e vê "3
       // importados" precisa saber disso na hora, e não depois de procurar os
       // outros nove na lista.
