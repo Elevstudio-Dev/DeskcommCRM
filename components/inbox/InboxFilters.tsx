@@ -116,7 +116,32 @@ function ImportarGrupos() {
       } else {
         toast.success(`${r.vinculados} ${t("grupos importados")}`);
       }
-      await qc.invalidateQueries({ queryKey: ["conversations"] });
+      /**
+       * `refetchQueries` com `type: "all"`, e não `invalidateQueries`.
+       *
+       * ⚠️ ESTE CONSERTO É DE CLASSE, NÃO DE CAUSA — e a diferença está escrita
+       * aqui porque ela importa para quem vier depois.
+       *
+       * O relato foi "precisei atualizar a página para os grupos aparecerem".
+       * Três coisas foram MEDIDAS e estão certas: o servidor devolve as linhas
+       * sob a RLS do usuario (9 de 9); o realtime entrega (assinatura por fora +
+       * UPDATE provocado = evento recebido); e o prefixo `["conversations"]`
+       * casa com a chave `["conversations", filters]`. A causa exata do lado do
+       * navegador não foi reproduzida — não tenho a sessão dele para medir.
+       *
+       * O que se sabe da ferramenta: `invalidateQueries` marca como obsoleto e
+       * só REBUSCA o que estiver ATIVO. Basta a consulta não estar ativa naquele
+       * instante para a chamada virar um no-op silencioso. `refetchQueries` com
+       * `type: "all"` não depende disso: busca de novo, ativa ou não.
+       *
+       * A contagem entra junto: o numero ao lado de "Grupos" vem de OUTRA rota,
+       * e um badge que discorda da lista é o defeito que
+       * `badge-espelha-a-aba.test.ts` existe para impedir.
+       */
+      await Promise.all([
+        qc.refetchQueries({ queryKey: ["conversations"], type: "all" }),
+        qc.invalidateQueries({ queryKey: ["conversation-counts"] }),
+      ]);
     } catch (err) {
       showApiError(err);
     } finally {

@@ -28,7 +28,6 @@ interface Props {
   onSelect: (id: string) => void;
   /** Optional client-side filter (e.g. only-unread). */
   clientFilter?: (c: ConversationWithContact) => boolean;
-  /** Notifies parent when the visible list changes (used by keyboard nav). */
 }
 
 export function ConversationList({
