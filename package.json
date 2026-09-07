@@ -13,6 +13,7 @@
     "build:webpack": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "lint:types": "NODE_OPTIONS=--max-old-space-size=8192 eslint --config eslint.typed.config.mjs .",
     "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json,css}\"",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",

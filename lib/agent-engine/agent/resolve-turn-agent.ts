@@ -186,9 +186,9 @@ export async function resolveTurnAgent(
     // regra 6: sem mensagem inbound (follow-up) — nunca classifica.
     if (input.signal === null) {
       if (stickyMember !== undefined) {
-        return loadMatchedOrFallback('sticky', stickyMember.agentId, input.stickyIntent, null);
+        return await loadMatchedOrFallback('sticky', stickyMember.agentId, input.stickyIntent, null);
       }
-      return resolveFallback('no_match', null);
+      return await resolveFallback('no_match', null);
     }
 
     // classifica — inclusive com sticky ativo, pra detectar troca de assunto (regra 2).
@@ -203,29 +203,42 @@ export async function resolveTurnAgent(
     // "sem sinal", nunca deve derrubar a stickiness (review T4 finding 1).
     if (verdict === null) {
       if (stickyMember !== undefined) {
-        return loadMatchedOrFallback('sticky', stickyMember.agentId, input.stickyIntent, null);
+        return await loadMatchedOrFallback('sticky', stickyMember.agentId, input.stickyIntent, null);
       }
-      return resolveFallback('classifier_failed', null);
+      return await resolveFallback('classifier_failed', null);
     }
 
     if (stickyMember !== undefined) {
       const changedSubject =
         verdict.intentName !== null && verdict.intentName !== input.stickyIntent && verdict.confidence >= router.minConfidence;
       if (!changedSubject) {
-        return loadMatchedOrFallback('sticky', stickyMember.agentId, input.stickyIntent, verdict.confidence);
+        return await loadMatchedOrFallback('sticky', stickyMember.agentId, input.stickyIntent, verdict.confidence);
       }
       const newMember = router.members.find((m) => m.intentName === verdict.intentName);
       // newMember sempre definido: classifyIntent só devolve intentName que bateu em router.members.
-      return loadMatchedOrFallback('reclassified', newMember!.agentId, verdict.intentName, verdict.confidence);
+      return await loadMatchedOrFallback('reclassified', newMember!.agentId, verdict.intentName, verdict.confidence);
     }
 
     // sem sticky (regra 3).
     if (verdict.intentName !== null && verdict.confidence >= router.minConfidence) {
       const member = router.members.find((m) => m.intentName === verdict.intentName);
-      return loadMatchedOrFallback('classified', member!.agentId, verdict.intentName, verdict.confidence);
+      return await loadMatchedOrFallback('classified', member!.agentId, verdict.intentName, verdict.confidence);
     }
 
-    return resolveFallback('no_match', verdict.confidence);
+    return await resolveFallback('no_match', verdict.confidence);
+    // ⚠️ OS `return await` ACIMA NÃO SÃO REDUNDANTES — sem eles este `catch`
+    // nao existe para a maioria dos caminhos.
+    //
+    // `loadMatchedOrFallback` e `resolveFallback` são `async` e consultam o
+    // banco (`_loadAgentById`). Devolvidas SEM `await` de dentro do `try`, a
+    // promessa sai do bloco e a rejeição acontece FORA dele: o `catch` nunca
+    // roda, e a rede que existe para "o turno cair no fluxo sem router" some
+    // justamente quando o banco falha — que é quando ela precisaria existir.
+    //
+    // Achado por `@typescript-eslint/return-await` (`in-try-catch`) na camada
+    // com tipos (`eslint.typed.config.mjs`), em 8 sítios. Nenhum teste pegava:
+    // eles exercitam o caminho feliz do router, e a rejeição do carregador não
+    // tem caso.
   } catch (err) {
     deps.log.warn('resolve-turn-agent: erro inesperado no router — turno cai no fluxo sem router', {
       error: err instanceof Error ? err.message : String(err),
