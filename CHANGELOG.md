@@ -8,66 +8,44 @@ Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual es
 
 ## [Não lançado]
 
+## [1.15.0] — 2026-09-07
+
 ### Adicionado
-
-- **Os grupos de WhatsApp aparecem no CRM** Até agora toda mensagem de grupo era descartada na entrada, e o grupo nem
-  existia no sistema. Agora ele vira conversa como qualquer outra, com uma visão
-  **Grupos** própria na caixa de entrada — separada de propósito: um grupo de 40
-  pessoas produz dezenas de mensagens por hora e empurraria para fora da
-  primeira página justamente o cliente que está esperando resposta.
-
-  Dentro do grupo, cada mensagem mostra **quem escreveu**, como no WhatsApp. E o
-  que você digita no grupo pelo próprio celular também aparece aqui — sem isso,
-  o CRM mostraria meia conversa, o que é pior do que nenhuma porque parece
-  completa.
-
-  Para os grupos que você **já participa** e que estão parados, há o botão
-  **"Importar grupos do WhatsApp"** dentro da visão Grupos. Ele também é quem
-  traz o nome de cada um: a mensagem de grupo carrega o nome de quem escreveu, e
-  não o assunto do grupo. Dá para rodar quantas vezes quiser — reimportar
-  conserta nomes e renomeia os grupos que mudaram de assunto no WhatsApp.
-
-  **A IA continua calada em grupo**, como já era: o agente ignora grupos por
-  padrão, e isso segue configurável na tela dele. A importação **não traz
-  histórico**: o grupo entra vazio e recebe o que chegar dali em diante.
 
 - **A conversa avisa quem assumiu** Duas pessoas com a mesma conversa aberta é o normal num time, e nada na tela
   dizia que alguém já tinha assumido — quem chegava depois respondia por cima do
   colega. Agora aparece uma linha no meio da conversa: *"Fulano assumiu esta
-  conversa"*, junto com transferências, liberações e a passagem do automático
-  para uma pessoa.
+  conversa"*, junto com transferências, liberações e a passagem do automático para
+  uma pessoa. Ela chega sozinha, sem recarregar a página.
 
   O aviso é discreto de propósito — cinza e centrado, como o "Fulano entrou no
   grupo" do WhatsApp. Se tivesse o mesmo destaque da nota interna, uma conversa
-  com quatro trocas de responsável viraria uma parede amarela e a nota de
-  verdade, escrita por alguém, perderia a atenção que tem hoje.
+  com quatro trocas de responsável viraria uma parede amarela e a nota de verdade,
+  escrita por alguém, perderia a atenção que tem hoje.
 
-- **Marcadores com cor, criados pelo gerente** Os marcadores de conversa existiam e dava para filtrar por eles, mas **não
-  havia tela para criar nenhum** — só quem tivesse acesso ao banco conseguia
-  definir o vocabulário da empresa. Agora tem: **Funis › Marcadores**, onde o
-  gerente cria, renomeia, escolhe uma cor entre oito e vê **quantas conversas
-  carregam cada marcador**.
+  Quando quem agiu foi você, a linha diz **"Você"** em vez do seu nome.
+
+- **Instagram Direct — a base pronta, a conexão em breve** O canal já existe no sistema, ao lado do WhatsApp: a caixa de entrada, os
+  marcadores, a fila e as regras de silêncio da IA vão funcionar para ele sem nada
+  de novo. A aba **Instagram** em Conexões mostra o que falta.
+
+  **Ainda não dá para conectar**, e o que falta não depende deste sistema: a conta
+  precisa ser Profissional e ligada a uma Página do Facebook, e a Meta precisa
+  aprovar o aplicativo para ler e responder mensagens (App Review), às vezes com
+  verificação da empresa por documento. Esses passos levam de dias a semanas.
+  Assim que a aprovação sair, a tela ganha o botão de conectar.
+
+- **Marcadores com cor, criados pelo gerente** Os marcadores de conversa existiam e dava para filtrar por eles, mas **não havia tela para criar nenhum** — só quem tivesse acesso ao banco conseguia definir o
+  vocabulário da empresa. Agora tem: **Funis › Marcadores**, onde o gerente cria,
+  renomeia, escolhe uma cor entre oito e vê **quantas conversas carregam cada marcador**.
 
   Quem atende continua aplicando marcador na conversa como sempre; criar o
   vocabulário oficial é do gerente, e a diferença importa: é ela que faz a
-  contagem significar alguma coisa em vez de dividir "urgente" em quatro
-  grafias.
+  contagem significar alguma coisa em vez de dividir "urgente" em quatro grafias.
 
-  A tela mostra também uma lista que não existia em lugar nenhum: **"Em uso, mas
-  fora da lista"** — os marcadores que alguém digitou direto na conversa e que
-  não estão no vocabulário. São eles que quebram o filtro e dividem a contagem
-  sem aparecer. Um clique promove qualquer um deles a oficial.
-
-- **Instagram Direct — a base pronta, a conexão em breve** O canal já existe no sistema, ao lado do WhatsApp: a caixa de entrada, os
-  marcadores, a fila e as regras de silêncio da IA vão funcionar para ele sem
-  nada de novo. A aba **Instagram** em Conexões mostra o que falta.
-
-  ⚠️ **Ainda não dá para conectar**, e o que falta não depende deste sistema: a
-  conta precisa ser Profissional e ligada a uma Página do Facebook, e a Meta
-  precisa aprovar o aplicativo para ler e responder mensagens (App Review),
-  às vezes com verificação da empresa por documento. Esses passos levam de dias
-  a semanas. Assim que a aprovação sair, a tela ganha o botão de conectar.
-
+  A tela mostra também uma lista que não existia em lugar nenhum: **"Em uso, mas fora da lista"** — os marcadores que alguém digitou direto na conversa e que não
+  estão no vocabulário. São eles que quebram o filtro e dividem a contagem sem
+  aparecer. Um clique promove qualquer um deles a oficial.
 
 - **O onboarding pergunta primeiro se você quer a IA** Quem chegava para cadastrar a empresa caía direto na configuração do atendente
   de IA, mesmo querendo só o CRM. Agora a primeira tela oferece dois caminhos:
@@ -79,20 +57,46 @@ Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual es
   quando quiser ligá-la, e o resumo do onboarding para de cobrar o que você
   decidiu não usar agora.
 
+- **Os grupos de WhatsApp aparecem no CRM** Até agora toda mensagem de grupo era descartada na entrada, e o grupo nem
+  existia no sistema. Agora ele vira conversa como qualquer outra, com uma visão
+  **Grupos** própria na caixa de entrada — separada de propósito: um grupo de 40
+  pessoas produz dezenas de mensagens por hora e empurraria para fora da primeira
+  página justamente o cliente que está esperando resposta.
+
+  Dentro do grupo, cada mensagem mostra **quem escreveu**, como no WhatsApp. E o
+  que você digita no grupo pelo próprio celular também aparece aqui — sem isso, o
+  CRM mostraria meia conversa, o que é pior do que nenhuma porque parece completa.
+
+  Para os grupos que você **já participa** e que estão parados, há o botão
+  **"Importar grupos do WhatsApp"** dentro da visão Grupos. Ele também é quem traz
+  o nome de cada um: a mensagem de grupo carrega o nome de quem escreveu, e não o
+  assunto do grupo. Dá para rodar quantas vezes quiser — reimportar conserta nomes
+  e renomeia os grupos que mudaram de assunto no WhatsApp.
+
+  Na primeira importação o WhatsApp pode ficar alguns segundos reconectando: é a
+  conexão recebendo a configuração que passa a entregar mensagem de grupo.
+  Acontece uma vez só.
+
+  **A IA continua calada em grupo**, como já era: o agente ignora grupos por
+  padrão, e isso segue configurável na tela dele.
+
+  A importação **não traz histórico**: o grupo entra vazio e passa a receber o que
+  chegar dali em diante.
+
 ### Alterado
 
-- **A área de conversa ficou com a cara do WhatsApp** Quem atende passa o dia entre o WhatsApp Web e o CRM, e a diferença visual
-  entre os dois custava tempo. A conversa agora tem fundo com textura discreta,
-  balões com rabinho, mensagens seguidas da mesma pessoa agrupadas e a hora
-  junto do texto — o mesmo desenho que a mão já conhece.
+- **A área de conversa ficou com a cara do WhatsApp** Quem atende passa o dia entre o WhatsApp Web e o CRM, e a diferença visual entre
+  os dois custava tempo. A conversa agora tem fundo com textura discreta, balões
+  com rabinho, mensagens seguidas da mesma pessoa agrupadas e a hora junto do
+  texto — o mesmo desenho que a mão já conhece.
 
   A cor dos balões enviados continua sendo **a cor da sua marca**, não o verde do
   WhatsApp: a tela fica familiar sem deixar de ser sua.
 
-- **As ações da conversa moraram num menu "Opções"** O topo da conversa tinha cinco botões concorrendo pelo mesmo espaço e o nome
-  do contato espremido no meio. Agora **Assumir** (ou **Liberar**) fica à vista,
-  porque é a ação do dia a dia, e o resto — transferir, lembrar depois, devolver
-  ao automático, pausar o automático, arquivar — mora num menu **Opções**.
+- **As ações da conversa moraram num menu "Opções"** O topo da conversa tinha cinco botões concorrendo pelo mesmo espaço e o nome do
+  contato espremido no meio. Agora **Assumir** (ou **Liberar**) fica à vista,
+  porque é a ação do dia a dia, e o resto — transferir, lembrar depois, devolver ao
+  automático, pausar o automático, arquivar — mora num menu **Opções**.
 
   As visões da caixa de entrada (Fila, Minhas, Todas, Automático, Arquivadas)
   também viraram um menu, com a visão atual e a contagem dela sempre visíveis no
@@ -101,6 +105,18 @@ Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual es
   **"Fechar" agora se chama "Arquivar"**, e a aba "Fechadas" virou "Arquivadas" —
   a conversa nunca foi apagada, e o nome antigo sugeria o contrário.
 
+- **Os atalhos de uma tecla saíram da caixa de entrada** Apertar **E** com o foco fora do campo de texto abria a pergunta "fechar
+  conversa?". O mesmo valia para **A** (assumir) e **R** (focar a resposta): eram
+  atalhos de uma letra só, sem tecla modificadora, e na caixa de entrada a mão fica
+  o tempo todo entre a lista e o campo de escrever. Clicar numa conversa tira o
+  foco do campo, e a tecla seguinte virava comando.
+
+  Saíram todos, e com eles a janela de ajuda que os listava.
+
+  **Enter e Shift+Enter continuam** — eles não são atalho, são o comportamento do
+  campo de escrever, como em qualquer aplicativo de conversa. A busca (Ctrl+K) e a
+  troca de tema também ficam: exigem tecla modificadora e não disparam sozinhas
+  enquanto alguém trabalha.
 
 ## [1.14.0] — 2026-09-04
 
@@ -2321,7 +2337,8 @@ Primeira versão marcada do DeskcommCRM. O projeto vinha sendo desenvolvido publ
 
 - **Node 22 é obrigatório para desenvolvimento.** A suíte de invariantes instancia o cliente do Supabase, que exige o `WebSocket` global — nativo apenas a partir do Node 22. Isso não afeta quem apenas hospeda: a VPS roda a imagem pronta.
 
-[Não lançado]: https://github.com/melgarafael/DeskcommCRM/compare/v1.14.0...HEAD
+[Não lançado]: https://github.com/melgarafael/DeskcommCRM/compare/v1.15.0...HEAD
+[1.15.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.11.1...v1.12.0
