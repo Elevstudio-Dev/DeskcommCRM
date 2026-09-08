@@ -1,7 +1,7 @@
 -- 0200 · O worker que empurra compromisso para o Google NUNCA empurrou nada.
 --
 -- ─── O sintoma, medido em produção ──────────────────────────────────────────
--- Log do contêiner de `crm.deskcomm.com.br`, a cada 5 minutos, desde o deploy
+-- Log do contêiner de `crm.elevcrm.com.br`, a cada 5 minutos, desde o deploy
 -- da v1.7.0:
 --
 --   {"level":"warn","msg":"[agenda-google-push] leitura falhou",

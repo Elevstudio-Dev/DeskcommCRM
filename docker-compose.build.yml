@@ -17,7 +17,7 @@ services:
       # não veio de release nenhuma.
       args:
         APP_VERSION: ${APP_VERSION:-local}
-    image: ${APP_IMAGE:-deskcomm-app:local}
+    image: ${APP_IMAGE:-elevcrm-app:local}
     pull_policy: never
 
   # O worker e o scheduler já têm `build:` no compose de produção (é o escape

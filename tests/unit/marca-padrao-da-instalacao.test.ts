@@ -91,7 +91,7 @@ describe("a marca com que a instalação nasce", () => {
     ).toBeLessThan(primeiroUso);
   });
 
-  it("não deixa DeskcommCRM voltar como padrão de APP_NAME", () => {
+  it("não deixa Elev CRM voltar como padrão de APP_NAME", () => {
     // A catraca. O valor antigo era literal em dois pontos; se um `git merge` do
     // upstream trouxer qualquer um de volta, isto fica vermelho aqui em vez de
     // aparecer no `.env` de um cliente.
@@ -100,8 +100,8 @@ describe("a marca com que a instalação nasce", () => {
       ["install.sh", INSTALL],
     ] as const) {
       expect(
-        /APP_NAME[^\n]*DeskcommCRM|DeskcommCRM[^\n]*APP_NAME/.test(conteudo),
-        `${arquivo} voltou a usar DeskcommCRM como padrão de APP_NAME`,
+        /APP_NAME[^\n]*Elev CRM|Elev CRM[^\n]*APP_NAME/.test(conteudo),
+        `${arquivo} voltou a usar Elev CRM como padrão de APP_NAME`,
       ).toBe(false);
     }
   });

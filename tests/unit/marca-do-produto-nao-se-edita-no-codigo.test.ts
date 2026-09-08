@@ -31,7 +31,7 @@
  *    esta linha junto. O que ele garante é que a mudança seja DELIBERADA e
  *    legível no diff, em vez de carona em 56 arquivos.
  *  - Ele não varre marca ESTRANGEIRA. A varredura de `tests/unit/branding.test.ts`
- *    procura `/deskcomm/i` — ela vê a marca da casa saindo, nunca a de fora
+ *    procura `/elevcrm/i` — ela vê a marca da casa saindo, nunca a de fora
  *    entrando. Uma marca qualquer hardcoded num `.tsx` continua invisível.
  *  - `app/design/` é pulado por aquela varredura (`branding.test.ts`, a linha
  *    `if (rel.startsWith("app/design")) continue`), e o showcase renderiza o
@@ -54,7 +54,25 @@ import { DEFAULT_APP_NAME, resolveBranding } from "@/lib/branding";
  * importado de `lib/branding`, de propósito: um teste que compara a constante
  * com ela mesma passa sempre.
  */
-const MARCA_DO_PRODUTO = "DeskcommCRM";
+/**
+ * ⚠️ ESTE VALOR MUDOU EM 2026-09-07, e a mudanca e o caso de uso que o
+ * cabecalho acima descreve — nao a violacao que ele previne.
+ *
+ * O cabecalho conta a historia de um contribuidor que trocou `DEFAULT_APP_NAME`
+ * para personalizar a INSTALACAO dele, e o PR levou a personalizacao junto. Esta
+ * guarda existe para que a proxima troca seja DELIBERADA e legivel no diff.
+ *
+ * Aqui ela e deliberada: este repositorio deixou de ser uma instalacao do
+ * produto de outra pessoa e passou a ser um produto proprio, com nome proprio,
+ * imagens proprias (ver `IMG_NS` no kit) e cliente proprio. Mudar
+ * o PADRAO e o ato certo — o errado seria continuar entregando ao cliente uma
+ * tela que diz o nome de outro produto quando a marca nao esta configurada.
+ *
+ * O caminho de personalizacao POR INSTALACAO segue o mesmo e nao mudou: banco
+ * (`platform_branding`, `organizations.settings.branding`) manda, e `APP_NAME`
+ * no `.env` e a semente. Uma imagem serve todas as marcas.
+ */
+const MARCA_DO_PRODUTO = "Elev CRM";
 
 const COMO_PERSONALIZAR =
   "Para personalizar a marca da SUA instalação, não edite esta constante: " +
@@ -64,7 +82,7 @@ const COMO_PERSONALIZAR =
   "e some com a sua marca no próximo `git pull`.";
 
 describe("a marca padrão do produto", () => {
-  it("é DeskcommCRM — e trocá-la aqui é mudar o produto, não a sua instalação", () => {
+  it("é Elev CRM — e trocá-la aqui é mudar o produto, não a sua instalação", () => {
     expect(DEFAULT_APP_NAME, COMO_PERSONALIZAR).toBe(MARCA_DO_PRODUTO);
   });
 
@@ -76,7 +94,7 @@ describe("a marca padrão do produto", () => {
     expect(resolveBranding(undefined, undefined), COMO_PERSONALIZAR).toEqual({
       name: MARCA_DO_PRODUTO,
       logoUrl: null,
-      initial: "D",
+      initial: "E",
     });
   });
 });

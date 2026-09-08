@@ -103,7 +103,7 @@ Gates da `main`: `typecheck`, `lint`, `lint:channels`, `test:unit`, `test:shell`
 Obrigatórios no merge — **cinco**, e não confie nesta lista: meça.
 
 ```bash
-gh api repos/melgarafael/DeskcommCRM/branches/main/protection \
+gh api repos/Elevstudio-Dev/ElevCRM/branches/main/protection \
   --jq '.required_status_checks.contexts|join(", ")'
 # em 2026-08-14: verify, build-and-size, invariants, e2e, imagens-ok
 ```
@@ -1229,7 +1229,7 @@ Cada um destes foi cometido de verdade nesta casa, e é por isso que estão escr
     Duas defesas, e a segunda é a que pega:
 
     ```bash
-    DESKCOMM_GOV_MIGRATION_EDIT=1 git commit ...        # a variável que o hook exige
+    ELEVCRM_GOV_MIGRATION_EDIT=1 git commit ...        # a variável que o hook exige
     git log --oneline -1 && git diff --stat origin/main..HEAD   # o commit EXISTE e tem o tamanho certo?
     ```
 

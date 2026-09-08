@@ -111,17 +111,17 @@ EOF
 # qual árvore é a dona e como assumir de propósito. Parar calado deixaria o dono
 # da VPS achando que o agente atualiza, quando ele desiste a cada 5 minutos.
 #
-# `DESKCOMM_ASSUMIR_PROJETO=1` é a saída para o caso legítimo — a instalação
+# `ELEVCRM_ASSUMIR_PROJETO=1` é a saída para o caso legítimo — a instalação
 # mudou de pasta e os contêineres ainda apontam para a antiga. É explícita de
 # propósito: assumir por engano é justamente o defeito que esta função existe
 # para impedir.
 recusar_projeto_de_outra_arvore() {  # recusar_projeto_de_outra_arvore <como reportar>
   local alheias reportar="${1:-}"
   alheias="$(projeto_pertence_a_outra_arvore)" || return 0
-  [ "${DESKCOMM_ASSUMIR_PROJETO:-}" != "1" ] || return 0
+  [ "${ELEVCRM_ASSUMIR_PROJETO:-}" != "1" ] || return 0
 
   local recado
-  recado="os contêineres do projeto '$(nome_do_projeto_atual)' foram criados por outra cópia do repo ($(printf '%s' "$alheias" | tr '\n' ' ')) — esta aqui é $(printf '%s' "${PROJECT_DIR:-$PWD}"). Duas cópias com o mesmo nome de projeto disputam os MESMOS contêineres e cada uma os recria com o .env dela, o que derruba as conexões de WhatsApp e quebra as credenciais. Deixe apenas UMA no cron (crontab -e) ou, se esta é mesmo a instalação boa, rode com DESKCOMM_ASSUMIR_PROJETO=1"
+  recado="os contêineres do projeto '$(nome_do_projeto_atual)' foram criados por outra cópia do repo ($(printf '%s' "$alheias" | tr '\n' ' ')) — esta aqui é $(printf '%s' "${PROJECT_DIR:-$PWD}"). Duas cópias com o mesmo nome de projeto disputam os MESMOS contêineres e cada uma os recria com o .env dela, o que derruba as conexões de WhatsApp e quebra as credenciais. Deixe apenas UMA no cron (crontab -e) ou, se esta é mesmo a instalação boa, rode com ELEVCRM_ASSUMIR_PROJETO=1"
   if [ -n "$reportar" ] && command -v "$reportar" >/dev/null 2>&1; then
     "$reportar" "$recado"
   else
@@ -469,7 +469,7 @@ MARCA_PADRAO="Elev CRM"
 # alguém porque não deu para resolver um número de versão seria trocar um
 # problema de previsibilidade por um de disponibilidade.
 ultima_versao_publicada() {
-  local url="${1:-https://github.com/Elevstudio-Dev/DeskcommCRM.git}" ref
+  local url="${1:-https://github.com/Elevstudio-Dev/ElevCRM.git}" ref
   command -v git >/dev/null 2>&1 || return 0
   # `grep -v -- -` descarta PRERELEASE (v1.11.0-rc1, v1.1.1-jmpo.1 — esta última
   # existe de verdade neste repo). O `--sort=-v:refname` do git põe o prerelease

@@ -4,7 +4,7 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
-Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual está atualizando antes de rodar `bash update.sh`**. Mudanças que exigem ação manual aparecem sob **⚠️ Requer atenção**.
+Se você roda o Elev CRM numa VPS, **leia a seção da versão para a qual está atualizando antes de rodar `bash update.sh`**. Mudanças que exigem ação manual aparecem sob **⚠️ Requer atenção**.
 
 ## [Não lançado]
 
@@ -380,7 +380,7 @@ Se você roda o DeskcommCRM numa VPS, **leia a seção da versão para a qual es
 
 ### Do projeto de origem
 
-Esta versão traz junto a 1.13.0 do DeskcommCRM, o projeto do qual o Elev CRM
+Esta versão traz junto a 1.13.0 do Elev CRM, o projeto do qual o Elev CRM
 deriva — 229 mudanças de código. Os itens abaixo estão em uma linha cada; a
 explicação longa de cada um está no CHANGELOG daquele projeto.
 
@@ -1234,7 +1234,7 @@ Primeira versão publicada pela Elev Studio, a partir da 1.12.0.
 
   **Você não precisa fazer nada.** A opção de Push continua podendo ser ligada dos
   dois jeitos: mesmo sem as chaves, o aviso na bandeja do sistema já funciona
-  enquanto o DeskcommCRM está aberto numa aba.
+  enquanto o Elev CRM está aberto numa aba.
 
 - **A Agenda passa a mostrar só a organização que está selecionada** Quem administra mais de uma empresa na mesma instalação via a Agenda somando as
   duas: os tipos de agendamento apareciam repetidos, e clicar em metade deles
@@ -2062,7 +2062,7 @@ novas têm valor padrão e o próprio `update.sh` as acrescenta.
 
 ## [1.2.1] — 2026-08-12
 
-**Versão de segurança. Se você roda o DeskcommCRM numa VPS, atualize.**
+**Versão de segurança. Se você roda o Elev CRM numa VPS, atualize.**
 
 Um usuário da comunidade auditou o código e mandou um relatório. Parte do que ele apontou já
 tinha sido corrigida nas versões seguintes à que ele analisou — mas **seis** problemas estavam
@@ -2270,7 +2270,7 @@ Depois disso, nunca mais é preciso o terminal.
 
 ## [1.0.0] — 2026-07-27
 
-Primeira versão marcada do DeskcommCRM. O projeto vinha sendo desenvolvido publicamente desde abril de 2026 sem tags; esta release estabelece o ponto a partir do qual toda mudança passa a ser versionada e descrita — porque quem hospeda o próprio sistema precisa saber o que muda antes de atualizar.
+Primeira versão marcada do Elev CRM. O projeto vinha sendo desenvolvido publicamente desde abril de 2026 sem tags; esta release estabelece o ponto a partir do qual toda mudança passa a ser versionada e descrita — porque quem hospeda o próprio sistema precisa saber o que muda antes de atualizar.
 
 ### Plataforma
 
@@ -2325,7 +2325,7 @@ Primeira versão marcada do DeskcommCRM. O projeto vinha sendo desenvolvido publ
 - `hostgator-setup-kit`: instalação completa (app + WAHA + banco) com um comando.
 - `baseline.sql` idempotente e auto-curativo — atualização não quebra clone com dados legados.
 - 8 scripts de operação: `install`, `update`, `backup`, `restore`, `reset-password`, `reset-mfa`, `healthcheck` e o assistente de instalação em IA.
-- Imagem publicada em `ghcr.io/melgarafael/deskcommcrm` — a VPS não compila nada.
+- Imagem publicada em `ghcr.io/melgarafael/elevcrm` — a VPS não compila nada.
 
 ### Qualidade
 
@@ -2337,25 +2337,25 @@ Primeira versão marcada do DeskcommCRM. O projeto vinha sendo desenvolvido publ
 
 - **Node 22 é obrigatório para desenvolvimento.** A suíte de invariantes instancia o cliente do Supabase, que exige o `WebSocket` global — nativo apenas a partir do Node 22. Isso não afeta quem apenas hospeda: a VPS roda a imagem pronta.
 
-[Não lançado]: https://github.com/melgarafael/DeskcommCRM/compare/v1.15.0...HEAD
-[1.15.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.14.0...v1.15.0
-[1.14.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.13.0...v1.14.0
-[1.13.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.12.0...v1.13.0
-[1.12.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.11.1...v1.12.0
-[1.11.1]: https://github.com/melgarafael/DeskcommCRM/compare/v1.11.0...v1.11.1
-[1.11.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.10.2...v1.11.0
-[1.10.2]: https://github.com/melgarafael/DeskcommCRM/compare/v1.10.1...v1.10.2
-[1.10.1]: https://github.com/melgarafael/DeskcommCRM/compare/v1.10.0...v1.10.1
-[1.10.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.9.1...v1.10.0
-[1.9.1]: https://github.com/melgarafael/DeskcommCRM/compare/v1.9.0...v1.9.1
-[1.9.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.8.0...v1.9.0
-[1.8.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.7.0...v1.8.0
-[1.7.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.6.0...v1.7.0
-[1.5.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.4.1...v1.5.0
-[1.4.1]: https://github.com/melgarafael/DeskcommCRM/compare/v1.4.0...v1.4.1
-[1.4.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.3.0...v1.4.0
-[1.3.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.2.1...v1.3.0
-[1.2.1]: https://github.com/melgarafael/DeskcommCRM/compare/v1.2.0...v1.2.1
-[1.2.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/melgarafael/DeskcommCRM/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/melgarafael/DeskcommCRM/releases/tag/v1.0.0
+[Não lançado]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.15.0...HEAD
+[1.15.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.14.0...v1.15.0
+[1.14.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.13.0...v1.14.0
+[1.13.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.12.0...v1.13.0
+[1.12.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.11.1...v1.12.0
+[1.11.1]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.11.0...v1.11.1
+[1.11.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.10.2...v1.11.0
+[1.10.2]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.10.1...v1.10.2
+[1.10.1]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.10.0...v1.10.1
+[1.10.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.9.1...v1.10.0
+[1.9.1]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.9.0...v1.9.1
+[1.9.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.8.0...v1.9.0
+[1.8.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.7.0...v1.8.0
+[1.7.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.6.0...v1.7.0
+[1.5.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.4.1...v1.5.0
+[1.4.1]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.4.0...v1.4.1
+[1.4.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.2.1...v1.3.0
+[1.2.1]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.2.0...v1.2.1
+[1.2.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/Elevstudio-Dev/ElevCRM/releases/tag/v1.0.0

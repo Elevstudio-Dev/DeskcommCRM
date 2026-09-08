@@ -2400,7 +2400,11 @@ np_ok /root/_elevcrm    elevcrm
 np_ok /root/-elevcrm    elevcrm
 np_ok /root/_-_crm       crm
 np_ok /root/_123         123
-np_ok /root/elevcrm.crm elevcrmcrm  # o ponto SOME: `elevcrm.crm` vira `elevcrmcrm`
+# O esperado aqui e `elevcrmcrm` — o docker compose REMOVE o ponto, entao
+# `elevcrm.crm` colapsa em `elevcrmcrm`. Nao "conserte" para `elevcrm`: o caso
+# mede a remocao do ponto, e a coincidencia de o resultado parecer o nome do
+# produto era do nome ANTIGO (`deskcomm.crm` -> `deskcommcrm`).
+np_ok /root/elevcrm.crm elevcrmcrm  # o ponto SOME: `elevcrm.crm` vira `elevcrm`
 np_ok /root/crm_cliente  crm_cliente
 
 echo "re-execução: o kit é chamado por caminho RELATIVO, como o README manda"

@@ -80,7 +80,7 @@ describe("rodapé do relatório LGPD", () => {
   it("NÃO imprime marca nenhuma — nem a do produto, nem a do revendedor", () => {
     // Esta é a asserção que reprova a "melhoria" de trocar a razão social por
     // uma marca QUALQUER: o rodapé só pode conter o que veio de `legal_name`.
-    // Checar apenas `/deskcomm/i` pegaria a nossa marca e deixaria passar a do
+    // Checar apenas `/elevcrm/i` pegaria a nossa marca e deixaria passar a do
     // revendedor — que é justamente o conserto que alguém vai propor.
     const texto = rodape(
       LgpdExportPdf({
@@ -95,7 +95,7 @@ describe("rodapé do relatório LGPD", () => {
       .trim();
 
     expect(nomeDoControlador).toBe("Bem Viver Serviços Médicos LTDA");
-    expect(texto).not.toMatch(/deskcomm/i);
+    expect(texto).not.toMatch(/elevcrm/i);
     // O nome fantasia também não entra: quem responde pelos dados é a pessoa
     // jurídica, e é a razão social que a identifica.
     expect(nomeDoControlador).not.toContain("Clínica Bem Viver");
@@ -137,6 +137,6 @@ describe("rodapé do relatório LGPD", () => {
     const tudo = rodape(LgpdExportPdf({ data: payload({ organization_legal_name: "" }) }));
 
     expect(tudo).toContain("Controlador: —");
-    expect(tudo).not.toMatch(/deskcomm/i);
+    expect(tudo).not.toMatch(/elevcrm/i);
   });
 });

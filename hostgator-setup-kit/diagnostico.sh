@@ -19,7 +19,7 @@
 # depender dele seria diagnosticar o passado com a ferramenta do passado. E
 # precisa poder ser baixado avulso, sem clonar nada:
 #
-#   curl -fsSL https://raw.githubusercontent.com/Elevstudio-Dev/DeskcommCRM/main/hostgator-setup-kit/diagnostico.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Elevstudio-Dev/ElevCRM/main/hostgator-setup-kit/diagnostico.sh | bash
 #
 # ── O que ele pode assumir que existe ────────────────────────────────────────
 # Medido numa VPS real: bash 5.1, docker, docker compose, curl, sed/awk/grep.
@@ -38,7 +38,7 @@ titulo() { printf '\n%s%s%s\n' "$B" "$*" "$Z"; }
 item()   { printf '  %s\n' "$*"; }
 
 # ── 0. Achar a instalação ────────────────────────────────────────────────────
-# O install.sh clona em ./elevcrm ./deskcommcrm por padrão, mas o operador pode ter posto
+# O install.sh clona em ./elevcrm por padrão (e ./elevcrm continua na busca, para achar instalação antiga), mas o operador pode ter posto
 # em qualquer lugar. Procuramos no cwd, no caminho padrão, e por último varremos
 # — em profundidade limitada, para não passear pelo disco inteiro.
 achar_projeto() {

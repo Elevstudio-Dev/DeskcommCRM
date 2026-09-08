@@ -28,26 +28,26 @@ escreveu — uma escrita que só se confirma pela própria sessão que a fez nã
 
 | pacote | tag | antes | depois | |
 |---|---|---|---|---|
-| `deskcommcrm` | `1.3.0` | `fc10b029e326` | `fc10b029e326` | alinhado ✓ |
-| `deskcommcrm` | `1.3` | `fc10b029e326` | `fc10b029e326` | alinhado ✓ |
-| `deskcommcrm` | `stable` | `c4bc70b606c8` | `fc10b029e326` | alinhado ✓ *(alterado)* |
-| `deskcommcrm` | `latest` | `2f90346bf86d` | `2f90346bf86d` | **controle** — não podia mudar ✓ |
-| `deskcommcrm` | `main` | `2f90346bf86d` | `2f90346bf86d` | **controle** — não podia mudar ✓ |
-| `deskcomm-worker` | `1.3.0` | `81e5af567cc8` | `81e5af567cc8` | alinhado ✓ |
-| `deskcomm-worker` | `1.3` | `81e5af567cc8` | `81e5af567cc8` | alinhado ✓ |
-| `deskcomm-worker` | `stable` | `3fe292cad2bd` | `81e5af567cc8` | alinhado ✓ *(alterado)* |
-| `deskcomm-worker` | `latest` | `6f7c03a5b96c` | `6f7c03a5b96c` | **controle** — não podia mudar ✓ |
-| `deskcomm-worker` | `main` | `6f7c03a5b96c` | `6f7c03a5b96c` | **controle** — não podia mudar ✓ |
-| `deskcomm-scheduler` | `1.3.0` | `4396263ba807` | `4396263ba807` | alinhado ✓ |
-| `deskcomm-scheduler` | `1.3` | `4396263ba807` | `4396263ba807` | alinhado ✓ |
-| `deskcomm-scheduler` | `stable` | `a0d5c3ad2296` | `4396263ba807` | alinhado ✓ *(alterado)* |
-| `deskcomm-scheduler` | `latest` | `c6be866e2b26` | `c6be866e2b26` | **controle** — não podia mudar ✓ |
-| `deskcomm-scheduler` | `main` | `c6be866e2b26` | `c6be866e2b26` | **controle** — não podia mudar ✓ |
+| `elevcrm` | `1.3.0` | `fc10b029e326` | `fc10b029e326` | alinhado ✓ |
+| `elevcrm` | `1.3` | `fc10b029e326` | `fc10b029e326` | alinhado ✓ |
+| `elevcrm` | `stable` | `c4bc70b606c8` | `fc10b029e326` | alinhado ✓ *(alterado)* |
+| `elevcrm` | `latest` | `2f90346bf86d` | `2f90346bf86d` | **controle** — não podia mudar ✓ |
+| `elevcrm` | `main` | `2f90346bf86d` | `2f90346bf86d` | **controle** — não podia mudar ✓ |
+| `elevcrm-worker` | `1.3.0` | `81e5af567cc8` | `81e5af567cc8` | alinhado ✓ |
+| `elevcrm-worker` | `1.3` | `81e5af567cc8` | `81e5af567cc8` | alinhado ✓ |
+| `elevcrm-worker` | `stable` | `3fe292cad2bd` | `81e5af567cc8` | alinhado ✓ *(alterado)* |
+| `elevcrm-worker` | `latest` | `6f7c03a5b96c` | `6f7c03a5b96c` | **controle** — não podia mudar ✓ |
+| `elevcrm-worker` | `main` | `6f7c03a5b96c` | `6f7c03a5b96c` | **controle** — não podia mudar ✓ |
+| `elevcrm-scheduler` | `1.3.0` | `4396263ba807` | `4396263ba807` | alinhado ✓ |
+| `elevcrm-scheduler` | `1.3` | `4396263ba807` | `4396263ba807` | alinhado ✓ |
+| `elevcrm-scheduler` | `stable` | `a0d5c3ad2296` | `4396263ba807` | alinhado ✓ *(alterado)* |
+| `elevcrm-scheduler` | `latest` | `c6be866e2b26` | `c6be866e2b26` | **controle** — não podia mudar ✓ |
+| `elevcrm-scheduler` | `main` | `c6be866e2b26` | `c6be866e2b26` | **controle** — não podia mudar ✓ |
 
 ## Confira você mesmo
 
 ```bash
-for p in deskcommcrm deskcomm-worker deskcomm-scheduler; do
+for p in elevcrm elevcrm-worker elevcrm-scheduler; do
   for t in 1.3.0 1.3 stable; do
     echo -n "$p:$t "
     docker buildx imagetools inspect ghcr.io/melgarafael/$p:$t | awk '/^Digest:/{print $2}'

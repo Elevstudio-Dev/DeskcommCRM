@@ -215,9 +215,9 @@ describe("os números que o código e o banco compartilham", () => {
   });
 
   it("o bucket não carrega a marca do produto no nome", () => {
-    // `tests/unit/branding.test.ts` varre `/deskcomm/i` em 5 raízes de código.
+    // `tests/unit/branding.test.ts` varre `/elevcrm/i` em 5 raízes de código.
     // O nome do bucket também vai para a URL pública, que o cliente do
     // revendedor vê.
-    expect(BUCKET_DE_LOGOS).not.toMatch(/deskcomm/i);
+    expect(BUCKET_DE_LOGOS).not.toMatch(/elevcrm/i);
   });
 });

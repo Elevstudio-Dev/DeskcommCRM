@@ -3,12 +3,12 @@ marp: true
 theme: default
 class: invert
 paginate: true
-title: DeskcommCRM — Pitch Deck v0.1
+title: Elev CRM — Pitch Deck v0.1
 description: CRM operacional com IA pra e-commerce brasileiro
 date: 2026-04-29
 ---
 
-# DeskcommCRM
+# Elev CRM
 
 ### O CRM operacional onde **IA e humanos atendem juntos** os clientes finais de PMEs de e-commerce no WhatsApp.
 
@@ -34,7 +34,7 @@ PME de e-commerce brasileiro hoje atende cliente final num caos:
 
 ## 2. A nossa visão
 
-DeskcommCRM é a plataforma onde:
+Elev CRM é a plataforma onde:
 
 | Atendimento | Tecnologia | Compliance |
 |---|---|---|

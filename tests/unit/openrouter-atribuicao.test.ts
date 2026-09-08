@@ -1,5 +1,5 @@
 /**
- * A catraca de marca (`branding.test.ts`) casa `/deskcomm/i` e é CEGA para host
+ * A catraca de marca (`branding.test.ts`) casa `/elevcrm/i` e é CEGA para host
  * de terceiro: removendo só o `X-Title`, um `HTTP-Referer` com domínio pessoal
  * passaria verde. Foi o que quase entrou pelo PR #266 — o domínio do próprio
  * contribuidor viajaria dentro da imagem que todo self-hoster instala,

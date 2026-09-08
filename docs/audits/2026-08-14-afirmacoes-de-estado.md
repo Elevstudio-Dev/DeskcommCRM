@@ -844,10 +844,10 @@ ls .claude/skills/ ; test -e .claude/skills/epic-executor && echo existe || echo
 **Deu:**
 
 ```
-`.claude/skills/` do repo contém apenas `DeskcommCRM` e `sistema-vivo` → `AUSENTE_NO_REPO`. A skill só existe em `~/.claude/skills/epic-executor/` (instalação pessoal do mantenedor); os campos são de fato lidos lá (`init_epic_state.py:29,54,87,144`). Frontmatter: 15/15 arquivos `EPIC-*.md` têm `epic_id`, `priority`, `depends_on` e `status`.
+`.claude/skills/` do repo contém apenas `Elev CRM` e `sistema-vivo` → `AUSENTE_NO_REPO`. A skill só existe em `~/.claude/skills/epic-executor/` (instalação pessoal do mantenedor); os campos são de fato lidos lá (`init_epic_state.py:29,54,87,144`). Frontmatter: 15/15 arquivos `EPIC-*.md` têm `epic_id`, `priority`, `depends_on` e `status`.
 ```
 
-**Sugestão:** Remover a seção `### epic-executor`. Ela descreve uma ferramenta que **não está no repositório** (`.claude/skills/` só traz `DeskcommCRM` e `sistema-vivo`) e um fluxo parado desde 2026-05-06 — quem vem de fora não tem como executá-la e vai gastar tempo procurando. Se ficar, precisa dizer em uma linha: "ferramenta interna do mantenedor, não distribuída no clone".
+**Sugestão:** Remover a seção `### epic-executor`. Ela descreve uma ferramenta que **não está no repositório** (`.claude/skills/` só traz `Elev CRM` e `sistema-vivo`) e um fluxo parado desde 2026-05-06 — quem vem de fora não tem como executá-la e vai gastar tempo procurando. Se ficar, precisa dizer em uma linha: "ferramenta interna do mantenedor, não distribuída no clone".
 
 **Vira teste:** para cada ferramenta citada como parte do fluxo em CONTRIBUTING.md, assertar que ela existe no repositório (`.claude/skills/<nome>` ou `package.json` scripts)
 
@@ -961,10 +961,10 @@ grep -rn 'imagens-ok' .github/workflows/ ; sed -n '160,180p' .github/workflows/p
 **Deu:**
 
 ```
-`.github/workflows/publish-image.yml:160:  imagens-ok:` — existe e o path está certo. Mas o job é fachada: `needs: [build-and-push]`, `permissions: {}`, e o único step roda `[ "${{ needs.build-and-push.result }}" = "success" ]`. Quem constrói é `build-and-push`, matriz de 3: deskcommcrm/Dockerfile, deskcomm-worker/Dockerfile.worker, deskcomm-scheduler/Dockerfile.scheduler.
+`.github/workflows/publish-image.yml:160:  imagens-ok:` — existe e o path está certo. Mas o job é fachada: `needs: [build-and-push]`, `permissions: {}`, e o único step roda `[ "${{ needs.build-and-push.result }}" = "success" ]`. Quem constrói é `build-and-push`, matriz de 3: elevcrm/Dockerfile, elevcrm-worker/Dockerfile.worker, elevcrm-scheduler/Dockerfile.scheduler.
 ```
 
-**Sugestão:** O `publish-image.yml` constrói as três imagens que o self-hoster instala (`deskcommcrm`, `deskcomm-worker`, `deskcomm-scheduler`); o check `imagens-ok` é o job de fachada que reprova quando qualquer uma delas falha. Roda em PR e **bloqueia** desde 2026-08-13.
+**Sugestão:** O `publish-image.yml` constrói as três imagens que o self-hoster instala (`elevcrm`, `elevcrm-worker`, `elevcrm-scheduler`); o check `imagens-ok` é o job de fachada que reprova quando qualquer uma delas falha. Roda em PR e **bloqueia** desde 2026-08-13.
 
 **Vira teste:** assertar que o job `imagens-ok` existe em .github/workflows/publish-image.yml e que sua lista `needs` cobre o job da matriz de 3 imagens
 
@@ -1851,7 +1851,7 @@ Comentário no próprio arquivo: "O replay DE ERRO continua, porque é o que exp
 
 ### L5 · FALSA · gravidade media · sobre-o-codigo
 
-> O DeskcommCRM é distribuído em rolling release a partir da branch `main`.
+> O Elev CRM é distribuído em rolling release a partir da branch `main`.
 
 **Mede com:**
 
@@ -1865,7 +1865,7 @@ grep -n 'TARGET_TAG="$(git tag' hostgator-setup-kit/update.sh ; gh release list 
 update.sh:39 → `[ -n "$TARGET_TAG" ] || TARGET_TAG="$(git tag -l 'v*' --sort=-v:refname | head -1)"`. Releases: v1.3.0 (2026-08-13), v1.2.1, v1.2.0, v1.1.0, v1.0.0. README:163 → "**O alvo é a última versão publicada** (`v1.2.3`), não o topo da `main`".
 ```
 
-**Sugestão:** O DeskcommCRM é distribuído por **versões marcadas** (`v1.x.y`), publicadas como release e descritas no [`CHANGELOG.md`]\(CHANGELOG.md\). O `update.sh` sempre aponta para a última versão publicada — nunca para o topo da `main`. Correções de segurança entram na próxima versão; mantenha sua instalação atualizada (`bash hostgator-setup-kit/update.sh` em self-host). Para saber qual é a última: `gh release list --limit 1`.
+**Sugestão:** O Elev CRM é distribuído por **versões marcadas** (`v1.x.y`), publicadas como release e descritas no [`CHANGELOG.md`]\(CHANGELOG.md\). O `update.sh` sempre aponta para a última versão publicada — nunca para o topo da `main`. Correções de segurança entram na próxima versão; mantenha sua instalação atualizada (`bash hostgator-setup-kit/update.sh` em self-host). Para saber qual é a última: `gh release list --limit 1`.
 
 **Vira teste:** assertar que SECURITY.md não afirma "a partir da branch main" enquanto hostgator-setup-kit/update.sh resolver o alvo por `git tag -l 'v*'`
 
@@ -1954,7 +1954,7 @@ grep -n 'SUPABASE_ACCESS_TOKEN\|Criando o projeto Supabase' hostgator-setup-kit/
 **Mede com:**
 
 ```bash
-for i in deskcommcrm deskcomm-worker deskcomm-scheduler; do for t in 1.3.0 stable; do echo -n "$i:$t "; docker buildx imagetools inspect ghcr.io/melgarafael/$i:$t --format '{{.Manifest.Digest}}'; done; done
+for i in elevcrm elevcrm-worker elevcrm-scheduler; do for t in 1.3.0 stable; do echo -n "$i:$t "; docker buildx imagetools inspect ghcr.io/melgarafael/$i:$t --format '{{.Manifest.Digest}}'; done; done
 ```
 
 **Deu:**
@@ -2099,7 +2099,7 @@ verify, build-and-size, invariants, e2e, imagens-ok
 **Mede com:**
 
 ```bash
-TOKEN=$(curl -s 'https://ghcr.io/token?scope=repository:melgarafael/deskcommcrm:pull&service=ghcr.io' | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])'); curl -s -H "Authorization: Bearer $TOKEN" https://ghcr.io/v2/melgarafael/deskcommcrm/tags/list | python3 -c 'import sys,json;t=json.load(sys.stdin)["tags"];print(len(t),sorted(t))' ; curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" https://ghcr.io/v2/melgarafael/deskcommcrm/manifests/latest
+TOKEN=$(curl -s 'https://ghcr.io/token?scope=repository:melgarafael/elevcrm:pull&service=ghcr.io' | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])'); curl -s -H "Authorization: Bearer $TOKEN" https://ghcr.io/v2/melgarafael/elevcrm/tags/list | python3 -c 'import sys,json;t=json.load(sys.stdin)["tags"];print(len(t),sorted(t))' ; curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $TOKEN" https://ghcr.io/v2/melgarafael/elevcrm/manifests/latest
 ```
 
 **Deu:**
@@ -2163,7 +2163,7 @@ sed -n '294,299p' hostgator-setup-kit/_common.sh ; grep -n 'up -d` FALHA' hostga
 
 ### L42 · FRAGIL · gravidade baixa · contagem
 
-> | Exemplos | `deskcommcrm`, `deskcomm-worker` |
+> | Exemplos | `elevcrm`, `elevcrm-worker` |
 
 **Mede com:**
 
@@ -2174,12 +2174,12 @@ grep -n -A12 'matrix:' .github/workflows/publish-image.yml | grep 'name:'
 **Deu:**
 
 ```
-- name: deskcommcrm
-- name: deskcomm-worker
-- name: deskcomm-scheduler
+- name: elevcrm
+- name: elevcrm-worker
+- name: elevcrm-scheduler
 ```
 
-**Sugestão:** | Exemplos | `deskcommcrm`, `deskcomm-worker`, `deskcomm-scheduler` |
+**Sugestão:** | Exemplos | `elevcrm`, `elevcrm-worker`, `elevcrm-scheduler` |
 
 **Vira teste:** tests/unit/packaging-artefato-do-cliente.test.ts: toda `name:` da matriz de publish-image.yml aparece citada em docs/doctrine/packaging.md — uma quarta imagem, um dia, entra no gate e some da doutrina
 
@@ -2211,17 +2211,17 @@ grep -n 'image:' docker-compose.prod.yml
 **Mede com:**
 
 ```bash
-ghcr_status deskcomm-worker 1.2.1 ; ghcr_status deskcomm-scheduler 1.2.1
+ghcr_status elevcrm-worker 1.2.1 ; ghcr_status elevcrm-scheduler 1.2.1
 ```
 
 **Deu:**
 
 ```
-deskcomm-worker:1.2.1 -> 404
-deskcomm-scheduler:1.2.1 -> 404
+elevcrm-worker:1.2.1 -> 404
+elevcrm-scheduler:1.2.1 -> 404
 ```
 
-**Sugestão:** Trocar o exemplo por uma versão que exista nas três imagens: "gravam no `.env` do cliente uma **tag de versão** (`1.3.0`), nunca `latest`, `main` ou `stable`" — e o mesmo na primeira linha da tabela de canais (linha 254). Usar `1.2.1` como exemplo do estado desejado contradiz o parágrafo 13 linhas abaixo, que diz que `deskcomm-worker:1.2.1` nunca vai existir: nenhuma instalação pode nascer pinada nesse número.
+**Sugestão:** Trocar o exemplo por uma versão que exista nas três imagens: "gravam no `.env` do cliente uma **tag de versão** (`1.3.0`), nunca `latest`, `main` ou `stable`" — e o mesmo na primeira linha da tabela de canais (linha 254). Usar `1.2.1` como exemplo do estado desejado contradiz o parágrafo 13 linhas abaixo, que diz que `elevcrm-worker:1.2.1` nunca vai existir: nenhuma instalação pode nascer pinada nesse número.
 
 ### L136 · FALSA · gravidade alta · contagem
 
@@ -2256,20 +2256,20 @@ grep -n 'VERSAO_ALVO=\|trio_publicado' hostgator-setup-kit/install.sh | sed -n '
 
 ```bash
 # config blob das imagens no GHCR (docker daemon fora do ar; li o registry direto)
-python3 scratchpad/ghcr_cfg.py deskcommcrm 1.2.1 ; python3 scratchpad/ghcr_cfg.py deskcommcrm 1.3.0 ; python3 scratchpad/ghcr_cfg.py deskcomm-worker 1.3.0 ; gh release list --limit 2
+python3 scratchpad/ghcr_cfg.py elevcrm 1.2.1 ; python3 scratchpad/ghcr_cfg.py elevcrm 1.3.0 ; python3 scratchpad/ghcr_cfg.py elevcrm-worker 1.3.0 ; gh release list --limit 2
 ```
 
 **Deu:**
 
 ```
-deskcommcrm:1.2.1  APP_VERSION env: AUSENTE
-deskcommcrm:1.3.0  APP_VERSION env: ['APP_VERSION=1.3.0']
-deskcomm-worker:1.3.0  APP_VERSION env: ['APP_VERSION=1.3.0']
-deskcommcrm:stable APP_VERSION=1.3.0 | deskcommcrm:latest APP_VERSION=840917e
+elevcrm:1.2.1  APP_VERSION env: AUSENTE
+elevcrm:1.3.0  APP_VERSION env: ['APP_VERSION=1.3.0']
+elevcrm-worker:1.3.0  APP_VERSION env: ['APP_VERSION=1.3.0']
+elevcrm:stable APP_VERSION=1.3.0 | elevcrm:latest APP_VERSION=840917e
 gh release list: v1.3.0 … Latest … 2026-08-13T19:58:03Z
 ```
 
-**Sugestão:** > **Onde já vale.** Toda imagem publicada a partir da v1.3.0 carrega `APP_VERSION` — medido em 2026-08-14 direto no registry: `deskcommcrm:1.3.0` e `deskcomm-worker:1.3.0` trazem `APP_VERSION=1.3.0`; a `1.2.1` não traz nenhuma. Quem ainda roda imagem anterior à 1.3.0 responde `desconhecido`, que é a resposta honesta e o motivo de o fallback não ser mais um número plausível. Para saber o que a SUA imagem carrega: `docker run --rm ghcr.io/melgarafael/deskcommcrm:<tag> node -e 'console.log(process.env.APP_VERSION)'`.
+**Sugestão:** > **Onde já vale.** Toda imagem publicada a partir da v1.3.0 carrega `APP_VERSION` — medido em 2026-08-14 direto no registry: `elevcrm:1.3.0` e `elevcrm-worker:1.3.0` trazem `APP_VERSION=1.3.0`; a `1.2.1` não traz nenhuma. Quem ainda roda imagem anterior à 1.3.0 responde `desconhecido`, que é a resposta honesta e o motivo de o fallback não ser mais um número plausível. Para saber o que a SUA imagem carrega: `docker run --rm ghcr.io/melgarafael/elevcrm:<tag> node -e 'console.log(process.env.APP_VERSION)'`.
 
 ### L234 · FALSA · gravidade media · ponteiro
 
@@ -2300,15 +2300,15 @@ grep -n '^\[ \] [0-9]' docs/doctrine/packaging.md | sed -n '8,10p'
 **Mede com:**
 
 ```bash
-for i in deskcommcrm deskcomm-worker deskcomm-scheduler; do for t in 1.3.0 stable; do python3 scratchpad/ghcr_cfg.py $i $t | head -1; done; done
+for i in elevcrm elevcrm-worker elevcrm-scheduler; do for t in 1.3.0 stable; do python3 scratchpad/ghcr_cfg.py $i $t | head -1; done; done
 ```
 
 **Deu:**
 
 ```
-deskcommcrm:1.3.0  top-digest=sha256:fc10b029…  | deskcommcrm:stable  top-digest=sha256:c4bc70b6…
-deskcomm-worker:1.3.0 sha256:81e5af56… | deskcomm-worker:stable sha256:3fe292ca…
-deskcomm-scheduler:1.3.0 sha256:4396263b… | deskcomm-scheduler:stable sha256:a0d5c3ad…
+elevcrm:1.3.0  top-digest=sha256:fc10b029…  | elevcrm:stable  top-digest=sha256:c4bc70b6…
+elevcrm-worker:1.3.0 sha256:81e5af56… | elevcrm-worker:stable sha256:3fe292ca…
+elevcrm-scheduler:1.3.0 sha256:4396263b… | elevcrm-scheduler:stable sha256:a0d5c3ad…
 (os dois lados carregam revision=9bd59e9 e APP_VERSION=1.3.0 — builds distintos do mesmo commit)
 ```
 
@@ -2321,19 +2321,19 @@ deskcomm-scheduler:1.3.0 sha256:4396263b… | deskcomm-scheduler:stable sha256:a
 **Mede com:**
 
 ```bash
-ghcr_status() { … }; for i in deskcommcrm deskcomm-worker deskcomm-scheduler; do for t in docs-doutrina-packaging quebrada-teste; do echo "$i:$t -> $(ghcr_status $i $t)"; done; done
+ghcr_status() { … }; for i in elevcrm elevcrm-worker elevcrm-scheduler; do for t in docs-doutrina-packaging quebrada-teste; do echo "$i:$t -> $(ghcr_status $i $t)"; done; done
 ```
 
 **Deu:**
 
 ```
-deskcommcrm:docs-doutrina-packaging -> 404
-deskcommcrm:quebrada-teste -> 200
-deskcomm-worker:docs-doutrina-packaging -> 404 | quebrada-teste -> 404
-deskcomm-scheduler:docs-doutrina-packaging -> 404 | quebrada-teste -> 404
+elevcrm:docs-doutrina-packaging -> 404
+elevcrm:quebrada-teste -> 200
+elevcrm-worker:docs-doutrina-packaging -> 404 | quebrada-teste -> 404
+elevcrm-scheduler:docs-doutrina-packaging -> 404 | quebrada-teste -> 404
 ```
 
-**Sugestão:** Apagar tags de branch dos três pacotes — qualquer uma nascida de um `workflow_dispatch` de ensaio. Tag de branch é artefato de trabalho: se ficar, vira canal órfão que alguém pina por engano achando que é release, e ela nunca mais se move. Para listar o que existe: `ghcr_status <imagem> <tag>` acima, ou `gh api /user/packages/container/<imagem>/versions --jq '.[].metadata.container.tags'`. O registry ainda carrega `quebrada-teste` (só em `deskcommcrm`) como lembrete; a `docs-doutrina-packaging` já foi apagada — 404 nos três em 2026-08-14.
+**Sugestão:** Apagar tags de branch dos três pacotes — qualquer uma nascida de um `workflow_dispatch` de ensaio. Tag de branch é artefato de trabalho: se ficar, vira canal órfão que alguém pina por engano achando que é release, e ela nunca mais se move. Para listar o que existe: `ghcr_status <imagem> <tag>` acima, ou `gh api /user/packages/container/<imagem>/versions --jq '.[].metadata.container.tags'`. O registry ainda carrega `quebrada-teste` (só em `elevcrm`) como lembrete; a `docs-doutrina-packaging` já foi apagada — 404 nos três em 2026-08-14.
 
 ### L367 · FRAGIL · gravidade baixa · data-versao
 
@@ -2591,7 +2591,7 @@ agent-turn.html  agent-turn.workflow.json  atualizacao-self-service.architecture
 **Mede com:**
 
 ```bash
-docker buildx imagetools inspect ghcr.io/melgarafael/deskcommcrm:stable --format '{{.Manifest.Digest}}' ; docker buildx imagetools inspect ghcr.io/melgarafael/deskcommcrm:1.3.0 --format '{{.Manifest.Digest}}'
+docker buildx imagetools inspect ghcr.io/melgarafael/elevcrm:stable --format '{{.Manifest.Digest}}' ; docker buildx imagetools inspect ghcr.io/melgarafael/elevcrm:1.3.0 --format '{{.Manifest.Digest}}'
 ```
 
 **Deu:**
@@ -2611,15 +2611,15 @@ stable → sha256:c4bc70b606c8e63f3fc9557ed31b1a211b58beaac3b67509eb0c8acbc0dbae
 **Mede com:**
 
 ```bash
-for i in deskcommcrm deskcomm-worker deskcomm-scheduler; do for t in 1.3.0 stable; do echo -n "$i:$t "; docker buildx imagetools inspect ghcr.io/melgarafael/$i:$t --format '{{.Manifest.Digest}}'; done; done
+for i in elevcrm elevcrm-worker elevcrm-scheduler; do for t in 1.3.0 stable; do echo -n "$i:$t "; docker buildx imagetools inspect ghcr.io/melgarafael/$i:$t --format '{{.Manifest.Digest}}'; done; done
 ```
 
 **Deu:**
 
 ```
-deskcommcrm:1.3.0 sha256:fc10b029e326… / deskcommcrm:stable sha256:c4bc70b606c8…
-deskcomm-worker:1.3.0 sha256:81e5af567cc8… / deskcomm-worker:stable sha256:3fe292cad2bd…
-deskcomm-scheduler:1.3.0 sha256:4396263ba807… / deskcomm-scheduler:stable sha256:a0d5c3ad2296…
+elevcrm:1.3.0 sha256:fc10b029e326… / elevcrm:stable sha256:c4bc70b606c8…
+elevcrm-worker:1.3.0 sha256:81e5af567cc8… / elevcrm-worker:stable sha256:3fe292cad2bd…
+elevcrm-scheduler:1.3.0 sha256:4396263ba807… / elevcrm-scheduler:stable sha256:a0d5c3ad2296…
 (pares divergentes nas TRÊS; até as camadas amd64 diferem: 42d064f0… vs 198c494e…)
 ```
 
@@ -2737,14 +2737,14 @@ grep -n "U6" docs/testing/user-journey-map.md | head -10
 **Mede com:**
 
 ```bash
-gh api repos/melgarafael/DeskcommCRM/branches/main/protection --jq '.required_status_checks.contexts|join(", ")' ; ghcr_status deskcommcrm stable
+gh api repos/melgarafael/DeskcommCRM/branches/main/protection --jq '.required_status_checks.contexts|join(", ")' ; ghcr_status elevcrm stable
 ```
 
 **Deu:**
 
 ```
 verify, build-and-size, invariants, e2e, imagens-ok
-deskcommcrm latest=200 stable=200 1.3.0=200 (idem worker e scheduler)
+elevcrm latest=200 stable=200 1.3.0=200 (idem worker e scheduler)
 ```
 
 **Sugestão:** ## Como era enquanto os passos 1–4 não tinham acontecido (histórico — eles aconteceram em 2026-08-14)  Nada quebrava, e isso era por construção. **Nenhuma linha da tabela abaixo descreve o estado de hoje**: os quatro passos foram dados. Ela fica como registro do desenho — para o estado atual, rode os comandos de cada seção.
@@ -2783,13 +2783,13 @@ grep -n "REPO_DIR=\|git clone\|PROJECT_DIR=" hostgator-setup-kit/install.sh ; gr
 **Deu:**
 
 ```
-install.sh:22: REPO_DIR="${REPO_DIR:-deskcommcrm}"
+install.sh:22: REPO_DIR="${REPO_DIR:-elevcrm}"
 install.sh:728: git clone --depth 1 "$REPO_URL" "$REPO_DIR"  → cd "$REPO_DIR" ; PROJECT_DIR="$(pwd)"
 /var/www no kit: só diagnostico.sh:46, como ÚLTIMO palpite de uma lista de 6 candidatos.
 Runbook irmão: docs/runbooks/remediar-worker-congelado.md:81,101,110,218 usam `cd /caminho/do/projeto`.
 ```
 
-**Sugestão:** ```bash cd /caminho/do/projeto      # o install.sh clona em ./deskcommcrm — normalmente /root/deskcommcrm.                             # Não sabe onde está? find /root /opt /home -maxdepth 4 -name docker-compose.prod.yml docker compose -f docker-compose.prod.yml -f docker-compose.traefik.yml --env-file .env up -d app ```
+**Sugestão:** ```bash cd /caminho/do/projeto      # o install.sh clona em ./elevcrm — normalmente /root/elevcrm.                             # Não sabe onde está? find /root /opt /home -maxdepth 4 -name docker-compose.prod.yml docker compose -f docker-compose.prod.yml -f docker-compose.traefik.yml --env-file .env up -d app ```
 
 ### L25 · FALSA · gravidade alta · ponteiro
 
@@ -2867,33 +2867,33 @@ grep -n "TARGET_TAG" hostgator-setup-kit/update.sh | head -3 ; grep -n "stable" 
 
 ```
 update.sh:39: [ -n "$TARGET_TAG" ] || TARGET_TAG="$(git tag -l 'v*' --sort=-v:refname | head -1)"
-docker-compose.prod.yml:35 image: ${APP_IMAGE:-ghcr.io/melgarafael/deskcommcrm:stable} (idem worker:92 e scheduler:196)
+docker-compose.prod.yml:35 image: ${APP_IMAGE:-ghcr.io/melgarafael/elevcrm:stable} (idem worker:92 e scheduler:196)
 docs/DEPLOY-CHECKLIST.md:45: - [ ] `gh release create vX.Y.Z` com as notas do CHANGELOG
 docs/doctrine/packaging.md:340: [ ] 9. `gh release create vX.Y.Z`
-Medido no GHCR: deskcommcrm:latest revision=840917ed (topo da main) vs deskcommcrm:stable version=1.3.0 revision=9bd59e9.
+Medido no GHCR: elevcrm:latest revision=840917ed (topo da main) vs elevcrm:stable version=1.3.0 revision=9bd59e9.
 ```
 
 **Sugestão:** ``` commit → push → PR → merge na main → CI publica `latest`             → `gh release create vX.Y.Z` → CI publica a versão + `stable` → VPS puxa ```  O merge na `main` NÃO chega a instalação nenhuma. Ele publica `latest`, e ninguém consome `latest`: o `docker-compose.prod.yml` tem `:stable` como default nas três imagens, e o `update.sh` alveja a maior tag `v*` (`git tag -l 'v*' --sort=-v:refname | head -1`). Sem cortar a release, a correção fica parada no registry. O checklist da release está em [`../DEPLOY-CHECKLIST.md`]\(../DEPLOY-CHECKLIST.md\).
 
 ### L72 · FRAGIL · gravidade media · contagem
 
-> publica **três** imagens — `deskcommcrm`, `deskcomm-worker` e `deskcomm-scheduler` — sempre na mesma versão
+> publica **três** imagens — `elevcrm`, `elevcrm-worker` e `elevcrm-scheduler` — sempre na mesma versão
 
 **Mede com:**
 
 ```bash
-grep -n "fail-fast\|push: \|- name: deskcomm" .github/workflows/publish-image.yml ; grep -n -A8 'if ! dc pull' hostgator-setup-kit/update.sh
+grep -n "fail-fast\|push: \|- name: elevcrm" .github/workflows/publish-image.yml ; grep -n -A8 'if ! dc pull' hostgator-setup-kit/update.sh
 ```
 
 **Deu:**
 
 ```
-publish-image.yml: strategy.fail-fast: false ; matrix com deskcommcrm, deskcomm-worker, deskcomm-scheduler ; push: ${{ github.event_name != 'pull_request' }} em cada job da matriz.
+publish-image.yml: strategy.fail-fast: false ; matrix com elevcrm, elevcrm-worker, elevcrm-scheduler ; push: ${{ github.event_name != 'pull_request' }} em cada job da matriz.
 update.sh:200: "if ! dc pull; then ... se um run de publicação quebrou ... o compose ainda tem build: ao lado do image: do worker e do scheduler"
 GHCR (medido agora): as três respondem HTTP 200 em :latest e :stable.
 ```
 
-**Sugestão:** publica **três** imagens — `deskcommcrm`, `deskcomm-worker` e `deskcomm-scheduler` — sob a mesma tag de versão. Sob a mesma tag, não necessariamente as três: a matriz roda com `fail-fast: false` e cada job empurra a sua, então uma versão pode existir para duas imagens e faltar na terceira (é exatamente o caso que o `dc pull` do `update.sh` trata). Antes de anunciar uma versão, confirme as três: `for i in deskcommcrm deskcomm-worker deskcomm-scheduler; do docker buildx imagetools inspect ghcr.io/melgarafael/$i:<versão> --format '{{.Manifest.Digest}}'; done`
+**Sugestão:** publica **três** imagens — `elevcrm`, `elevcrm-worker` e `elevcrm-scheduler` — sob a mesma tag de versão. Sob a mesma tag, não necessariamente as três: a matriz roda com `fail-fast: false` e cada job empurra a sua, então uma versão pode existir para duas imagens e faltar na terceira (é exatamente o caso que o `dc pull` do `update.sh` trata). Antes de anunciar uma versão, confirme as três: `for i in elevcrm elevcrm-worker elevcrm-scheduler; do docker buildx imagetools inspect ghcr.io/melgarafael/$i:<versão> --format '{{.Manifest.Digest}}'; done`
 
 ### L108 · FRAGIL · gravidade media · contagem
 
@@ -2926,7 +2926,7 @@ docs/adr/0001-packaging-e-distribuicao.md:148: "4–34 min" não existe no repo
 **Mede com:**
 
 ```bash
-docker buildx imagetools inspect ghcr.io/melgarafael/deskcomm-worker:stable 2>&1 | awk '/^Digest:/{print $2; exit}'
+docker buildx imagetools inspect ghcr.io/melgarafael/elevcrm-worker:stable 2>&1 | awk '/^Digest:/{print $2; exit}'
 ```
 
 **Deu:**
@@ -3046,7 +3046,7 @@ P4 (mesmo arquivo): "**nenhuma** chave do `.env` sumiu (39 → 43: as 4 novas s�
 **Mede com:**
 
 ```bash
-docker buildx imagetools inspect ghcr.io/melgarafael/deskcomm-worker:stable 2>&1 | awk '/^Digest:/{print $2;exit}'; docker buildx imagetools inspect ghcr.io/melgarafael/deskcomm-worker:1.3.0 2>&1 | awk '/^Digest:/{print $2;exit}'; git rev-parse v1.3.0^{commit}
+docker buildx imagetools inspect ghcr.io/melgarafael/elevcrm-worker:stable 2>&1 | awk '/^Digest:/{print $2;exit}'; docker buildx imagetools inspect ghcr.io/melgarafael/elevcrm-worker:1.3.0 2>&1 | awk '/^Digest:/{print $2;exit}'; git rev-parse v1.3.0^{commit}
 ```
 
 **Deu:**
@@ -4494,7 +4494,7 @@ git ls-tree -r --name-only v1.0.0 hostgator-setup-kit/ ; git show v1.0.0:hostgat
 **Deu:**
 
 ```
-v1.0.0 tinha 8 arquivos `.sh`, mas um deles é `_common.sh` (biblioteca compartilhada, não operação); o README da tag documenta exatamente **7** scripts. O "assistente de instalação em IA" é `hostgator-setup-kit/CLAUDE.md` — um markdown ("# Você é o assistente de instalação do DeskcommCRM"), não um script. Portanto: 7 scripts + 1 documento, contados como 8 scripts. No HEAD a pasta tem 14 `.sh` (entram agent, comecar, diagnostico, marca-emails, supabase-provision, test-validators).
+v1.0.0 tinha 8 arquivos `.sh`, mas um deles é `_common.sh` (biblioteca compartilhada, não operação); o README da tag documenta exatamente **7** scripts. O "assistente de instalação em IA" é `hostgator-setup-kit/CLAUDE.md` — um markdown ("# Você é o assistente de instalação do Elev CRM"), não um script. Portanto: 7 scripts + 1 documento, contados como 8 scripts. No HEAD a pasta tem 14 `.sh` (entram agent, comecar, diagnostico, marca-emails, supabase-provision, test-validators).
 ```
 
 **Sugestão:** - 7 scripts de operação — `install`, `update`, `backup`, `restore`, `reset-password`, `reset-mfa` e `healthcheck` — mais `CLAUDE.md`, o roteiro que faz uma IA conduzir a instalação de ponta a ponta para quem não programa.
@@ -4503,7 +4503,7 @@ v1.0.0 tinha 8 arquivos `.sh`, mas um deles é `_common.sh` (biblioteca comparti
 
 ### L337 · FALSA · gravidade alta · sobre-o-codigo
 
-> Imagem publicada em `ghcr.io/melgarafael/deskcommcrm` — a VPS não compila nada.
+> Imagem publicada em `ghcr.io/melgarafael/elevcrm` — a VPS não compila nada.
 
 **Mede com:**
 
@@ -4514,10 +4514,10 @@ git show v1.0.0:docker-compose.prod.yml | grep -nE '^  [a-z0-9_-]+:|image:|build
 **Deu:**
 
 ```
-Em v1.0.0: `app` (linha 19) tem `image: ${APP_IMAGE:-ghcr.io/melgarafael/deskcommcrm:latest}`; `worker` (linha 42) tem **`build:`** e NENHUM `image:`; `scheduler` (linha 112) é `alpine:3.20` com `apk add` no `command:`. Ou seja, na própria v1.0.0 a VPS compilava o worker. O mesmo arquivo admite isso na linha 22: "O worker … era compilado dentro do seu servidor no dia da instalação".
+Em v1.0.0: `app` (linha 19) tem `image: ${APP_IMAGE:-ghcr.io/melgarafael/elevcrm:latest}`; `worker` (linha 42) tem **`build:`** e NENHUM `image:`; `scheduler` (linha 112) é `alpine:3.20` com `apk add` no `command:`. Ou seja, na própria v1.0.0 a VPS compilava o worker. O mesmo arquivo admite isso na linha 22: "O worker … era compilado dentro do seu servidor no dia da instalação".
 ```
 
-**Sugestão:** - Imagem publicada em `ghcr.io/melgarafael/deskcommcrm` — a VPS não compila **o app**. (O worker ainda era compilado no seu servidor nesta versão; isso só foi corrigido na 1.3.0.)
+**Sugestão:** - Imagem publicada em `ghcr.io/melgarafael/elevcrm` — a VPS não compila **o app**. (O worker ainda era compilado no seu servidor nesta versão; isso só foi corrigido na 1.3.0.)
 
 **Vira teste:** tests/unit/packaging-sem-build-only.test.ts (se ainda não existir com este alcance) — todo serviço de `docker-compose.prod.yml` declara `image:`; serviço com `build:` e sem `image:` reprova. Sabotagem que reprova: remover o `image:` do `worker`.
 
@@ -4697,7 +4697,7 @@ QUEBRADOS: []
 - docs/ATUALIZANDO.md — AUDITADO SEM ACHADO: conferido contra hostgator-setup-kit/update.sh linha a linha; os 6 passos, o backup e os 3 scripts citados conferem.
 - docs/architecture/README.md — AUDITADO SEM ACHADO: a tabela de 10 mapas bate com `ls docs/architecture/*.json` (10).
 - docs/doctrine/sistema-vivo.md — AUDITADO SEM ACHADO: '10 gates before-send' bate com BEFORE_SEND_GATES (10 entradas).
-- docs/white-label.md — AUDITADO SEM ACHADO: /admin/marca, /app/settings/marca, X-Deskcomm-Signature e 'o alarme de orçamento não tem cron' conferem.
+- docs/white-label.md — AUDITADO SEM ACHADO: /admin/marca, /app/settings/marca, X-Elev CRM-Signature e 'o alarme de orçamento não tem cron' conferem.
 - docs/SETUP.md, docs/runbooks/waha-hostgator.md, docs/runbooks/ai-credentials-rotation.md, VISION.md, docs/business-rules/, docs/doctrine/restricao-de-canal.md, docs/doctrine/separacao-fala-e-operacao.md — varridos por existência de path e por contagem; zero path morto, zero contagem. O runbook de rotação cita `scripts/rotate-ai-cred-aes-key.ts` mas DECLARA que ele não existe — honesto, não é achado.
 - Fora do escopo literal do brief (não são raiz nem docs/) mas não cobertos e com afirmação de estado: .claude/agents/triagem-medidor.md, .claude/skills/sistema-vivo/SKILL.md, hostgator-setup-kit/README.md, hostgator-setup-kit/CLAUDE.md, plan/progress.md, tasks/todo.md.
 - NÃO SÃO ACHADO, e é deliberado: docs/specs/* e docs/stories/epics/* citam 324 paths inexistentes (medido). São planos — afirmam futuro, não estado. Excluí-los foi decisão minha, não omissão.

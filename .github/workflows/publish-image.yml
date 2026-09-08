@@ -110,13 +110,13 @@ jobs:
         include:
           - name: elevcrm
             dockerfile: Dockerfile
-            title: DeskcommCRM
+            title: Elev CRM
           - name: elevcrm-worker
             dockerfile: Dockerfile.worker
-            title: DeskcommCRM worker
+            title: Elev CRM worker
           - name: elevcrm-scheduler
             dockerfile: Dockerfile.scheduler
-            title: DeskcommCRM scheduler
+            title: Elev CRM scheduler
 
     steps:
       - uses: actions/checkout@v7
@@ -236,7 +236,7 @@ jobs:
           platforms: linux/amd64
           push: false
           load: true
-          tags: deskcomm-smoke:pr
+          tags: elevcrm-smoke:pr
           build-args: |
             APP_VERSION=smoke
           # Mesmo escopo de cache do build-and-push: as camadas são idênticas,
@@ -252,7 +252,7 @@ jobs:
             -e SUPABASE_SERVICE_ROLE_KEY=chave-de-mentira \
             -e SUPABASE_DB_URL=postgres://u:p@127.0.0.1:5432/postgres \
             -e SENTRY_DSN=off \
-            deskcomm-smoke:pr
+            elevcrm-smoke:pr
 
           # Espera o boot; falha rápido se o processo morreu (crashloop).
           pronto=nao

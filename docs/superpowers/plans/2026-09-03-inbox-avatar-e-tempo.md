@@ -16,7 +16,7 @@
 
 - **Comentários em PT-BR** — é a norma do repo; mantenha o idioma do arquivo editado.
 - **Toda string nova em `t()` precisa de espanhol** em `lib/i18n/dicionario.ts`. O guard `tests/unit/i18n-espanhol-cobre-a-tela.test.ts` reprova sem isso.
-- **Nunca escrever "Elev CRM" nem "Deskcomm" em asserção de teste.** Quebra em instalação com marca própria — foi o bug do PR #492 e reapareceu no E2E `signup-journey.spec.ts`.
+- **Nunca escrever "Elev CRM" nem "Elev CRM" em asserção de teste.** Quebra em instalação com marca própria — foi o bug do PR #492 e reapareceu no E2E `signup-journey.spec.ts`.
 - **`console.log` é proibido** — use `lib/logger.ts`.
 - **`agora` sempre injetado em teste**, nunca `Date.now()` dentro da função. O teste de fuso do upstream quebra quando o relógio do runner bate 14:30 UTC (issue #506).
 - **Piso do SLA: 15 minutos**, confirmado com o dono do produto.

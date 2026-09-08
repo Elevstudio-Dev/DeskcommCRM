@@ -2,7 +2,7 @@
 --
 -- ## O defeito
 --
--- O DeskcommCRM responde `allow by default`: publicou agente para a sessão de
+-- O Elev CRM responde `allow by default`: publicou agente para a sessão de
 -- WhatsApp, a IA atende TODO mundo que mandar mensagem — não há gate de
 -- elegibilidade em lugar nenhum. `lib/channels/pos-entrada.ts` emite
 -- `ai_agent.dispatch_requested` para todo inbound novo; `lib/agent-engine/edge/

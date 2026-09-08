@@ -5,7 +5,7 @@
 # High-confidence manually curated instincts should be preserved alongside these.
 
 ---
-id: DeskcommCRM-commit-conventional
+id: Elev CRM-commit-conventional
 trigger: "when writing a commit message"
 confidence: 0.85
 domain: git
@@ -13,7 +13,7 @@ source: repo-analysis
 source_repo: https://github.com/melgarafael/DeskcommCRM
 ---
 
-# DeskcommCRM Commit Conventional
+# Elev CRM Commit Conventional
 
 ## Action
 
@@ -26,7 +26,7 @@ Use conventional commit format with prefixes: fix
 - Examples: fix(supabase): compara channel_sessions.status contra WORKING (maiúsculo)
 
 ---
-id: DeskcommCRM-commit-length
+id: Elev CRM-commit-length
 trigger: "when writing a commit message"
 confidence: 0.6
 domain: git
@@ -34,7 +34,7 @@ source: repo-analysis
 source_repo: https://github.com/melgarafael/DeskcommCRM
 ---
 
-# DeskcommCRM Commit Length
+# Elev CRM Commit Length
 
 ## Action
 
@@ -46,7 +46,7 @@ Write moderate-length commit messages (~73 characters)
 - Based on 1 commits
 
 ---
-id: DeskcommCRM-naming-files
+id: Elev CRM-naming-files
 trigger: "when creating a new file"
 confidence: 0.8
 domain: code-style
@@ -54,7 +54,7 @@ source: repo-analysis
 source_repo: https://github.com/melgarafael/DeskcommCRM
 ---
 
-# DeskcommCRM Naming Files
+# Elev CRM Naming Files
 
 ## Action
 
@@ -66,7 +66,7 @@ Use snake_case naming convention
 - Dominant pattern: snake_case
 
 ---
-id: DeskcommCRM-import-relative
+id: Elev CRM-import-relative
 trigger: "when importing modules"
 confidence: 0.75
 domain: code-style
@@ -74,7 +74,7 @@ source: repo-analysis
 source_repo: https://github.com/melgarafael/DeskcommCRM
 ---
 
-# DeskcommCRM Import Relative
+# Elev CRM Import Relative
 
 ## Action
 
@@ -86,7 +86,7 @@ Use relative imports for project files
 - Example: import { x } from '../lib/x'
 
 ---
-id: DeskcommCRM-export-style
+id: Elev CRM-export-style
 trigger: "when exporting from a module"
 confidence: 0.7
 domain: code-style
@@ -94,7 +94,7 @@ source: repo-analysis
 source_repo: https://github.com/melgarafael/DeskcommCRM
 ---
 
-# DeskcommCRM Export Style
+# Elev CRM Export Style
 
 ## Action
 
@@ -106,7 +106,7 @@ Prefer named exports
 - Dominant style: named
 
 ---
-id: DeskcommCRM-test-separate
+id: Elev CRM-test-separate
 trigger: "when writing tests"
 confidence: 0.8
 domain: testing
@@ -114,7 +114,7 @@ source: repo-analysis
 source_repo: https://github.com/melgarafael/DeskcommCRM
 ---
 
-# DeskcommCRM Test Separate
+# Elev CRM Test Separate
 
 ## Action
 
@@ -126,7 +126,7 @@ Place tests in the tests/ or __tests__/ directory, mirroring src structure
 - Tests live in dedicated test folders
 
 ---
-id: deskcommcrm-instinct-file-naming
+id: elevcrm-instinct-file-naming
 trigger: "When creating a new file"
 confidence: 0.9
 domain: code-style
@@ -134,7 +134,7 @@ source: repo-analysis
 source_repo: melgarafael/DeskcommCRM
 ---
 
-# Deskcommcrm Instinct File Naming
+# Elev CRMcrm Instinct File Naming
 
 ## Action
 
@@ -145,7 +145,7 @@ Name the file using snake_case
 - Pattern in namingConventions.files: snake_case
 
 ---
-id: deskcommcrm-instinct-function-naming
+id: elevcrm-instinct-function-naming
 trigger: "When defining a new function"
 confidence: 0.9
 domain: code-style
@@ -153,7 +153,7 @@ source: repo-analysis
 source_repo: melgarafael/DeskcommCRM
 ---
 
-# Deskcommcrm Instinct Function Naming
+# Elev CRMcrm Instinct Function Naming
 
 ## Action
 
@@ -164,7 +164,7 @@ Name the function using camelCase
 - Pattern in namingConventions.functions: camelCase
 
 ---
-id: deskcommcrm-instinct-class-naming
+id: elevcrm-instinct-class-naming
 trigger: "When defining a new class"
 confidence: 0.9
 domain: code-style
@@ -172,7 +172,7 @@ source: repo-analysis
 source_repo: melgarafael/DeskcommCRM
 ---
 
-# Deskcommcrm Instinct Class Naming
+# Elev CRMcrm Instinct Class Naming
 
 ## Action
 
@@ -183,7 +183,7 @@ Name the class using PascalCase
 - Pattern in namingConventions.classes: PascalCase
 
 ---
-id: deskcommcrm-instinct-constant-naming
+id: elevcrm-instinct-constant-naming
 trigger: "When defining a new constant"
 confidence: 0.9
 domain: code-style
@@ -191,7 +191,7 @@ source: repo-analysis
 source_repo: melgarafael/DeskcommCRM
 ---
 
-# Deskcommcrm Instinct Constant Naming
+# Elev CRMcrm Instinct Constant Naming
 
 ## Action
 
@@ -202,7 +202,7 @@ Name the constant using SCREAMING_SNAKE_CASE
 - Pattern in namingConventions.constants: SCREAMING_SNAKE_CASE
 
 ---
-id: deskcommcrm-instinct-import-style
+id: elevcrm-instinct-import-style
 trigger: "When importing modules"
 confidence: 0.9
 domain: code-style
@@ -210,7 +210,7 @@ source: repo-analysis
 source_repo: melgarafael/DeskcommCRM
 ---
 
-# Deskcommcrm Instinct Import Style
+# Elev CRMcrm Instinct Import Style
 
 ## Action
 
@@ -221,7 +221,7 @@ Use relative import paths
 - Pattern in importStyle: relative
 
 ---
-id: deskcommcrm-instinct-export-style
+id: elevcrm-instinct-export-style
 trigger: "When exporting modules or functions"
 confidence: 0.9
 domain: code-style
@@ -229,7 +229,7 @@ source: repo-analysis
 source_repo: melgarafael/DeskcommCRM
 ---
 
-# Deskcommcrm Instinct Export Style
+# Elev CRMcrm Instinct Export Style
 
 ## Action
 
@@ -240,7 +240,7 @@ Use named exports
 - Pattern in exportStyle: named
 
 ---
-id: deskcommcrm-instinct-git-commit-prefix
+id: elevcrm-instinct-git-commit-prefix
 trigger: "When writing a commit message for a bug fix"
 confidence: 0.9
 domain: git
@@ -248,7 +248,7 @@ source: repo-analysis
 source_repo: melgarafael/DeskcommCRM
 ---
 
-# Deskcommcrm Instinct Git Commit Prefix
+# Elev CRMcrm Instinct Git Commit Prefix
 
 ## Action
 
@@ -260,7 +260,7 @@ Prefix the commit message with 'fix' following conventional commit format
 - Seen in commit: fix(supabase): compara channel_sessions.status contra WORKING (maiúsculo)
 
 ---
-id: deskcommcrm-instinct-git-commit-format
+id: elevcrm-instinct-git-commit-format
 trigger: "When writing a commit message"
 confidence: 0.9
 domain: git
@@ -268,7 +268,7 @@ source: repo-analysis
 source_repo: melgarafael/DeskcommCRM
 ---
 
-# Deskcommcrm Instinct Git Commit Format
+# Elev CRMcrm Instinct Git Commit Format
 
 ## Action
 
@@ -280,7 +280,7 @@ Use the conventional commit format: <type>(<scope>): <description>
 - Seen in commit: fix(supabase): compara channel_sessions.status contra WORKING (maiúsculo)
 
 ---
-id: deskcommcrm-instinct-test-location
+id: elevcrm-instinct-test-location
 trigger: "When adding or updating tests"
 confidence: 0.8
 domain: testing
@@ -288,7 +288,7 @@ source: repo-analysis
 source_repo: melgarafael/DeskcommCRM
 ---
 
-# Deskcommcrm Instinct Test Location
+# Elev CRMcrm Instinct Test Location
 
 ## Action
 

@@ -4,7 +4,7 @@
  * Nenhum dos três templates de e-mail deste produto tinha teste (medido antes
  * desta fase: `grep` por `resend|invite|email-delivery` nos arquivos de teste só
  * achava a própria allowlist da catraca de marca). O resultado foi que 100% dos
- * e-mails de LGPD de todo clone diziam ter sido processados pelo DeskcommCRM, e
+ * e-mails de LGPD de todo clone diziam ter sido processados pelo Elev CRM, e
  * ninguém foi avisado por gate nenhum.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -37,7 +37,7 @@ describe("convite de time", () => {
     expect(subject).toContain("Vendas Turbo");
     expect(html).toContain("Vendas Turbo");
     expect(text).toContain("Vendas Turbo");
-    expect(`${subject} ${html} ${text}`).not.toMatch(/deskcomm/i);
+    expect(`${subject} ${html} ${text}`).not.toMatch(/elevcrm/i);
   });
 
   it("o botão usa o accent E a frente calculada — não um azul fixo", () => {
@@ -107,7 +107,7 @@ describe("convite de time", () => {
 
   it("marca com HTML dentro é escapada no corpo", () => {
     // O nome vem de um campo que o operador digita numa tela; antes desta fase
-    // o pior caso era o literal "DeskcommCRM" e a questão não existia.
+    // o pior caso era o literal "Elev CRM" e a questão não existia.
     const { html } = buildInviteEmail({
       inviterName: "Ana",
       orgName: "Acme",

@@ -2,7 +2,7 @@
 -- 0177 — O PRODUTO SABE QUANDO VOLTAR A FALAR, MAS NÃO SABE QUE HORA FOI
 --        COMBINADA COM O CLIENTE
 --
--- Hoje o DeskcommCRM sabe agendar um RETORNO — o sistema volta a falar com o
+-- Hoje o Elev CRM sabe agendar um RETORNO — o sistema volta a falar com o
 -- lead daqui a X — e isso mora em `cron_jobs` (kind='at', job_kind=
 -- 'followup_turn'), escrito por `lib/followup/retorno-crm.ts`. É uma decisão
 -- interna: o cliente não sabe, ninguém combinou nada com ele, e não ocupa a

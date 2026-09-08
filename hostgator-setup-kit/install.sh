@@ -15,7 +15,7 @@ set -euo pipefail
 # de qualquer 'cd' (step 2 pode entrar num repo clonado à parte).
 KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 
-REPO_URL="${REPO_URL:-https://github.com/Elevstudio-Dev/DeskcommCRM.git}"
+REPO_URL="${REPO_URL:-https://github.com/Elevstudio-Dev/ElevCRM.git}"
 # Uma constante, dois usos (o fim feliz e o fim travado) — e o comecar.sh tem a
 # gêmea. Link repetido à mão vira link divergente na primeira troca.
 COMUNIDADE_URL="https://lp-comunidade.automatiklabs.com.br"
@@ -105,7 +105,7 @@ banner() {
   # Terminal estreito recebe a versão de uma linha: logo quebrado no meio é
   # pior do que logo nenhum.
   if [ "$COLOR" != 1 ] || [ "$cols" -lt $((LOGO_COLS + 2)) ]; then
-    paint 1 "  DESKCOMM"
+    paint 1 "  ELEV CRM"
   else
     # Tela limpa: tira o ruído do clone/apt de cima do logo. Exige TTY de
     # verdade (não basta COLOR=1): com FORCE_COLOR numa saída redirecionada, um
@@ -839,7 +839,7 @@ source "$KIT_DIR/_common.sh"
 #
 # Instalação NOVA não é afetada: sem contêiner do projeto no ar, a função
 # devolve vazio e o guarda deixa passar. Re-executar na MESMA pasta idem — a
-# árvore é a mesma. `DESKCOMM_ASSUMIR_PROJETO=1` é a saída para quem move a
+# árvore é a mesma. `ELEVCRM_ASSUMIR_PROJETO=1` é a saída para quem move a
 # instalação de lugar de propósito, e é a mesma dos outros dois call sites.
 recusar_projeto_de_outra_arvore || die "Instalação interrompida para não derrubar o CRM que já está no ar nesta VPS."
 
