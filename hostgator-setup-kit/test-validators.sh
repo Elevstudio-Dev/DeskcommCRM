@@ -803,8 +803,8 @@ echo "cron: instalar uma instância não pode silenciar a outra"
 # a linha de QUALQUER instalação: subir uma segunda instância na mesma máquina
 # apagava as duas linhas da primeira, em silêncio.
 CRONTAB_VIZINHO='0 8 * * * /root/trend-radar/run_full_vps.sh
-* * * * * curl -fsS -H "Authorization: Bearer SEGREDO" "https://crm.deskcomm.com.br/api/v1/cron/event-log-drain" >/dev/null 2>&1
-*/5 * * * * cd /root/Aula-Youtube/DeskcommCRM && bash hostgator-setup-kit/agent.sh >/dev/null 2>&1'
+* * * * * curl -fsS -H "Authorization: Bearer SEGREDO" "https://crm.elevcrm.com.br/api/v1/cron/event-log-drain" >/dev/null 2>&1
+*/5 * * * * cd /root/Aula-Youtube/ElevCRM && bash hostgator-setup-kit/agent.sh >/dev/null 2>&1'
 
 cron_ok() {  # cron_ok <descrição> <esperado_no_resultado> <marcador> <legado> <linha_nova>
   local desc="$1" espera="$2" marcador="$3" legado="$4" nova="$5" out
@@ -812,11 +812,11 @@ cron_ok() {  # cron_ok <descrição> <esperado_no_resultado> <marcador> <legado>
   if printf '%s' "$out" | grep -qF -e "$espera"; then printf '  ✓ %s\n' "$desc"
   else printf '  ✗ %s\n     sumiu do crontab: %s\n' "$desc" "$espera"; fail=1; fi
 }
-NOVO_TAG='# deskcomm:/root/instalacao-nova'
+NOVO_TAG='# elevcrm:/root/instalacao-nova'
 NOVA_URL='https://crm-novo.exemplo.com.br/api/v1/cron/event-log-drain'
-cron_ok "o drain do vizinho sobrevive"  'crm.deskcomm.com.br/api/v1/cron/event-log-drain' \
+cron_ok "o drain do vizinho sobrevive"  'crm.elevcrm.com.br/api/v1/cron/event-log-drain' \
         "$NOVO_TAG" "$NOVA_URL" "* * * * * curl \"$NOVA_URL\" $NOVO_TAG"
-cron_ok "o agente do vizinho sobrevive" 'cd /root/Aula-Youtube/DeskcommCRM && bash hostgator-setup-kit/agent.sh' \
+cron_ok "o agente do vizinho sobrevive" 'cd /root/Aula-Youtube/ElevCRM && bash hostgator-setup-kit/agent.sh' \
         "$NOVO_TAG" "cd /root/instalacao-nova && bash hostgator-setup-kit/agent.sh" \
         "*/5 * * * * cd /root/instalacao-nova && bash hostgator-setup-kit/agent.sh $NOVO_TAG"
 cron_ok "a linha alheia (trend-radar) sobrevive" '/root/trend-radar/run_full_vps.sh' \
@@ -824,9 +824,9 @@ cron_ok "a linha alheia (trend-radar) sobrevive" '/root/trend-radar/run_full_vps
 
 # Re-executar a MESMA instalação substitui a própria linha em vez de empilhar —
 # inclusive a legada, escrita antes de o marcador existir.
-reexec="$(printf '%s\n' "$CRONTAB_VIZINHO" | cron_merge '# deskcomm:/root/Aula-Youtube/DeskcommCRM' \
-          'cd /root/Aula-Youtube/DeskcommCRM && bash hostgator-setup-kit/agent.sh' \
-          '*/5 * * * * cd /root/Aula-Youtube/DeskcommCRM && bash hostgator-setup-kit/agent.sh # deskcomm:/root/Aula-Youtube/DeskcommCRM')"
+reexec="$(printf '%s\n' "$CRONTAB_VIZINHO" | cron_merge '# elevcrm:/root/Aula-Youtube/ElevCRM' \
+          'cd /root/Aula-Youtube/ElevCRM && bash hostgator-setup-kit/agent.sh' \
+          '*/5 * * * * cd /root/Aula-Youtube/ElevCRM && bash hostgator-setup-kit/agent.sh # elevcrm:/root/Aula-Youtube/ElevCRM')"
 n_agent="$(printf '%s\n' "$reexec" | grep -cF 'hostgator-setup-kit/agent.sh')"
 if [ "$n_agent" = 1 ]; then printf '  ✓ re-executar a mesma instalação não duplica a linha\n'
 else printf '  ✗ re-executar duplicou: %s linhas de agent.sh\n' "$n_agent"; fail=1; fi
@@ -838,7 +838,7 @@ else printf '  ✗ re-executar duplicou: %s linhas de agent.sh\n' "$n_agent"; fa
 # automação inteira parada em silêncio. Este teste roda as duas em sequência,
 # como a instalação faz.
 DIR=/root/instalacao-nova
-TAG_DRAIN="# deskcomm:${DIR}:drain"; TAG_AGENT="# deskcomm:${DIR}:agent"
+TAG_DRAIN="# elevcrm:${DIR}:drain"; TAG_AGENT="# elevcrm:${DIR}:agent"
 L_DRAIN="* * * * * curl \"https://novo.exemplo.com.br/api/v1/cron/event-log-drain\" $TAG_DRAIN"
 L_AGENT="*/5 * * * * cd ${DIR} && bash hostgator-setup-kit/agent.sh $TAG_AGENT"
 depois_drain="$(printf '%s\n' "$CRONTAB_VIZINHO" | cron_merge "$TAG_DRAIN" 'https://novo.exemplo.com.br/api/v1/cron/event-log-drain' "$L_DRAIN")"
@@ -1026,7 +1026,7 @@ fi
 
 echo "proxy reverso: quem está com as portas 80/443"
 # A versão anterior só sabia procurar Traefik. Qualquer outro proxy — inclusive o
-# Caddy de OUTRO DeskcommCRM na mesma VPS — caía no ramo "portas livres", e a
+# Caddy de OUTRO ElevCRM na mesma VPS — caía no ramo "portas livres", e a
 # instalação seguia até a fase 4 para morrer com "Bind for 0.0.0.0:80 failed:
 # port is already allocated". Medido numa VPS com produção rodando.
 # dono_das_portas lê o que o `docker ps` imprime de verdade. Os casos com "->"
@@ -1044,7 +1044,7 @@ dono_ok "app em 8080->80 NÃO é ocupante (80 do host livre)" \
   '' 'phpmyadmin|web|phpmyadmin:latest|0.0.0.0:8080->80/tcp'
 dono_ok "proxy sem privilégio (80->8080) É ocupante" \
   'traefik|infra|traefik:v3' 'traefik|infra|traefik:v3|0.0.0.0:80->8080/tcp'
-dono_ok "Caddy de outro Deskcomm é encontrado" \
+dono_ok "Caddy de outro ElevCRM é encontrado" \
   'outro-caddy-1|outro|caddy:2-alpine' 'outro-caddy-1|outro|caddy:2-alpine|0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp'
 dono_ok "contêiner sem porta publicada é ignorado" \
   '' 'worker|app|meu/worker|'
@@ -1086,31 +1086,31 @@ dec_ok "portas livres → nosso Caddy"        caddy    ""        ""          "cr
 # PRÓPRIO Caddy. Tratar isso como intruso bloqueia a instalação que o kit manda
 # rodar de novo para corrigir uma resposta, e sem nem um comando acionável.
 dec_ok "re-execução: portas com esta mesma instalação" caddy "80 e 443" "crm" "crm" "caddy:2-alpine" "crm-caddy-1"
-dec_ok "Caddy de OUTRO Deskcomm → bloqueia" bloqueia "80 e 443" "outro"     "crm" "caddy:2-alpine" "outro-caddy-1"
-# O fixture acima nomeia "outro Deskcomm" mas usa projeto DIFERENTE ("outro" vs
+dec_ok "Caddy de OUTRO ElevCRM → bloqueia" bloqueia "80 e 443" "outro"     "crm" "caddy:2-alpine" "outro-caddy-1"
+# O fixture acima nomeia "outro ElevCRM" mas usa projeto DIFERENTE ("outro" vs
 # "crm") — e é justamente o nome do projeto que NÃO difere no caso real: o
 # projeto do compose é o basename da pasta, e toda cópia do repo se chama
-# DeskcommCRM. Medido numa VPS de produção em 2026-08-24: a instalação de uma
-# aula em /root/apagar7/DeskcommCRM viu o Caddy da produção em
-# /root/DeskcommCRM com o MESMO projeto `deskcommcrm`, concluiu "é a
+# ElevCRM. Medido numa VPS de produção em 2026-08-24: a instalação de uma
+# aula em /root/apagar7/ElevCRM viu o Caddy da produção em
+# /root/ElevCRM com o MESMO projeto `elevcrm`, concluiu "é a
 # re-execução" e subiu por cima — trocando o banco do CRM no ar sem um aviso.
 # Quem distingue as duas é a ÁRVORE (label com.docker.compose.project.working_dir),
 # não o nome.
 dec_ok "cópia irmã: mesmo projeto, OUTRA árvore → bloqueia" \
-  bloqueia "80 e 443" "deskcommcrm" "deskcommcrm" "caddy:2-alpine" "deskcommcrm-caddy-1" \
-  "/root/DeskcommCRM" "/root/apagar7/DeskcommCRM"
+  bloqueia "80 e 443" "elevcrm" "elevcrm" "caddy:2-alpine" "elevcrm-caddy-1" \
+  "/root/ElevCRM" "/root/apagar7/ElevCRM"
 # O outro lado da mesma moeda: re-execução DE VERDADE é mesma árvore, e tem de
 # seguir passando (é o caminho que o kit manda usar para corrigir uma resposta).
 dec_ok "re-execução real: mesmo projeto, MESMA árvore → segue" \
-  caddy "80 e 443" "deskcommcrm" "deskcommcrm" "caddy:2-alpine" "deskcommcrm-caddy-1" \
-  "/root/DeskcommCRM" "/root/DeskcommCRM"
+  caddy "80 e 443" "elevcrm" "elevcrm" "caddy:2-alpine" "elevcrm-caddy-1" \
+  "/root/ElevCRM" "/root/ElevCRM"
 # Contêiner sem o label de árvore (não foi o compose que criou, ou é antigo):
 # não dá para afirmar que é cópia irmã, e fechar aqui quebraria re-execução
 # legítima. Mantém o comportamento anterior — a varredura de portas continua
 # sendo a rede que pega o resto.
 dec_ok "sem árvore conhecida: mantém o comportamento anterior" \
-  caddy "80 e 443" "deskcommcrm" "deskcommcrm" "caddy:2-alpine" "deskcommcrm-caddy-1" \
-  "" "/root/apagar7/DeskcommCRM"
+  caddy "80 e 443" "elevcrm" "elevcrm" "caddy:2-alpine" "elevcrm-caddy-1" \
+  "" "/root/apagar7/ElevCRM"
 dec_ok "Traefik da hospedagem → por ele"    traefik  "80 e 443" "coolify"   "crm" "traefik:v3.3"   "coolify-proxy"
 dec_ok "ocupante não identificado → bloqueia" bloqueia "80"     ""          "crm" ""              ""
 dec_ok "projeto vazio não casa projeto vazio" bloqueia "80"     ""          ""    "nginx"         "web"
@@ -1525,7 +1525,7 @@ STUB
   # sobrevive aos dois caminhos, com rede e sem.
   img_app="$(valor_no_env "$VPS_PROJ/.env" APP_IMAGE)"
   tag_app="${img_app##*:}"
-  for par in "WORKER_IMAGE:deskcomm-worker" "SCHEDULER_IMAGE:deskcomm-scheduler"; do
+  for par in "WORKER_IMAGE:elevcrm-worker" "SCHEDULER_IMAGE:elevcrm-scheduler"; do
     chave="${par%%:*}"; repo="${par##*:}"
     if [ "$(valor_no_env "$VPS_PROJ/.env" "$chave")" != "${IMG_NS}/${repo}:${tag_app}" ]; then
       printf '  ✗ %s não acompanha a versão do app (%s): %s\n' "$chave" "$tag_app" \
@@ -1709,7 +1709,7 @@ STUB
   rodar install.sh --yes >/dev/null
   unset REPO_URL
 
-  for par in "APP_IMAGE:deskcommcrm" "WORKER_IMAGE:deskcomm-worker" "SCHEDULER_IMAGE:deskcomm-scheduler"; do
+  for par in "APP_IMAGE:elevcrm" "WORKER_IMAGE:elevcrm-worker" "SCHEDULER_IMAGE:elevcrm-scheduler"; do
     chave="${par%%:*}"; repo="${par##*:}"
     if [ "$(valor_no_env "$VPS_PROJ/.env" "$chave")" != "${IMG_NS}/${repo}:1.10.0" ]; then
       printf '  ✗ %s não foi pinado na versão resolvida (1.10.0): %s\n' "$chave" \
@@ -1727,7 +1727,7 @@ rm -rf "$TMP_PIN"
 
 echo "packaging: a tag do git não basta — as imagens têm de existir"
 # A tag nasce minutos antes das imagens, e as do worker/scheduler só passaram a
-# existir depois das releases que já estão publicadas: `deskcomm-worker:1.2.1`
+# existir depois das releases que já estão publicadas: `elevcrm-worker:1.2.1`
 # nunca vai existir, porque a v1.2.1 é passado. Sem sondar o registry, o .env do
 # cliente receberia referências impossíveis e o kit as construiria aqui EM
 # SILÊNCIO, do topo da main — app de uma release, worker de outro código.
@@ -1960,13 +1960,13 @@ echo "integração: instalar de uma CÓPIA IRMÃ, com o CRM já no ar (2026-08-2
 # regra (dentro de decide_proxy) ou o call site (deixar de passar a árvore). Um
 # teste só da função fica verde enquanto o produto instala por cima da produção.
 #
-# A VPS deste teste é a que aconteceu de verdade: um DeskcommCRM no ar em
-# /root/DeskcommCRM (Caddy publicando 80/443, projeto `deskcommcrm`), e o
-# instalador rodando de OUTRA cópia — cuja pasta também se chama DeskcommCRM,
+# A VPS deste teste é a que aconteceu de verdade: um ElevCRM no ar em
+# /root/ElevCRM (Caddy publicando 80/443, projeto `elevcrm`), e o
+# instalador rodando de OUTRA cópia — cuja pasta também se chama ElevCRM,
 # então o projeto colide e a versão anterior dizia "é a re-execução, siga".
 TMP_IRMA="$(mktemp -d)"
 (
-  montar_vps "$TMP_IRMA" "DeskcommCRM" <<'STUB'
+  montar_vps "$TMP_IRMA" "ElevCRM" <<'STUB'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >> "$DOCKER_LOG"
 case "$1" in
@@ -1976,10 +1976,10 @@ case "$1" in
   # O Caddy da instalação que está NO AR, com o MESMO nome de projeto.
   ps)      for a in "$@"; do [ "$a" = "network=host" ] && em_host=1; done
            [ "${em_host:-0}" = 1 ] && exit 0
-           printf 'deskcommcrm-caddy-1|deskcommcrm|caddy:2-alpine|0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp\n'
+           printf 'elevcrm-caddy-1|elevcrm|caddy:2-alpine|0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp\n'
            exit 0 ;;
   # A árvore que pariu aquele contêiner — o dado que separa irmã de re-execução.
-  inspect) case "$*" in *working_dir*) printf '/root/DeskcommCRM\n' ;; esac; exit 0 ;;
+  inspect) case "$*" in *working_dir*) printf '/root/ElevCRM\n' ;; esac; exit 0 ;;
   network) case "$2" in inspect) exit 1 ;; esac; exit 0 ;;
 esac
 exit 0
@@ -1991,12 +1991,12 @@ STUB
 
   # 1. Recusa. O sintoma do defeito era instalar em silêncio; qualquer coisa que
   #    não seja parar aqui é o defeito de volta.
-  if ! printf '%s' "$saida" | grep -q 'Já existe um DeskcommCRM NO AR'; then
+  if ! printf '%s' "$saida" | grep -q 'Já existe um ElevCRM NO AR'; then
     printf '  ✗ NÃO recusou a instalação por cima da que está no ar\n'
     printf '     últimas linhas: %s\n' "$(printf '%s' "$saida" | tail -3 | tr '\n' ' ')"; exit 1
   fi
   # 2. Nomeia a árvore do OUTRO — sem isso quem lê não sabe qual pasta usar.
-  if ! printf '%s' "$saida" | grep -q '/root/DeskcommCRM'; then
+  if ! printf '%s' "$saida" | grep -q '/root/ElevCRM'; then
     printf '  ✗ a recusa não diz ONDE está a instalação que já existe\n'; exit 1
   fi
   # 3. Ensina a saída acionável (atualizar a que existe).
@@ -2022,7 +2022,7 @@ case "\$1" in
   run)     case "\$*" in *--entrypoint*) exit 1 ;; esac; exit 0 ;;
   ps)      for a in "\$@"; do [ "\$a" = "network=host" ] && em_host=1; done
            [ "\${em_host:-0}" = 1 ] && exit 0
-           printf 'deskcommcrm-caddy-1|deskcommcrm|caddy:2-alpine|0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp\n'
+           printf 'elevcrm-caddy-1|elevcrm|caddy:2-alpine|0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp\n'
            exit 0 ;;
   inspect) case "\$*" in *working_dir*) printf '%s\n' "$VPS_PROJ" ;; esac; exit 0 ;;
   network) case "\$2" in inspect) exit 1 ;; esac; exit 0 ;;
@@ -2032,7 +2032,7 @@ STUB2
   chmod +x "$VPS_RAIZ/bin/docker"
   saida="$(rodar install.sh --yes)"
   chegou_na_deteccao || exit 1
-  if printf '%s' "$saida" | grep -q 'Já existe um DeskcommCRM NO AR'; then
+  if printf '%s' "$saida" | grep -q 'Já existe um ElevCRM NO AR'; then
     printf '  ✗ bloqueou a RE-EXECUÇÃO legítima (mesma árvore) — o kit manda rodar de novo\n'; exit 1
   fi
   printf '  ✓ e a re-execução de dentro da própria árvore continua passando\n'
@@ -2385,8 +2385,8 @@ NEXT_PUBLIC_APP_URL='https://crm.exemplo.com.br'")"
 rm -rf "$TMP6"
 
 echo "nome do projeto que o docker compose usa"
-# O compose faz TrimLeft("_-") no basename. Sem isso, uma pasta /root/_deskcomm
-# faz o kit calcular "_deskcomm" enquanto os contêineres carregam "deskcomm" — a
+# O compose faz TrimLeft("_-") no basename. Sem isso, uma pasta /root/_elevcrm
+# faz o kit calcular "_elevcrm" enquanto os contêineres carregam "elevcrm" — a
 # instalação deixa de se reconhecer e se trata como intrusa. Medido contra o
 # docker compose v2.38.2.
 np_ok() {  # np_ok <caminho> <esperado>
@@ -2394,13 +2394,13 @@ np_ok() {  # np_ok <caminho> <esperado>
   if [ "$real" = "$2" ]; then printf '  ✓ %s → %s\n' "$1" "$real"
   else printf '  ✗ %s → deu [%s], esperava [%s]\n' "$1" "$real" "$2"; fail=1; fi
 }
-np_ok /root/deskcommcrm  deskcommcrm
-np_ok /root/DeskcommCRM  deskcommcrm
-np_ok /root/_deskcomm    deskcomm
-np_ok /root/-deskcomm    deskcomm
+np_ok /root/elevcrm  elevcrm
+np_ok /root/ElevCRM  elevcrm
+np_ok /root/_elevcrm    elevcrm
+np_ok /root/-elevcrm    elevcrm
 np_ok /root/_-_crm       crm
 np_ok /root/_123         123
-np_ok /root/deskcomm.crm deskcommcrm
+np_ok /root/elevcrm.crm elevcrmcrm  # o ponto SOME: `elevcrm.crm` vira `elevcrmcrm`
 np_ok /root/crm_cliente  crm_cliente
 
 echo "re-execução: o kit é chamado por caminho RELATIVO, como o README manda"
@@ -2415,7 +2415,7 @@ echo "re-execução: o kit é chamado por caminho RELATIVO, como o README manda"
 # leitura do próprio script), que é o que regride em silêncio.
 reexec_ok() {
   local desc="$1" dir raiz achou linha
-  raiz="$(mktemp -d)"; dir="$raiz/deskcommcrm"; mkdir -p "$dir"
+  raiz="$(mktemp -d)"; dir="$raiz/elevcrm"; mkdir -p "$dir"
   cp ./install.sh "$raiz/install.sh"
   # A LINHA REAL do install.sh, extraída do arquivo — não uma reimplementação.
   # Reimplementar o mecanismo aqui deixaria este caso VERDE com o install.sh
@@ -2448,7 +2448,7 @@ reexec_ok() {
 # decorativo.
 reexec_neg() {
   local dir raiz linha achou
-  raiz="$(mktemp -d)"; dir="$raiz/deskcommcrm"; mkdir -p "$dir"
+  raiz="$(mktemp -d)"; dir="$raiz/elevcrm"; mkdir -p "$dir"
   cp ./install.sh "$raiz/install.sh"
   linha="$(grep -n 'CONHECIDAS=' "$raiz/install.sh" | head -1 | cut -d: -f2-)"
   if [ -z "$linha" ]; then
@@ -2491,7 +2491,7 @@ echo "isolamento: a suíte não escreve no crontab da máquina"
 # do kit. Só quando existe uma escrita capturada é que "o real não mudou"
 # significa alguma coisa.
 crontab -l >"$CRONTAB_REAL_DEPOIS" 2>/dev/null || : >"$CRONTAB_REAL_DEPOIS"
-if [ ! -s "$CRONTAB_SANDBOX" ] || ! grep -q '# deskcomm:' "$CRONTAB_SANDBOX"; then
+if [ ! -s "$CRONTAB_SANDBOX" ] || ! grep -q '# elevcrm:' "$CRONTAB_SANDBOX"; then
   printf '  ✗ nada foi escrito no crontab de mentira — o teste não mediu isolamento nenhum\n'
   printf '     (o kit deveria ter agendado drain e agente nas rodadas de integração)\n'
   fail=1
@@ -2501,7 +2501,7 @@ elif ! cmp -s "$CRONTAB_REAL_ANTES" "$CRONTAB_REAL_DEPOIS"; then
   fail=1
 else
   printf '  ✓ o kit agendou %s linha(s) — todas no sandbox, o crontab real intacto\n' \
-    "$(grep -c '# deskcomm:' "$CRONTAB_SANDBOX")"
+    "$(grep -c '# elevcrm:' "$CRONTAB_SANDBOX")"
 fi
 
 # ───────────────────────────────────────────────────────────────────────────

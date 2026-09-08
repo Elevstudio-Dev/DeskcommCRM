@@ -12,10 +12,10 @@ import { describe, expect, it } from "vitest";
  * de DIGEST — a ingênua ("a tag `stable` existe?") devolve `200` nas três e não
  * prova nada, porque `stable` existe desde a 1.11.0:
  *
- *     deskcommcrm          1.12.0   404
- *     deskcommcrm          stable   sha256:0235d02b…   ← 1.11.0
- *     deskcomm-worker      stable   sha256:66c7bde4…   ← 1.12.0
- *     deskcomm-scheduler   stable   sha256:ac6b87cc…   ← 1.12.0
+ *     elevcrm          1.12.0   404
+ *     elevcrm          stable   sha256:0235d02b…   ← 1.11.0
+ *     elevcrm-worker      stable   sha256:66c7bde4…   ← 1.12.0
+ *     elevcrm-scheduler   stable   sha256:ac6b87cc…   ← 1.12.0
  *
  * Quem instalasse por `stable` naquela janela recebia **app 1.11.0 com worker e
  * scheduler 1.12.0**. Os três serviços saem do mesmo repositório e compartilham
@@ -75,7 +75,7 @@ function corpo(yml: string, nome: string): string {
     .join("\n");
 }
 
-const IMAGENS = ["deskcommcrm", "deskcomm-worker", "deskcomm-scheduler"];
+const IMAGENS = ["elevcrm", "elevcrm-worker", "elevcrm-scheduler"];
 
 describe("o canal `stable` move em bloco", () => {
   it("o instrumento está vivo: enxerga os jobs de publish-image.yml", () => {

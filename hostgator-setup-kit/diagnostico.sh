@@ -38,12 +38,12 @@ titulo() { printf '\n%s%s%s\n' "$B" "$*" "$Z"; }
 item()   { printf '  %s\n' "$*"; }
 
 # ── 0. Achar a instalação ────────────────────────────────────────────────────
-# O install.sh clona em ./deskcommcrm por padrão, mas o operador pode ter posto
+# O install.sh clona em ./elevcrm ./deskcommcrm por padrão, mas o operador pode ter posto
 # em qualquer lugar. Procuramos no cwd, no caminho padrão, e por último varremos
 # — em profundidade limitada, para não passear pelo disco inteiro.
 achar_projeto() {
   local c
-  for c in . ./deskcommcrm /root/DeskcommCRM /root/deskcommcrm /opt/deskcommcrm /var/www/crm; do
+  for c in . ./elevcrm /root/ElevCRM /root/elevcrm /opt/elevcrm /var/www/crm; do
     [ -f "$c/$COMPOSE_FILE" ] && { (cd "$c" && pwd); return 0; }
   done
   c="$(find /root /opt /home /var/www -maxdepth 4 -name "$COMPOSE_FILE" 2>/dev/null | head -1)"
@@ -52,13 +52,13 @@ achar_projeto() {
 }
 
 PROJETO="$(achar_projeto)" || {
-  printf '%s✖ Não achei uma instalação do DeskcommCRM nesta máquina.%s\n' "$R" "$Z"
+  printf '%s✖ Não achei uma instalação do ElevCRM nesta máquina.%s\n' "$R" "$Z"
   printf '  Rode este script de dentro da pasta do projeto (a que tem %s).\n' "$COMPOSE_FILE"
   exit 2
 }
 cd "$PROJETO" || exit 2
 
-printf '%s══ Diagnóstico do DeskcommCRM ══%s\n' "$B" "$Z"
+printf '%s══ Diagnóstico do ElevCRM ══%s\n' "$B" "$Z"
 item "${D}pasta: $PROJETO${Z}"
 item "${D}data:  $(date -u '+%Y-%m-%d %H:%M UTC')${Z}"
 
@@ -110,7 +110,7 @@ IMG_APP="$(imagem_do_servico app)"
 #     A primeira versão deste detector decidia pelo NOME da imagem ("tem host,
 #     logo veio de registro") e só consultava os labels quando o nome não tinha
 #     host. Uma sabotagem derrubou isso em um comando: construí local, taguei
-#     como `<namespace>/deskcomm-worker:falsificado`, e o diagnóstico
+#     como `<namespace>/elevcrm-worker:falsificado`, e o diagnóstico
 #     deu "NÃO afetada" numa instalação afetada. Pior: o comentário ao lado do
 #     código afirmava que os labels pegariam esse caso — a prosa descrevia uma
 #     proteção que o código não implementava.

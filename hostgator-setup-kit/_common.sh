@@ -38,10 +38,10 @@ dc_files() {
 # O nome que o docker compose dá ao projeto quando ninguém passa -p: basename do
 # diretório, minúsculo, só [a-z0-9_-] — E com os `_`/`-` do INÍCIO aparados
 # (NormalizeProjectName faz TrimLeft). Sem essa aparada, uma pasta como
-# `/root/_deskcomm` faz o kit calcular `_deskcomm` enquanto os contêineres
-# carregam `deskcomm`: a instalação deixa de se reconhecer e passa a se tratar
-# como intrusa. Medido contra o docker compose v2.38.2 em `_deskcomm`,
-# `-deskcomm`, `_-_crm` e `_123` — todos divergiam.
+# `/root/_elevcrm` faz o kit calcular `_elevcrm` enquanto os contêineres
+# carregam `elevcrm`: a instalação deixa de se reconhecer e passa a se tratar
+# como intrusa. Medido contra o docker compose v2.38.2 em `_elevcrm`,
+# `-elevcrm`, `_-_crm` e `_123` — todos divergiam.
 nome_do_projeto_compose() {  # nome_do_projeto_compose <diretório>
   local n
   n="$(basename "$1" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9_-')"
@@ -56,8 +56,8 @@ nome_do_projeto_atual() {
 #
 # Duas cópias do repo na mesma VPS — o clone de produção e um de teste ao lado —
 # recebem o MESMO nome de projeto compose: o docker o deriva do basename do
-# diretório, e `/root/DeskcommCRM` e `/root/apagar6/DeskcommCRM` dão os dois
-# `deskcommcrm`. Os contêineres são UM conjunto só; os `.env` são dois. Cada
+# diretório, e `/root/ElevCRM` e `/root/apagar6/ElevCRM` dão os dois
+# `elevcrm`. Os contêineres são UM conjunto só; os `.env` são dois. Cada
 # `up -d` recria o parque com as credenciais da SUA árvore, e a outra fica
 # falando com um transporte que não a reconhece mais.
 #
@@ -378,7 +378,7 @@ load_env() {
 # Vai pro diretório do projeto (onde está o compose) e carrega o .env.
 enter_project() {
   if [ -f "$COMPOSE" ]; then :;
-  elif [ -f "deskcommcrm/$COMPOSE" ]; then cd deskcommcrm;
+  elif [ -f "elevcrm/$COMPOSE" ]; then cd elevcrm;
   else die "Não achei $COMPOSE. Rode a partir da pasta do projeto."; fi
   [ -f .env ] || die "Falta o .env (rode install.sh primeiro)."
   load_env .env
@@ -434,9 +434,9 @@ psql_run() { docker run --rm -i postgres:17-alpine psql "$(url_do_schema)" -v ON
 # `publish-image.yml` digam o mesmo. Se você é um fork, é lá que está a lista do
 # que trocar junto.
 IMG_NS="ghcr.io/elevstudio-dev"
-IMG_APP="${IMG_NS}/deskcommcrm"
-IMG_WORKER="${IMG_NS}/deskcomm-worker"
-IMG_SCHEDULER="${IMG_NS}/deskcomm-scheduler"
+IMG_APP="${IMG_NS}/elevcrm"
+IMG_WORKER="${IMG_NS}/elevcrm-worker"
+IMG_SCHEDULER="${IMG_NS}/elevcrm-scheduler"
 
 # A marca que a instalacao NASCE com, quando quem instala aperta Enter.
 #
@@ -502,16 +502,16 @@ ghcr_status() {
 
 # As TRÊS imagens existem e são públicas nesta referência?
 #
-# Perguntar pelas três juntas, e não só pela do app, é o ponto: `deskcomm-worker`
-# e `deskcomm-scheduler` nasceram depois das releases que já existem, então
-# `deskcomm-worker:1.2.1` nunca vai existir — a v1.2.1 é passado. Pinar as três
+# Perguntar pelas três juntas, e não só pela do app, é o ponto: `elevcrm-worker`
+# e `elevcrm-scheduler` nasceram depois das releases que já existem, então
+# `elevcrm-worker:1.2.1` nunca vai existir — a v1.2.1 é passado. Pinar as três
 # numa versão sem conferir gravaria no .env do cliente duas referências
 # impossíveis, e o kit as construiria na VPS **em silêncio**, do topo da main:
 # app de uma release + worker/scheduler de outro código. Exatamente a mistura de
 # versões que a doutrina existe para proibir, no caminho de primeira impressão.
 trio_publicado() {
   local tag="$1" i
-  for i in deskcommcrm deskcomm-worker deskcomm-scheduler; do
+  for i in elevcrm elevcrm-worker elevcrm-scheduler; do
     [ "$(ghcr_status "$i" "$tag")" = "200" ] || return 1
   done
   return 0
@@ -593,7 +593,7 @@ completar_pin_ausente() {  # completar_pin_ausente [envfile]
   # e o `.env` original chega intacto do outro lado, com as customizações.
   [ -w "$envfile" ] || return 0
 
-  for par in "WORKER_IMAGE:worker:deskcomm-worker" "SCHEDULER_IMAGE:scheduler:deskcomm-scheduler"; do
+  for par in "WORKER_IMAGE:worker:elevcrm-worker" "SCHEDULER_IMAGE:scheduler:elevcrm-scheduler"; do
     chave="${par%%:*}"; svc="$(printf '%s' "$par" | cut -d: -f2)"; repo="${par##*:}"
 
     # LACUNA apenas. Valor explícito (mesmo em canal móvel) é intocável.
@@ -732,7 +732,7 @@ owner_id_by_email() {
 # primeira (o filtro remove tudo que casa com o marcador, e as duas linhas
 # casavam). Medido na VPS: depois de instalar, sobrava só o agente e o CRM ficava
 # SEM o drain de eventos — a automação inteira parada, em silêncio.
-cron_tag() { printf '# deskcomm:%s:%s' "${PROJECT_DIR:-$PWD}" "${1:?papel da linha (drain|agent)}"; }
+cron_tag() { printf '# elevcrm:%s:%s' "${PROJECT_DIR:-$PWD}" "${1:?papel da linha (drain|agent)}"; }
 
 # Puro (testável sem tocar no crontab real): lê o crontab atual em stdin e
 # imprime o novo. Tira as linhas DESTA instalação — pelo marcador, e também
@@ -794,7 +794,7 @@ setup_update_agent_cron() {
 
   # `cd` explícito: o agent.sh chama enter_project(), que acha o projeto pelo
   # DIRETÓRIO CORRENTE. No cron o CWD é o home do dono do crontab — sem o cd,
-  # a linha só funciona por acidente (instalação padrão em /root/deskcommcrm) e
+  # a linha só funciona por acidente (instalação padrão em /root/elevcrm) e
   # morre calada a cada 5 minutos em qualquer REPO_DIR customizado ou /opt.
   # A assinatura legada inclui o PROJECT_DIR: é o que distingue a linha desta
   # instalação da linha de uma vizinha, que roda o mesmo agent.sh em outra pasta.
