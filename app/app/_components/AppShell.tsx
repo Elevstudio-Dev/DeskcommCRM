@@ -27,7 +27,7 @@ export function AppShell({ children }: AppShellProps) {
   useCrmAlerts();
   useNotifyOpenFromServiceWorker();
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
+    <div className="flex h-dvh w-full flex-col bg-background">
       <TopBar />
       {/*
         `p-6` é a moldura padrão de toda tela. A EXCEÇÃO é declarada pela
@@ -40,7 +40,18 @@ export function AppShell({ children }: AppShellProps) {
         conhecer rotas — a mesma acoplagem que o registro de navegação existe
         para evitar.
       */}
-      <main className="flex-1 overflow-auto p-6 [&:has([data-tela-cheia])]:p-0">{children}</main>
+      {/*
+        `h-dvh` na raiz e `min-h-0` aqui, e NÃO `min-h-screen` na raiz — e isto
+        é correção, não estilo. `h-full` só resolve contra pai de altura
+        DEFINIDA. Com o menu lateral (`h-screen`, item de uma LINHA flex), a
+        coluna de conteúdo era esticada e ganhava altura definida por
+        tabela; ao virar coluna única com `min-h-screen`, todo `h-full` abaixo
+        passou a resolver como `auto` — e o canvas do construtor de follow-up
+        (React Flow, que exige altura explícita) nasceu com 0px. Medido pela
+        E2E: cinco specs de follow-up com `.react-flow` "hidden". A raiz
+        definida devolve a cadeia; `min-h-0` deixa o `main` encolher e rolar.
+      */}
+      <main className="min-h-0 flex-1 overflow-auto p-6 [&:has([data-tela-cheia])]:p-0">{children}</main>
     </div>
   );
 }

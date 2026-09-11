@@ -47,7 +47,12 @@ async function login(page: Page, email: string): Promise<void> {
 }
 
 async function gotoRadar(page: Page): Promise<void> {
-  await page.getByRole("link", { name: "Radar" }).click();
+  // A PORTA do Radar é Configurações (o inventário): o menu lateral que tinha
+  // o link saiu em 2026-09-10. Clicar pela porta, e não `goto`, é o que prova
+  // que a tela continua alcançável por quem não sabe a URL.
+  await page.getByRole("link", { name: "Configurações", exact: true }).click();
+  await page.waitForURL(/\/app\/settings$/);
+  await page.getByRole("link", { name: /Radar/ }).first().click();
   await page.waitForURL(/\/app\/radar/);
   await expect(page.getByRole("heading", { name: "Radar de risco" })).toBeVisible();
 }

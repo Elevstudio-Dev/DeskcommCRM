@@ -749,6 +749,15 @@ export function AgentForm(props: Props) {
                 {t(". Publish bloqueado até validar.")}
               </p>
             ) : null}
+            {/* A PORTA para o que este bloco exige. Até 2026-09-10 o menu lateral
+                oferecia "Credenciais" em toda tela; sem ele, quem chega aqui sem
+                chave precisa saber para onde ir — e o e2e `agente-novo-e-uso`
+                cobra que a tela diga. */}
+            <p className="text-xs text-muted-foreground">
+              <Link href="/app/ai/credentials" className="underline underline-offset-2 hover:text-foreground">
+                {t("Cadastrar ou validar credenciais")} →
+              </Link>
+            </p>
           </Card>
 
           {/* WhatsApp session */}
@@ -804,6 +813,11 @@ export function AgentForm(props: Props) {
               {validation.channel_session_id ? (
                 <p className="text-xs text-destructive">{validation.channel_session_id}</p>
               ) : null}
+              <p className="text-xs text-muted-foreground">
+                <Link href="/app/connections" className="underline underline-offset-2 hover:text-foreground">
+                  {t("Conectar um número de WhatsApp em Conexões")} →
+                </Link>
+              </p>
             </div>
           </Card>
 

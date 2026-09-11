@@ -115,3 +115,16 @@ Vale dizer também quando pular o mês:
   duas fontes de problema. Termine, depois sincronize.
 - **A suíte já está vermelha.** Sincronizar sobre base quebrada torna
   impossível saber quem quebrou o quê.
+
+---
+
+## 6. Os levantamentos feitos
+
+Cada rodada deixa um registro em :
+o que veio, o que vale, o que conflita, e a decisão — inclusive a de NÃO puxar.
+É o que permite, três meses depois, saber se algo ficou de fora por escolha ou
+por esquecimento.
+
+- [2026-09-11](levantamentos/2026-09-11-upstream.md) — 404 commits deles em
+  uma semana; dependências puxadas isoladas; o resto fica para outubro, antes
+  da VPS, por causa das migrations em colisão.

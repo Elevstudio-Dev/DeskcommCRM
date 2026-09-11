@@ -4167,6 +4167,8 @@ export const DICIONARIO: Traducoes = {
   "Escreva para a equipe…": { es: "Escribe para el equipo…" },
   "Mensagem para a equipe": { es: "Mensaje para el equipo" },
   Abrir: { es: "Abrir" },
+  "Cadastrar ou validar credenciais": { es: "Registrar o validar credenciales" },
+  "Conectar um número de WhatsApp em Conexões": { es: "Conectar un número de WhatsApp en Conexiones" },
 
   // ─── Mensagens prontas com parâmetros (composer + formulário) ───
   "Mensagens prontas": { es: "Mensajes listos" },
