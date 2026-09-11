@@ -4152,6 +4152,22 @@ export const DICIONARIO: Traducoes = {
   "transferiu para o setor": { es: "transfirió al sector" },
   "Transferida para o setor": { es: "Transferida al sector" },
 
+  // ─── Chat interno (migration 0214) ───
+  "Chat da equipe": { es: "Chat del equipo" },
+  "não lidas": { es: "sin leer" },
+  "Escolha um canal": { es: "Elige un canal" },
+  "Com quem?": { es: "¿Con quién?" },
+  "Você já conversa com todo mundo.": { es: "Ya conversas con todo el mundo." },
+  "Conversa direta": { es: "Conversación directa" },
+  "Toda a equipe": { es: "Todo el equipo" },
+  "Quem está no setor e a gestão": { es: "Quien está en el sector y la gestión" },
+  "Só vocês dois": { es: "Solo ustedes dos" },
+  "Ninguém escreveu ainda. Seja a primeira pessoa.": { es: "Nadie escribió todavía. Sé la primera persona." },
+  Colega: { es: "Colega" },
+  "Escreva para a equipe…": { es: "Escribe para el equipo…" },
+  "Mensagem para a equipe": { es: "Mensaje para el equipo" },
+  Abrir: { es: "Abrir" },
+
   // ─── Mensagens prontas com parâmetros (composer + formulário) ───
   "Mensagens prontas": { es: "Mensajes listos" },
   "Preencha o que falta. Os campos já preenchidos vieram do cadastro e podem ser corrigidos.": {

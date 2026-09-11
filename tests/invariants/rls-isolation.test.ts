@@ -209,6 +209,27 @@ beforeAll(() => {
               from public.sectors s where s.organization_id = v_org limit 1;
         end if;
 
+        -- chat interno (migration 0214): o Geral da org, quem leu, e uma mensagem.
+        -- A regra por canal (setor, direto) é outro eixo, medida em
+        -- tests/invariants/chat-interno-rls.test.ts; aqui é o isolamento entre orgs.
+        if not exists (select 1 from public.team_channels where organization_id = v_org) then
+          insert into public.team_channels (organization_id, kind) values (v_org, 'geral');
+        end if;
+        if not exists (select 1 from public.team_channel_members where organization_id = v_org) then
+          insert into public.team_channel_members (channel_id, user_id, organization_id)
+            select c.id,
+                   case when v_org = '${ORG_A}'::uuid then '${USER_A}'::uuid else '${USER_B}'::uuid end,
+                   v_org
+              from public.team_channels c where c.organization_id = v_org and c.kind = 'geral' limit 1;
+        end if;
+        if not exists (select 1 from public.team_messages where organization_id = v_org) then
+          insert into public.team_messages (organization_id, channel_id, sender_user_id, sender_name, body)
+            select v_org, c.id,
+                   case when v_org = '${ORG_A}'::uuid then '${USER_A}'::uuid else '${USER_B}'::uuid end,
+                   'Invariante', 'mensagem de invariante'
+              from public.team_channels c where c.organization_id = v_org and c.kind = 'geral' limit 1;
+        end if;
+
         if not exists (select 1 from public.push_subscriptions where organization_id = v_org) then
           insert into public.push_subscriptions
             (organization_id, user_id, endpoint, p256dh, auth)
@@ -269,6 +290,11 @@ export const TABLES = [
   // entre organizações.
   "sectors",
   "sector_members",
+  // migration 0214 — o chat interno. Só o Geral é semeado: setor e direto têm
+  // regra própria, em `tests/invariants/chat-interno-rls.test.ts`.
+  "team_channels",
+  "team_channel_members",
+  "team_messages",
   // ⚠️ `webhook_lead_captures` (migration 0174) NÃO entra nesta lista, e a
   // ausência é deliberada: a policy dela exige `manager`, e o usuário semeado
   // aqui é `agent` — o controle positivo falharia por ACERTO, e a "correção"

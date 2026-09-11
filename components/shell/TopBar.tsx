@@ -9,6 +9,8 @@ import { GRUPO_DAS_CONFIGURACOES, NAV_GROUPS, searchable } from "@/lib/navigatio
 import { Gear } from "@/lib/ui/icons";
 import { cn } from "@/lib/utils";
 
+import { BotaoDoChat } from "@/components/chat-interno/BotaoDoChat";
+
 import { AbasPrincipais } from "./AbasPrincipais";
 import { AlertsBell } from "./AlertsBell";
 import { MarcaNaBarra } from "./MarcaNaBarra";
@@ -60,7 +62,8 @@ function AtalhoDeConfiguracoes() {
 
 /**
  * A barra superior é a navegação inteira do desktop: marca, abas de uso
- * diário, busca, avisos, Configurações e o menu do usuário — nessa ordem.
+ * diário, busca, chat da equipe, avisos, Configurações e o menu do usuário —
+ * nessa ordem.
  *
  * `sticky top-0` e `h-14`: a altura é subtraída pela grade do inbox
  * (`components/inbox/InboxLayout.tsx`, `h-[calc(100dvh-3.5rem)]`). Mudar uma
@@ -86,6 +89,7 @@ export function TopBar() {
       <div className="min-w-0 flex-1" />
       <div className="flex shrink-0 items-center gap-1 md:gap-2">
         <SearchTrigger />
+        <BotaoDoChat />
         <AlertsBell />
         <AtalhoDeConfiguracoes />
         <UserMenu />
