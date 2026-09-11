@@ -41,7 +41,7 @@ const NAV_ALLOWLIST: Record<string, string> = {
   "/app/settings/templates":
     "redirect para /app/connections?aba=oficial&sub=templates — template da Meta só existe por causa do canal oficial, e vive como sub-aba dele",
   "/app/settings/atualizacao":
-    "porta é o rodapé de versão (VersionFooter), que aparece justamente quando há versão nova — melhor que um card fixo. Além disso é só do dono do servidor (is_platform_admin), papel que o registro não modela",
+    "porta é o aviso de versão no menu do usuário (VersaoNoMenu), que aparece justamente quando há versão nova — melhor que um card fixo. Além disso é só do dono do servidor (is_platform_admin), papel que o registro não modela",
 };
 
 /** Deriva as rotas estáticas a partir dos arquivos de página que existem. */
@@ -68,7 +68,7 @@ describe("completude da navegação", () => {
   });
 
   it("toda tela tem porta: está no registro ou na allowlist justificada", () => {
-    // Um hub é porta tanto quanto um destino — o sidebar linka para ele. Ele só
+    // Um hub é porta tanto quanto um destino — a barra (aba IA) e a gaveta linkam para ele. Ele só
     // não é `NavDestination` porque não é uma tela do grupo, e sim a vitrine dele.
     const semPorta = ROTAS.filter(
       (r) => !NO_REGISTRO.has(r) && !HUBS.includes(r) && !(r in NAV_ALLOWLIST),

@@ -176,10 +176,8 @@ test("F2 — a tela de execuções abre e responde 'está tudo bem?'", async ({ 
 test("as duas telas têm porta na navegação — pelo hub de IA", async ({ page }) => {
   // Tela alcançável só por URL digitada é tela que não existe para o operador.
   //
-  // A porta é o HUB, não a sidebar: pô-las na sidebar estourou a dobra em 900px
-  // (pego pelo e2e `navegacao.spec.ts` no CI, e é o mesmo eixo do
-  // `feedback_agrupar_cria_overflow` — agrupar o menu o faz crescer). Elas
-  // seguem o padrão das outras nove telas do grupo, todas alcançáveis daqui.
+  // A porta é o HUB (e o inventário de Configurações, que lista o mesmo). As
+  // duas nunca foram aba: hoje a barra tem cinco, e a de IA é este hub.
   await page.goto("/app/ai");
   await expect(page.getByRole("link", { name: /Provedores/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /Execuções/ })).toBeVisible();

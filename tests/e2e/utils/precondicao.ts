@@ -19,11 +19,11 @@
  *   - **NÃO muda a navegação.** `canSee` (`lib/navigation/registry.ts:503-507`)
  *     é `isPlatformAdmin || ROLE_RANK[role] >= ROLE_RANK[d.minRole ?? "viewer"]`.
  *     `ROLE_RANK.admin = 5` é o TETO (`lib/auth/types.ts:21-27`) e o maior
- *     `minRole` do registro é `"admin"` — logo os DESTINOS DO REGISTRO (sidebar,
- *     hub e ⌘K) de um admin de tenant são idênticos promovido ou não.
+ *     `minRole` do registro é `"admin"` — logo os DESTINOS DO REGISTRO (abas,
+ *     inventário, hub e ⌘K) de um admin de tenant são idênticos promovido ou não.
  *
- *     ⚠️ "destinos do registro" e não "a sidebar": o raciocínio de `canSee` só
- *     cobre o que passa por ele. A sidebar tem uma superfície que NÃO passa —
+ *     ⚠️ "destinos do registro" e não "a casca": o raciocínio de `canSee` só
+ *     cobre o que passa por ele. A casca tem uma superfície que NÃO passa —
  *     ver o 5º item abaixo.
  *   - **NÃO muda os ~20 gates** `!user.is_platform_admin && ROLE_RANK[role] < X`
  *     de `app/app/**`: com rank 5, o segundo operando já é falso sozinho.
@@ -32,15 +32,15 @@
  *     de navegação — chega-se a ela por URL), `/admin/*`
  *     (`requirePlatformAdmin`), `app/actions/settings/updateBranding.ts`,
  *     `setActiveOrg` para uma org de que a pessoa não é membro, e — a que
- *     escapou da primeira enumeração — **o rodapé de versão da sidebar**
- *     (`components/shell/VersionFooter.tsx:22`, `is_owner && update_available`),
- *     que troca um `<p>` por um `<Link>` "Nova versão" e aparece em TODA tela de
- *     `/app/*`. Ele fica dentro do `<aside>` (`Sidebar.tsx:187`) mas FORA do
- *     `<nav>` (que fecha em `:168`), então nenhuma asserção escopada em
- *     `role=navigation` o vê — mas ele muda a ALTURA disponível para o `<nav>`,
- *     que é `flex-1`, e `navegacao.spec.ts` tem uma asserção geométrica
- *     (`m.rola`) sensível a isso. As duas metades do gatilho eram armadas pelo
- *     MESMO arquivo: `system-update.spec.ts` promovia o usuário E gravava
+ *     escapou da primeira enumeração — **o aviso de versão no menu do usuário**
+ *     (`components/shell/VersaoNoMenu.tsx`, `is_owner && update_available`),
+ *     que troca um texto por um item "Nova versão" e um ponto pulsando sobre o
+ *     avatar, em TODA tela de `/app/*`. (Quando este texto foi escrito ele era
+ *     o rodapé do menu lateral, fora do `<nav>` mas mudando a altura dele — e
+ *     `navegacao.spec.ts` tinha uma asserção geométrica sensível a isso. O
+ *     menu saiu em 2026-09-10; o aviso mudou de lugar, o escape de identidade
+ *     que ele expõe não.) As duas metades do gatilho eram armadas pelo MESMO
+ *     arquivo: `system-update.spec.ts` promovia o usuário E gravava
  *     `latest_version` no banco que ninguém reseta entre as partes do job.
  *
  * Conclusão honesta: hoje a contaminação é uma **mina**, não um falso-verde em

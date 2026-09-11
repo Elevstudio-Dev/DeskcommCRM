@@ -160,7 +160,7 @@ export interface ActiveOrg {
    * (a barra lateral) entrou uma onda ANTES do produtor, de propósito e
    * declarado — foi o que permitiu que o upload fosse só a camada, sem reabrir a
    * casca inteira. Enquanto durou, não era campo decorativo pelo avesso: já
-   * tinha teste de comportamento (`tests/unit/sidebar-nome-da-organizacao.test.tsx`).
+   * tinha teste de comportamento (`tests/unit/marca-na-barra.test.tsx`).
    *
    * A rota é a que já existe: layout → `AuthProvider` → `useAuth()`. É como o
    * valor atravessa a fronteira servidor/navegador sem plumbing nova. A marca da

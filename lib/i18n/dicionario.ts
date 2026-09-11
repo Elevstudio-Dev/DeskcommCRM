@@ -86,7 +86,6 @@ export const DICIONARIO: Traducoes = {
   "Evolução da IA": { es: "Evolución de la IA" },
   "Audit Log": { es: "Registro de auditoría" },
   Configurações: { es: "Configuración" },
-  Recolher: { es: "Contraer" },
   Buscar: { es: "Buscar" },
 
   // ─── Inbox: filtros e lista ───
@@ -328,10 +327,14 @@ export const DICIONARIO: Traducoes = {
   "Chaves para outro sistema conversar com o seu CRM.": {
     es: "Claves para que otro sistema converse con tu CRM.",
   },
-  // ─── Shell persistente (sidebar, topbar, ⌘K, menu do usuário) ───
+  // ─── Shell persistente (barra superior, gaveta do celular, ⌘K, menu do usuário) ───
   "Navegação principal": { es: "Navegación principal" },
-  "Expandir sidebar": { es: "Expandir barra lateral" },
-  "Recolher sidebar": { es: "Contraer barra lateral" },
+  // "IA" (a aba) e "Grupos" (as âncoras do inventário) já existem acima, no
+  // bloco do inbox — a chave é o texto, e o texto é o mesmo.
+  "Todas as telas": { es: "Todas las pantallas" },
+  "Tudo que o sistema tem, em um lugar só: atendimento, CRM, IA, canais, análise e a sua empresa.": {
+    es: "Todo lo que tiene el sistema, en un solo lugar: atención, CRM, IA, canales, análisis y tu empresa.",
+  },
   Versão: { es: "Versión" },
   versão: { es: "versión" },
   "Nova versão": { es: "Nueva versión" },
@@ -3873,7 +3876,7 @@ export const DICIONARIO: Traducoes = {
   Cliente: { es: "Cliente" },
   "(sem texto)": { es: "(sin texto)" },
   "Cancelar resposta": { es: "Cancelar respuesta" },
-  // ─── Saúde do canal (bolinha da sidebar + estado do canal) ───
+  // ─── Saúde do canal (bolinha da barra superior + estado do canal) ───
   "Todas as conexões ativas": { es: "Todas las conexiones activas" },
   "Conectando…": { es: "Conectando…" },
   "Uma conexão caiu": { es: "Una conexión se cayó" },

@@ -280,7 +280,7 @@ interface LogoNaTela {
  *
  * ⚠️ Quem prova o download é `naturalWidth`, e NÃO a altura na tela — o contrário
  * do que esta spec afirmou. Os dois `<img>` de marca do produto têm altura fixada
- * por CSS (`h-7` em `components/shell/Sidebar.tsx:82`, `h-10` em
+ * por CSS (`h-7` em `components/shell/MarcaNaBarra.tsx`, `h-10` em
  * `app/(public)/layout.tsx:54`), e altura fixa mede o mesmo para quem baixou e
  * para quem não baixou. MEDIDO em chromium, dois `<img>` sob `height: 1.75rem`
  * (o `h-7`), um com PNG válido e outro apontando para um endereço morto:
@@ -321,7 +321,13 @@ async function medirImagem(img: Locator): Promise<LogoNaTela> {
 }
 
 /**
- * O logo da barra lateral. `null` = a barra está sem `<img>` (nome em texto).
+ * O logo da barra SUPERIOR. `null` = a barra está sem `<img>` (nome em texto).
+ *
+ * Era a barra lateral (`<aside>`); o menu saiu em 2026-09-10 e a marca foi
+ * para o canto esquerdo da barra superior, num elemento marcado com
+ * `data-marca-da-barra` (`components/shell/MarcaNaBarra.tsx`). O atributo
+ * existe PARA este helper: `header` seria frágil — o `NavHub` e outras telas
+ * também abrem com um `<header>` próprio.
  *
  * ⚠️ Esta função devolvia `null` para TRÊS estados diferentes, e a asserção que a
  * consome culpava um QUARTO. Um vermelho real disse "a recusa apagou o logo — a
@@ -339,7 +345,7 @@ async function medirImagem(img: Locator): Promise<LogoNaTela> {
  * de estar vazias — e a da instalação não foi tocada pelo caso que falhou.
  *
  * Agora a casca é provada ANTES: `toHaveURL(/\/app\//)` separa "redirecionou" de
- * "a barra perdeu o logo" a custo zero, e a espera pelo `<aside>` separa o (3).
+ * "a barra perdeu o logo" a custo zero, e a espera pela marca separa o (3).
  * Nenhuma asserção ficou mais frouxa: o caso continua vermelho se o logo sumir
  * de verdade — só passa a dizer QUAL das coisas aconteceu.
  */
@@ -350,10 +356,10 @@ async function logoDaBarra(page: Page): Promise<LogoNaTela | null> {
       `(redirect de auth, onboarding, suspensão, 403 ou o gate de MFA).`,
   ).toHaveURL(/\/app(\/|$)/, { timeout: 15_000 });
 
-  const casca = page.locator("aside").first();
+  const casca = page.locator("[data-marca-da-barra]").first();
   await expect(
     casca,
-    `a casca do app não montou em /app — ${page.url()}. Sem <aside> não há o que medir.`,
+    `a casca do app não montou em /app — ${page.url()}. Sem a marca na barra não há o que medir.`,
   ).toBeAttached({ timeout: 15_000 });
 
   const img = casca.locator("img").first();
@@ -475,7 +481,7 @@ test.describe("o logo subido pela tela chega à tela", () => {
    */
   test.setTimeout(120_000);
 
-  test("(1) o dono do servidor sobe o logo e ele aparece na barra lateral", async ({ page }) => {
+  test("(1) o dono do servidor sobe o logo e ele aparece na barra superior", async ({ page }) => {
     const secret = creds.dono_totp?.secret;
     expect(secret, "sem `dono_totp` no .e2e-creds.json — rode seed-e2e-credentials.ts").toBeTruthy();
     await loginComTotp(page, creds.users.dono!.email, secret!);
@@ -530,7 +536,7 @@ test.describe("o logo subido pela tela chega à tela", () => {
     expect(barra, "nenhuma <img> na barra lateral depois do upload").not.toBeNull();
     expect(barra!.src).toContain(`${PREFIXO_PUBLICO}platform/`);
     baixou(barra!, "barra lateral do dono");
-    await page.screenshot({ path: evidencia("2-sidebar-do-dono.png") });
+    await page.screenshot({ path: evidencia("2-barra-do-dono.png") });
   });
 
   test("(2) quem NÃO entrou vê o logo do dono na tela de acesso — a P0", async ({ browser }) => {
@@ -570,7 +576,7 @@ test.describe("o logo subido pela tela chega à tela", () => {
     expect(barra, "nenhuma <img> na barra lateral depois do upload da empresa").not.toBeNull();
     expect(barra!.src).toContain(`${PREFIXO_PUBLICO}${creds.org_id}/`);
     baixou(barra!, "barra lateral da empresa");
-    await page.screenshot({ path: evidencia("4-sidebar-da-empresa.png") });
+    await page.screenshot({ path: evidencia("4-barra-da-empresa.png") });
 
     // A camada de cima NÃO alcança a fachada: quem não entrou continua vendo o
     // logo do revendedor. Sem esta asserção, o caso (1) e o (3) seriam
@@ -590,7 +596,7 @@ test.describe("o logo subido pela tela chega à tela", () => {
     // porque `antes!.src` lá embaixo, com `antes` nulo, reprova como
     // "Cannot read properties of null" — que não diz a ninguém o que faltou.
     expect(antes, "precondição: a barra precisa entrar neste caso COM logo da empresa").not.toBeNull();
-    // E COM O DA EMPRESA, não com o da instalação. `Sidebar.tsx` faz
+    // E COM O DA EMPRESA, não com o da instalação. `MarcaNaBarra.tsx` faz
     // `activeOrg?.marca?.logoUrl || brand.logoUrl`: se a camada da organização
     // não resolvesse, a barra cairia no logo da INSTALAÇÃO e este `not.toBeNull()`
     // ficaria verde do mesmo jeito — e a comparação lá embaixo (`depois === antes`)

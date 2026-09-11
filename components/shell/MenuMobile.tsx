@@ -9,17 +9,17 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useT } from "@/hooks/i18n/useT";
-import { SidebarContent } from "@/components/shell/Sidebar";
+import { MenuCompleto } from "@/components/shell/MenuCompleto";
 import { List } from "@/lib/ui/icons";
 
 /**
- * Navegação mobile do app autenticado.
+ * Navegação mobile do app autenticado: uma gaveta com o inventário inteiro.
  *
- * O estado "Recolher" é do sidebar desktop e persiste em cookie. No mobile a
- * navegação é uma gaveta temporária: abrir/fechar não escreve esse cookie, para
- * não trocar a preferência que a pessoa escolheu no laptop.
+ * No desktop as abas cabem na barra e o resto mora em Configurações. Abaixo de
+ * `md` não cabe aba nenhuma, então a gaveta traz TUDO — é a única porta que o
+ * celular tem além da busca.
  */
-export function MobileSidebar() {
+export function MenuMobile() {
   const t = useT();
   const [open, setOpen] = useState(false);
 
@@ -40,12 +40,8 @@ export function MobileSidebar() {
         side="left"
         className="flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-0 p-0 sm:max-w-xs"
       >
-        <SheetTitle className="sr-only">{t("Navegação principal")}</SheetTitle>
-        <SidebarContent
-          collapsed={false}
-          showCollapseControl={false}
-          onNavigate={() => setOpen(false)}
-        />
+        <SheetTitle className="sr-only">{t("Todas as telas")}</SheetTitle>
+        <MenuCompleto onNavigate={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
   );

@@ -1,6 +1,6 @@
 /**
  * GET  /api/v1/channel-sessions — lista os canais WhatsApp da org (do DB).
- *   Acessível a qualquer membro (usado pelo seletor do inbox e pela sidebar).
+ *   Acessível a qualquer membro (usado pelo seletor do inbox e pela bolinha de saúde da barra superior).
  * POST /api/v1/channel-sessions — conecta um NOVO número (cria a sessão com
  *   nome único e inicia no WAHA). Admin only.
  *

@@ -36,7 +36,7 @@ export interface SystemVersion {
 }
 
 /**
- * Estado da versão desta instalação. Fonte única do rodapé da sidebar e da
+ * Estado da versão desta instalação. Fonte única do aviso de versão no menu do usuário e da
  * tela de atualização. Poll folgado (5 min) porque o agente do host só reporta
  * a cada 5 min — bater mais rápido não traria informação nova.
  */

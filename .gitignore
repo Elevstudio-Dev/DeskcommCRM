@@ -123,3 +123,9 @@ evidence/.sonda-score-residuo.json
 
 # QA em VPS: guarda segredo TOTP da conta de teste (repo e publico)
 .qa-vps/
+# Saída da marca-logo.spec.ts. Entrou no git por engano em 17d65d17 (um 
+# largo) sem documento nenhum citando as seis imagens, e 
+# reprovou: imagem não citada é artefato de build, não prova. Quem quiser
+# versioná-las cita primeiro (docs/testing/user-journey-map.md, linha M9) e tira
+# esta linha.
+evidence/marca-logo/

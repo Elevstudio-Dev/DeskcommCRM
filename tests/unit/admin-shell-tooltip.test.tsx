@@ -44,7 +44,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 // Único mock: o `AdminSidebar` é client component e chama `usePathname`. O
 // banner e o sidebar continuam reais — a casca sob teste é a casca de verdade,
-// não uma maquete dela. Mesmo padrão de `tests/unit/sidebar-grupos.test.tsx`.
+// não uma maquete dela. Mesmo padrão de `tests/unit/barra-superior.test.tsx`.
 vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/inbox",
 }));

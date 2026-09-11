@@ -124,7 +124,7 @@ describe("listagem que falhou não vira 'primeira instalação'", () => {
     expect(screen.getByText(/continua aparecendo nesta lista/)).toBeInTheDocument();
   });
 
-  it("bolinha da sidebar não diz 'Nenhuma conexão' quando a lista falhou", () => {
+  it("bolinha da barra não diz 'Nenhuma conexão' quando a lista falhou", () => {
     listagem.data = undefined;
     listagem.isError = true;
 

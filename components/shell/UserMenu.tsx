@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { SeletorDeIdioma } from "@/components/shell/SeletorDeIdioma";
+import { PontoDeVersaoNova, VersaoNoMenu } from "@/components/shell/VersaoNoMenu";
 import { useT } from "@/hooks/i18n/useT";
 import { SignOut } from "@/lib/ui/icons";
 
@@ -35,11 +36,12 @@ export function UserMenu() {
       <ThemeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="rounded-full" aria-label={t("Menu do usuário")}>
+          <Button variant="ghost" size="icon" className="relative rounded-full" aria-label={t("Menu do usuário")}>
             <Avatar className="h-8 w-8">
               {user.avatar_url && <AvatarImage src={user.avatar_url} alt="" />}
               <AvatarFallback>{initials(user.full_name, user.email)}</AvatarFallback>
             </Avatar>
+            <PontoDeVersaoNova />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-[220px]">
@@ -54,6 +56,8 @@ export function UserMenu() {
             <SignOut size={16} className="mr-2" aria-hidden />
             {t("Sair")}
           </DropdownMenuItem>
+          {/* A versão instalada fecha o menu — era o rodapé do menu lateral. */}
+          <VersaoNoMenu />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

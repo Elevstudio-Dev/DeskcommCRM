@@ -243,7 +243,21 @@ test("quem pula versões vê os avisos de TODAS elas, não só o da mais nova", 
   await page.screenshot({ path: ".superpowers/evidence/faixa-de-versoes.png" });
 });
 
-test("o dono vê a versão nova na sidebar e atualiza pela tela", async ({ page, request }) => {
+/**
+ * A versão instalada e o aviso de "Nova versão" moram no MENU DO AVATAR desde
+ * que o menu lateral saiu (2026-09-10). Nada disso está no DOM com o menu
+ * fechado — então toda asserção sobre versão abre o menu antes e fecha depois,
+ * para não deixar um popover aberto atrapalhando o próximo clique.
+ */
+async function comOMenuDoUsuarioAberto(page: Page, fn: () => Promise<void>): Promise<void> {
+  await page.getByRole("button", { name: /menu do usuário/i }).click();
+  await expect(page.getByRole("menu")).toBeVisible();
+  await fn();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toHaveCount(0);
+}
+
+test("o dono vê a versão nova no menu do usuário e atualiza pela tela", async ({ page, request }) => {
   const changelog =
     "## [1.1.0] — 2026-08-02\n\n**⚠️ Requer atenção**\n\nReconecte o número depois.\n\n### Adicionado\n\n- Botão de atualizar pela tela.\n";
 
@@ -251,7 +265,11 @@ test("o dono vê a versão nova na sidebar e atualiza pela tela", async ({ page,
   await heartbeat(request, { latest_version: "1.1.0", changelog });
   await page.goto("/app/inbox");
 
-  const aviso = page.getByRole("link", { name: /nova versão/i });
+  // Era o rodapé do menu lateral. O menu saiu (2026-09-10) e o aviso foi para
+  // o menu do avatar — com um ponto pulsando sobre o avatar para o dono saber
+  // que há algo ali sem abrir. O link só existe com o menu aberto.
+  await page.getByRole("button", { name: /menu do usuário/i }).click();
+  const aviso = page.getByRole("menuitem", { name: /nova versão/i });
   await expect(aviso).toBeVisible();
   await aviso.click();
   await page.waitForURL(/\/app\/settings\/atualizacao/);
@@ -338,11 +356,13 @@ test("quando a atualização falha, a tela nomeia a versão certa, mostra o log 
   await detalhes.click();
   await expect(page.getByText(/o app não respondeu 'ok'/)).toBeVisible();
 
-  // O aviso da sidebar só acende porque o app sabe que está rodando a 1.0.0 —
+  // O aviso no menu do usuário só acende porque o app sabe que está rodando a 1.0.0 —
   // se ele tivesse acreditado no "1.1.0" que o host reportou, `update_available`
-  // seria falso e o rodapé mostraria "versão 1.1.0" como instalada, que é
+  // seria falso e o menu mostraria "versão 1.1.0" como instalada, que é
   // justamente a versão que quebrou.
-  await expect(page.getByRole("link", { name: /nova versão/i })).toBeVisible();
+  await comOMenuDoUsuarioAberto(page, async () => {
+    await expect(page.getByRole("menuitem", { name: /nova versão/i })).toBeVisible();
+  });
 
   // Saída garantida: o botão NÃO aparece (um novo pedido faria o servidor
   // responder "já estou na 1.1.0" e reportar sucesso sem trocar imagem
@@ -449,8 +469,10 @@ test("instalação à frente da versão publicada não vira tela quebrada nem al
   await loginWithTotp(page, creds.users.dono!.email, creds.dono_totp!.secret);
 
   await page.goto("/app/inbox");
-  await expect(page.getByRole("link", { name: /nova versão/i })).toHaveCount(0);
-  await expect(page.getByText("versão abc1234")).toBeVisible();
+  await comOMenuDoUsuarioAberto(page, async () => {
+    await expect(page.getByRole("menuitem", { name: /nova versão/i })).toHaveCount(0);
+    await expect(page.getByText("versão abc1234")).toBeVisible();
+  });
 
   await page.goto("/app/settings/atualizacao");
   await expect(
@@ -495,7 +517,12 @@ test("quem não é dono do servidor não vê o botão", async ({ page, request }
 
   await login(page, creds.users.agent!.email);
   await page.goto("/app/inbox");
-  await expect(page.getByRole("link", { name: /nova versão/i })).toHaveCount(0);
+  // Com o menu ABERTO, senão a ausência seria vácua: o item nunca está no DOM
+  // com o menu fechado, para dono ou não.
+  await comOMenuDoUsuarioAberto(page, async () => {
+    await expect(page.getByRole("menuitem", { name: /nova versão/i })).toHaveCount(0);
+    await expect(page.getByText("versão 1.0.0")).toBeVisible();
+  });
 
   await page.goto("/app/settings/atualizacao");
   await expect(page.getByText(/404 — Página não encontrada/i)).toBeVisible();

@@ -135,8 +135,9 @@ Saiu versão nova? Há dois caminhos, e o primeiro **não exige terminal**.
 
 ### Pela tela (recomendado)
 
-Quando existe versão nova, o rodapé do menu lateral acende **"Nova versão"** — só pro dono do
-servidor, porque avisar quem não pode atualizar é ruído. Clique e você cai em
+Quando existe versão nova, um ponto pulsa sobre o seu avatar (canto direito da barra) e o menu
+dele ganha **"Nova versão"** — só pro dono do servidor, porque avisar quem não pode atualizar é
+ruído. Clique e você cai em
 **Configurações → Atualização**, que mostra o que muda, faz **backup do banco sozinha** e
 acompanha cada fase (backup → código → banco → no ar) até terminar. Nada de SSH.
 
@@ -219,7 +220,7 @@ O projeto nasceu como CRM de e-commerce e a comunidade o levou muito além: hoje
 
 Todo tenant pode criar **fontes de captação**: um endereço público (`/api/v1/webhooks/in/<token>`) que recebe leads de landing pages, formulários próprios ou ferramentas como Zapier/n8n via POST (JSON ou `application/x-www-form-urlencoded`) e já entra direto no funil/estágio escolhido — sem código, sem integração customizada por tenant. Em cima dessas fontes (e dos outros eventos do CRM — lead mudou de etapa, ganhou tag, chegou mensagem no WhatsApp), o tenant monta **automações**: regras no formato QUANDO/SE/ENTÃO que disparam ações como adicionar tag, mover o lead no funil, atribuir a um atendente, mandar uma mensagem de WhatsApp ou avisar outro sistema via webhook de saída.
 
-Na UI, tudo mora em **Webhooks** na sidebar (visível só pra quem tem papel `manager`/`admin`). A tela tem três abas: **Receber dados** (criar fonte, copiar o endereço/formulário pronto, disparar um lead de teste, ver os últimos recebimentos), **Automações** (montar a regra, que sempre nasce pausada até você revisar e ligar) e **Atividade** (timeline de cada execução, com o resultado de cada ação e reenvio manual quando uma chamada externa falha).
+Na UI, tudo mora em **Configurações → Canais → Webhooks** (visível só pra quem tem papel `manager`/`admin`). A tela tem três abas: **Receber dados** (criar fonte, copiar o endereço/formulário pronto, disparar um lead de teste, ver os últimos recebimentos), **Automações** (montar a regra, que sempre nasce pausada até você revisar e ligar) e **Atividade** (timeline de cada execução, com o resultado de cada ação e reenvio manual quando uma chamada externa falha).
 
 Por baixo, cada evento vira uma linha em `event_log` — nenhum trigger de banco faz chamada HTTP diretamente. Quem drena essa fila é a rota `/api/v1/cron/event-log-drain`, chamada a cada minuto. **O `install.sh`/`update.sh` já configuram esse cron sozinhos** — sem ele, as automações são criadas normalmente mas nunca rodam.
 

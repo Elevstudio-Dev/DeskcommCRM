@@ -25,13 +25,13 @@ describe("NavHub", () => {
     expect(link).toHaveAttribute("href", "/app/ai/knowledge/sources");
   });
 
-  it("cada card explica para que serve — é o que o sidebar não cabe dizer", () => {
+  it("cada card explica para que serve — é o que uma aba não cabe dizer", () => {
     render(<NavHub group="ia" isPlatformAdmin role={null} title="Agente de IA" subtitle="" />);
     const link = screen.getByRole("link", { name: /Conhecimento/ });
     expect(link.textContent).toMatch(/consulta antes de responder/i);
   });
 
-  it("mostra também o que já está no sidebar — é inventário, não sobra", () => {
+  it("mostra também o que já é aba — é inventário, não sobra", () => {
     render(<NavHub group="ia" isPlatformAdmin role={null} title="Agente de IA" subtitle="" />);
     expect(screen.getByRole("link", { name: /Agentes/ })).toBeTruthy();
   });

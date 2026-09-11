@@ -277,24 +277,18 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
       ? t("Contato anonimizado — não é possível enviar mensagens.")
       : null;
 
-  // Altura da grade: a conta desconta TUDO que fica acima e abaixo dela.
+  // A GRADE OCUPA A TELA INTEIRA ABAIXO DA BARRA — de borda a borda.
+  //
+  // `data-tela-cheia` é o que faz o `<main>` do AppShell abrir mão da moldura
+  // de 24px (`[&:has([data-tela-cheia])]:p-0`): a conversa é o produto, e o
+  // WhatsApp de onde o atendente vem não tem moldura nenhuma. Por isso a
+  // altura desconta SÓ a barra superior:
   //   3.5rem            TopBar (`h-14`, em components/shell/TopBar.tsx)
-  //   2 * --space-6     padding do <main> do AppShell (`p-6`, em cima e embaixo)
   //
-  // Com `100vh-3.5rem` o padding ficava de fora e a grade media 48px a MAIS que a
-  // tela. Quem pagava a diferença era o composer, que fica no rodapé: nascia
+  // Antes a conta descontava também `2 * var(--space-6)` (o padding do main).
+  // Se a moldura voltar um dia, a parcela volta junto — sem ela a grade media
+  // 48px a MAIS que a tela e quem pagava era o composer, que nascia
   // parcialmente abaixo da borda, atrapalhando justo na hora de escrever.
-  //
-  // As duas parcelas NÃO estão na mesma unidade, e por isso o padding entra pelo
-  // token e não como `3rem`: o `@theme inline` de `app/globals.css` remapeia a
-  // escala de spacing para `var(--space-N)` — `--space-6` é `24px` LITERAL —, mas
-  // não remapeia o `14`, que o Tailwind 4 calcula pelo multiplicador `--spacing`
-  // e segue sendo `3.5rem` de verdade. (Até o Tailwind 4 quem remapeava era o
-  // `tailwind.config.ts`; o arquivo não existe mais, o efeito é o mesmo.)
-  // Escrever a soma como
-  // `6.5rem` só acerta enquanto a raiz for 16px; com acessibilidade de fonte maior
-  // ou menor o composer sai da tela de novo. Pelo token, a conta se auto-corrige
-  // se a escala de espaçamento mudar.
   //
   // `dvh` em vez de `vh` porque no celular a `vh` ignora a barra do navegador — o
   // mesmo corte, só que pior e mudando conforme se rola a página.
@@ -302,25 +296,21 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
   // TRÊS COLUNAS QUE CABEM — medido, não estimado.
   //
   // O `xl` do Tailwind dispara em 1280px, e era ali que a terceira coluna
-  // nascia: no ponto exato em que não havia espaço para ela. Com a barra de
-  // navegação (240px) sobram 1040px, e o grid pedia 300 + 707 + 320 = 1327 —
-  // o painel de CRM ficava 311px FORA da viewport, alcançável só rolando o
-  // `main` de lado, que ninguém faz. Em 1280 o atendente simplesmente não via
-  // contexto nenhum do cliente.
+  // nascia. Com o menu lateral (240px) sobravam 1040px, e o grid pedia
+  // 300 + 707 + 320 = 1327 — o painel de CRM ficava 311px FORA da viewport.
+  // Os 707px eram o `min-content` do `ConversationHeader`; consertado o
+  // header, o `1fr` volta a encolher sozinho.
   //
-  // Os 707px eram o `min-content` do `ConversationHeader` (a barra de ações
-  // era `shrink-0`), e `1fr` é `minmax(auto, 1fr)`: não encolhe abaixo disso.
-  // Consertado o header, o `1fr` volta a encolher sozinho — `minmax(0,1fr)`
-  // foi medido aqui e não mudou um pixel, então não entrou.
-  //
-  // Duas faixas em vez de uma: compacta onde aperta, generosa onde há espaço.
-  // Em 1280 isso dá 424px de conversa em vez de 372 — 54px de folga sobre o
-  // piso do composer (370px), em vez dos 2px que a versão de uma faixa só
-  // deixava. Margem de 2px não é margem, é sorte.
+  // SEM o menu lateral (2026-09-10) os 1280 são todos da grade: 300 + 320 de
+  // colunas deixam 660px de conversa em 1280 — quase o dobro dos 372 de antes,
+  // e 290px de folga sobre o piso do composer (370px). Por isso a faixa
+  // compacta (272/296) que existia para o 1280 apertado saiu: ela existia
+  // para dividir espaço com uma barra que não está mais lá.
   return (
     <OpenConversationProvider conversationId={selectedId}>
     <div
-      className="grid h-[calc(100dvh-3.5rem-2*var(--space-6))] w-full grid-cols-1 md:grid-cols-[300px_1fr] xl:grid-cols-[272px_1fr_296px] 2xl:grid-cols-[300px_1fr_320px]"
+      data-tela-cheia=""
+      className="grid h-[calc(100dvh-3.5rem)] w-full grid-cols-1 md:grid-cols-[300px_1fr] xl:grid-cols-[300px_1fr_320px] 2xl:grid-cols-[340px_1fr_340px]"
       /*
        * O ESTADO DO TEMPO REAL, LEGÍVEL DE FORA — mesmo par que o dossiê do lead
        * já publica (`LeadDossier`), e pela mesma razão: quando a entrega morre,

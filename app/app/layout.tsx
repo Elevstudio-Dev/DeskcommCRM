@@ -117,9 +117,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     ? await listarConexoesCaidas(createAdminClient(), activeOrg.orgId)
     : [];
 
-  // Read sidebar collapsed state SSR to avoid flash.
   const store = await cookies();
-  const collapsed = store.get("sidebar_collapsed")?.value === "1";
 
   // Impersonate (S-11.07): verify cookie server-side and resolve tenant name.
   // Middleware already validates HMAC + expiry on /app/*; we re-verify here as
@@ -154,7 +152,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     user.id,
     activeOrg?.orgId,
   );
-  const shell = <AppShell sidebarCollapsed={collapsed}>{children}</AppShell>;
+  const shell = <AppShell>{children}</AppShell>;
 
   return (
     // O idioma envolve a árvore inteira e recebe o código PRONTO — ele não

@@ -24,7 +24,8 @@ const DOT_LABEL: Record<ConnectionHealth, string> = {
 };
 
 /**
- * Bolinha de saúde exibida ao lado do item "Conexões" na sidebar. Poll leve
+ * Bolinha de saúde sobre a engrenagem de Configurações na barra superior (e ao
+ * lado de "Conexões" na gaveta do celular). Poll leve
  * (30s) para o usuário ver de relance quando um número cai — sem precisar abrir nada.
  */
 export function ConnectionHealthDot({ className }: { className?: string }) {

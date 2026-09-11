@@ -1,25 +1,21 @@
-import { NavHub } from "@/components/shell/NavHub";
+import { Inventario } from "@/components/shell/Inventario";
 import { requireAuth, resolveActiveOrg } from "@/lib/auth/server";
 import { traduzir } from "@/lib/i18n/dicionario";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Hub de Organização.
+ * Configurações — o inventário do produto inteiro.
  *
- * A lista de cards que vivia aqui era uma segunda navegação escrita à mão, e
- * divergia do sidebar — Funis, Conexões e Audit Log apareciam como se fossem
- * configuração, quando são CRM, Canais e Análise. Agora o conteúdo vem do
- * registro, e o que sobra aqui é o que de fato é organização: sua conta, sua
- * empresa, e quem tem acesso ao quê.
+ * Era o hub só de "Organização" (conta, empresa, acesso), e o resto das telas
+ * morava no menu lateral. O menu saiu (2026-09-10): a barra superior ficou com
+ * as cinco abas de uso diário, e TUDO o mais passou a ser alcançável daqui —
+ * Atendimento, CRM, Agente de IA, Canais, Análise e Organização, cada grupo
+ * uma seção, cada tela um card com a frase que diz para que serve.
  *
- * O card-ponte para "Canal oficial (Meta) e templates" que a `main` manteve
- * aqui NÃO foi perdido no merge — ele foi promovido. A ponte existia porque
- * conectar canal tinha duas respostas dependendo do WhatsApp, e quem já sabia
- * procurar em Configurações precisava continuar achando. Com o registro, o
- * grupo CANAIS fica visível no sidebar para todo admin e o ⌘K acha "canal
- * oficial" por nome — a pergunta passa a ter um lugar só, que é o que a ponte
- * tentava ensinar apontando para outro.
+ * O conteúdo vem do registro (`inventario()`), não de uma lista escrita aqui:
+ * a lista de cards que existiu nesta página era uma segunda navegação à mão e
+ * divergia do menu. Tela nova entra no registro e aparece aqui sozinha.
  */
 export default async function SettingsHubPage() {
   const user = await requireAuth();
@@ -27,12 +23,11 @@ export default async function SettingsHubPage() {
   const idioma = user.idioma;
 
   return (
-    <NavHub
-      group="organizacao"
+    <Inventario
       isPlatformAdmin={user.is_platform_admin}
       role={activeOrg?.role ?? null}
       title={traduzir("Configurações", idioma)}
-      subtitle={traduzir("Sua conta, os dados da empresa e quem tem acesso ao quê.", idioma)}
+      subtitle={traduzir("Tudo que o sistema tem, em um lugar só: atendimento, CRM, IA, canais, análise e a sua empresa.", idioma)}
       locale={idioma}
     />
   );

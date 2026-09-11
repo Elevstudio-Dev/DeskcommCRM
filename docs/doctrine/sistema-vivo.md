@@ -118,8 +118,9 @@ Uma feature que responde "nenhum" a *quem eu alimento* ou *onde apareço na tela
 
 - **Todo destino declara seu grupo** em `lib/navigation/registry.ts`. Sem grupo, sem merge.
 - **Configuração e observabilidade são grupos diferentes.** Desenhar como o sistema funciona (Agentes, Roteadores) não é a mesma atividade que olhar o sistema funcionando (Evolução da IA, Desempenho) — e quem procura uma não está procurando a outra.
-- **Hub a partir de 5 telas.** Abaixo disso o grupo cabe inteiro no sidebar; um hub de 3 itens é só um clique a mais para chegar onde já dava.
-- **O sidebar carrega o uso diário; o hub carrega o inventário.** Na dúvida, `sidebar: false` — o hub e o ⌘K já garantem a descoberta.
+- **Duas portas, e só duas (desde 2026-09-10).** A **barra superior** carrega as abas de uso diário (`principal: N` no registro — cinco, e a sexta é o menu lateral de volta, deitado); **Configurações** é o inventário de TODO grupo e TODA tela. Na dúvida, sem `principal` — o inventário e o ⌘K já garantem a descoberta.
+- **Hub próprio só onde a vitrine paga o clique.** A IA tem treze telas em três etapas de jornada e um hub (`/app/ai`) que é a própria aba. Os outros grupos não precisam de hub: o inventário já os lista, seção por seção.
+- **Não há menu lateral.** Ele foi removido porque disputava 240px com a conversa em toda tela; quem sentir falta de um item no dia a dia promove-o a aba tirando outra, não recriando a barra.
 - **Mudar o lugar na navegação não exige mudar a URL.** Rota só se renomeia quando o path mente sobre o conteúdo, e cada renomeação paga um redirect permanente.
 
 ---

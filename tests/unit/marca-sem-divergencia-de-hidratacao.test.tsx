@@ -50,18 +50,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { relativoEmBarraNormal } from "./helpers/caminho";
 
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { Sidebar } from "@/components/shell/Sidebar";
+import { MarcaNaBarra } from "@/components/shell/MarcaNaBarra";
 import type { ActiveOrg, AuthUser } from "@/lib/auth/types";
 import { MarcaDaInstalacaoProvider } from "@/lib/branding/contexto";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/app/ai/agents" }));
-vi.mock("@/app/actions/shell/toggleSidebar", () => ({ toggleSidebar: vi.fn() }));
 vi.mock("@/hooks/i18n/useT", () => ({ useT: () => (chave: string) => chave }));
-// Buscam estado do servidor e não falam de marca — fora do que se mede aqui.
-vi.mock("@/components/connections/ConnectionHealthDot", () => ({
-  ConnectionHealthDot: () => null,
-}));
-vi.mock("@/components/shell/VersionFooter", () => ({ VersionFooter: () => null }));
 
 const usuario = {
   id: "00000000-0000-4000-8000-000000000001",
@@ -122,9 +116,12 @@ afterEach(() => {
 });
 
 describe("a marca não diverge entre o SSR e a hidratação", () => {
-  it("a barra lateral renderiza IGUAL com e sem a marca no ambiente do navegador", () => {
-    const noServidor = renderComAmbiente(undefined, <Sidebar collapsed={false} />);
-    const noNavegador = renderComAmbiente(PUBLIC_ENV_DO_NAVEGADOR, <Sidebar collapsed={false} />);
+  it("a marca da barra superior renderiza IGUAL com e sem a marca no ambiente do navegador", () => {
+    // Era a barra lateral. O menu saiu (2026-09-10) e a marca foi para o canto
+    // da barra superior — o componente mudou, o defeito que ele pode reabrir
+    // é o mesmo.
+    const noServidor = renderComAmbiente(undefined, <MarcaNaBarra />);
+    const noNavegador = renderComAmbiente(PUBLIC_ENV_DO_NAVEGADOR, <MarcaNaBarra />);
 
     expect(
       noServidor,
@@ -150,7 +147,7 @@ describe("a marca não diverge entre o SSR e a hidratação", () => {
     // Sem este caso, os dois de cima passariam num componente que nunca mostra
     // logo nenhum — dois vazios são iguais. O que se afirma aqui é que a marca
     // do contexto ALCANÇA a tela: o `<img>` do banco está no HTML dos dois lados.
-    const noServidor = renderComAmbiente(undefined, <Sidebar collapsed={false} />);
+    const noServidor = renderComAmbiente(undefined, <MarcaNaBarra />);
 
     expect(noServidor).toContain(`src="${MARCA_DO_BANCO.logoUrl}"`);
     expect(noServidor).toContain(`alt="${MARCA_DO_BANCO.name}"`);
@@ -188,7 +185,7 @@ describe("catraca: `branding()` é server-only", () => {
 
   /**
    * Comentário não conta — senão os próprios comentários que EXPLICAM a regra
-   * (em `contexto.tsx`, na `Sidebar`, aqui ao lado) reprovariam a catraca, e o
+   * (em `contexto.tsx`, na `MarcaNaBarra`, aqui ao lado) reprovariam a catraca, e o
    * caminho de menor resistência seria apagá-los.
    *
    * ⚠️ A REGRA DE `tests/unit/branding.test.ts` NÃO SERVE AQUI, e a primeira

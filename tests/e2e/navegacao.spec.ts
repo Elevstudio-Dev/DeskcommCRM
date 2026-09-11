@@ -1,10 +1,18 @@
 /**
- * Navegação agrupada — prova pela TELA (DoD item 12).
+ * Navegação pela barra superior — prova pela TELA.
  *
  * Os testes unitários provam que o registro e os componentes fazem o que
- * dizem. Isto prova o que o usuário reclamou: que dá para *achar* as coisas.
- * O caso que originou a mudança é o primeiro — chegar em Funis sem saber que
- * ele morava em Configurações.
+ * dizem. Isto prova o que o usuário vê: que dá para *achar* as coisas — agora
+ * sem menu lateral. O menu saiu em 2026-09-10: as cinco abas de uso diário
+ * moram na barra superior, ao lado da busca, e TUDO o mais mora em
+ * Configurações, que virou o inventário do produto inteiro.
+ *
+ * ⚠️ O que esta spec media antes, e por que parou de medir:
+ *   - "o menu inteiro cabe em 900px sem rolar" — não há menu vertical; o que
+ *     se mede agora é que a BARRA não estoura a largura em 1024 e 1280;
+ *   - "chega nas Etapas do funil sem passar por Configurações" — passa, e é
+ *     de propósito: Configurações deixou de ser "só organização" e virou a
+ *     porta de tudo que não é aba. O caso mede que o caminho existe e é curto.
  *
  * Pré-requisito: `.e2e-creds.json` (gerado por scripts/seed-e2e-credentials.ts).
  */
@@ -22,17 +30,17 @@ const EVIDENCE = path.join(process.cwd(), ".superpowers", "evidence");
 mkdirSync(EVIDENCE, { recursive: true });
 
 // ── Precondição de identidade ────────────────────────────────────────────────
-// O menu é `sidebarGroups(isPlatformAdmin, role)` (`registry.ts:510-519`), então
-// a suspeita natural é que promover o `e2e-admin` a dono do servidor inflasse o
-// sidebar que esta spec mede item a item.
+// As abas são `abasPrincipais(isPlatformAdmin, role)` e o inventário é
+// `inventario(...)` (lib/navigation/registry.ts), então a suspeita natural é
+// que promover o `e2e-admin` a dono do servidor mudasse o que esta spec mede.
 //
-// ⚠️ MEDIDO, e a suspeita não se confirma: `canSee` (`registry.ts:503-507`) é
+// ⚠️ MEDIDO, e a suspeita não se confirma: `canSee` é
 // `isPlatformAdmin || ROLE_RANK[role] >= ROLE_RANK[minRole]`; `ROLE_RANK.admin`
-// é 5, o TETO, e o maior `minRole` do registro é `"admin"`. Para um admin de
-// tenant o menu é IDÊNTICO promovido ou não — as asserções de `toHaveText`
-// abaixo não mudariam. Guardar a identidade aqui continua valendo (é a spec de
-// navegação; qualquer destino futuro exclusivo do dono apareceria primeiro
-// nela), mas registrar a diferença entre "muda" e "poderia mudar" é o ponto.
+// é o TETO, e o maior `minRole` do registro é `"admin"`. Para um admin de
+// tenant a navegação é IDÊNTICA promovido ou não. Guardar a identidade aqui
+// continua valendo (qualquer destino futuro exclusivo do dono apareceria
+// primeiro nela), mas registrar a diferença entre "muda" e "poderia mudar" é
+// o ponto.
 test.beforeAll(async () => {
   await afirmarAdminDeTenantPuro(creds.users.admin!.email);
 });
@@ -49,88 +57,91 @@ async function loginAdmin(page: Page): Promise<void> {
   creds = await loginComoAdmin(page, creds);
 }
 
-const sidebar = (page: Page) => page.getByRole("navigation", { name: "Navegação principal" });
+const abas = (page: Page) => page.getByRole("navigation", { name: "Navegação principal" });
+const gaveta = (page: Page) => page.getByRole("navigation", { name: "Todas as telas" });
 
 async function expectSemOverflowHorizontal(page: Page, contexto: string): Promise<void> {
   const m = await page.evaluate(() => ({
     // ⚠️ `body.scrollWidth`, NÃO `documentElement`. `app/globals.css` põe
-    // `overflow-x: hidden` em `html` E em `body` (linhas 422 e 440), e sob isso
-    // o `scrollWidth` do `documentElement` é GRAMPEADO no `clientWidth`: a
-    // conta dá zero mesmo com um filho de 3000px dentro. Medido com o chromium
-    // do repo, viewport 390x844, filho de 3000px — `visible` → 2610,
-    // `hidden` → 0, e `body.scrollWidth` = 3000 nos DOIS casos.
-    //
-    // A asserção existia e era incapaz de falhar. Trocar a medida é o conserto;
-    // o caso de sabotagem ao lado é o que prova que a nova consegue.
+    // `overflow-x: hidden` em `html` E em `body`, e sob isso o `scrollWidth`
+    // do `documentElement` é GRAMPEADO no `clientWidth`: a conta dá zero mesmo
+    // com um filho de 3000px dentro. Medido com o chromium do repo, viewport
+    // 390x844, filho de 3000px — `visible` → 2610, `hidden` → 0, e
+    // `body.scrollWidth` = 3000 nos DOIS casos.
     scrollWidth: document.body.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
   }));
 
   expect(
     m.scrollWidth,
-    `${contexto}: documentElement.scrollWidth (${m.scrollWidth}) não pode passar do clientWidth (${m.clientWidth})`,
+    `${contexto}: body.scrollWidth (${m.scrollWidth}) não pode passar do clientWidth (${m.clientWidth})`,
   ).toBeLessThanOrEqual(m.clientWidth + 1);
 }
 
 // `loginComoAdmin` espera a virada da janela TOTP entre logins consecutivos
 // (o servidor recusa código repetido), e essa espera sozinha pode consumir os
-// 30 s do teto global do playwright.config.ts. Toda spec da casa que usa o
-// helper sobe o teto — 240 s em `agente-novo-e-uso`, `agente-papeis-operador`,
-// `escopo-de-funil-do-agente` e `capacidades-do-agente`; 90 s em
-// `prova-painel-provedores`. Esta era a única que faltava, e por isso dois
-// testes que já estavam verdes passaram a estourar 30 s.
+// 30 s do teto global do playwright.config.ts.
 test.describe.configure({ timeout: 120_000 });
 
-test.describe("navegação agrupada", () => {
-  test("o sidebar tem hierarquia: grupos na ordem de uso", async ({ page }) => {
+test.describe("navegação pela barra superior", () => {
+  test("as cinco abas, na ordem, e nenhuma a mais", async ({ page }) => {
     await loginAdmin(page);
 
-    // Organização não aparece como título aqui: seu hub (Configurações) vive no
-    // rodapé fixo — ver o teste de dobra abaixo.
-    const titulos = sidebar(page).getByRole("heading");
-    await expect(titulos).toHaveText([
-      "Atendimento",
-      "CRM",
-      "Agente de IA",
-      "Canais",
-      "Análise",
-    ]);
+    const links = abas(page).getByRole("link");
+    await expect(links).toHaveText(["Inbox", "Contatos", "Funis", "Agenda", "IA"]);
+
+    // E NÃO existe menu lateral: o conteúdo começa na borda esquerda da tela.
+    // (Não dá para afirmar "nenhum <aside>": o inbox tem o painel de CRM, que
+    // é um <aside> legítimo — dentro do conteúdo, não ao lado dele.)
+    const esquerdaDoMain = await page.evaluate(
+      () => document.querySelector("main")!.getBoundingClientRect().left,
+    );
+    expect(esquerdaDoMain, "há algo ocupando lugar à esquerda do conteúdo").toBe(0);
 
     await page.screenshot({
-      path: path.join(EVIDENCE, "nav-sidebar-agrupado.png"),
-      fullPage: true,
+      path: path.join(EVIDENCE, "nav-barra-superior.png"),
+      fullPage: false,
     });
   });
 
-  test("chega nas Etapas do funil pelo CRM, sem passar por Configurações", async ({ page }) => {
+  test("Configurações é o inventário: todo grupo, com Etapas do funil dentro do CRM", async ({
+    page,
+  }) => {
     await loginAdmin(page);
 
-    // O caso que originou tudo: o usuário não sabia que esta tela existia.
-    //
-    // ⚠️ O ITEM MUDOU DE NOME, e o nome antigo ("Funis") passou para o VIZINHO —
-    // a lista de funis, em /app/kanban. Um teste que continuasse clicando em
-    // "Funis" seguiria verde medindo a outra tela; por isso a asserção de URL
-    // abaixo é específica (`settings/tenant/pipelines`) e não o antigo
-    // /pipelines/, que casa com as duas.
-    await sidebar(page).getByRole("link", { name: "Etapas do funil" }).click();
+    // A engrenagem ao lado da busca é a segunda porta.
+    await page.getByRole("link", { name: "Configurações", exact: true }).click();
+    await page.waitForURL(/\/app\/settings$/);
+
+    // Os seis grupos, como seções.
+    for (const grupo of ["Atendimento", "CRM", "Agente de IA", "Canais", "Análise", "Organização"]) {
+      await expect(page.getByRole("heading", { name: grupo, level: 2 })).toBeVisible();
+    }
+
+    await page.screenshot({ path: path.join(EVIDENCE, "nav-inventario.png"), fullPage: true });
+
+    // ⚠️ O ITEM MUDOU DE NOME no passado, e o nome antigo ("Funis") passou para
+    // o VIZINHO — a lista de funis, em /app/kanban. A asserção de URL abaixo é
+    // específica (`settings/tenant/pipelines`) e não o antigo /pipelines/, que
+    // casa com as duas.
+    await page.getByRole("link", { name: /Etapas do funil/ }).click();
     await page.waitForURL(/settings\/tenant\/pipelines/);
     await expect(page.getByRole("heading", { name: "Etapas do funil", level: 1 })).toBeVisible();
   });
 
-  test("e a lista de funis é o item vizinho, com nome próprio", async ({ page }) => {
+  test("e a lista de funis é a aba, com nome próprio", async ({ page }) => {
     await loginAdmin(page);
-    await sidebar(page).getByRole("link", { name: "Funis", exact: true }).click();
+    await abas(page).getByRole("link", { name: "Funis", exact: true }).click();
     await page.waitForURL(/\/app\/kanban/);
     await expect(page.getByRole("heading", { name: "Funis", level: 1 })).toBeVisible();
   });
 
-  test("chega em Conhecimento, que só existia atrás das abas de IA", async ({ page }) => {
+  test("a aba IA abre o hub, organizado por jornada", async ({ page }) => {
     await loginAdmin(page);
 
-    await sidebar(page).getByRole("link", { name: "Ver tudo em IA" }).click();
+    await abas(page).getByRole("link", { name: "IA" }).click();
     await page.waitForURL(/\/app\/ai$/);
 
-    // O hub organiza por jornada, não numa grade solta.
     await expect(page.getByRole("heading", { name: "Montar o agente" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Ensinar o agente" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Acompanhar o agente" })).toBeVisible();
@@ -143,13 +154,15 @@ test.describe("navegação agrupada", () => {
 
   /**
    * O canal oficial saiu de Configurações no PR #105 e virou aba de Conexões.
-   * A porta, portanto, é Conexões — que agora vive no grupo CANAIS do sidebar,
-   * e não mais como um card perdido em Configurações.
+   * Conexões, por sua vez, deixou de ser item de menu: a porta é o grupo
+   * CANAIS do inventário.
    */
-  test("chega ao canal oficial pelo grupo Canais, não por Configurações", async ({ page }) => {
+  test("chega ao canal oficial por Configurações → Canais → Conexões", async ({ page }) => {
     await loginAdmin(page);
 
-    await sidebar(page).getByRole("link", { name: "Conexões" }).click();
+    await page.getByRole("link", { name: "Configurações", exact: true }).click();
+    await page.waitForURL(/\/app\/settings$/);
+    await page.getByRole("link", { name: /Conexões/ }).click();
     await page.waitForURL(/\/app\/connections/);
     await expect(page.getByRole("tab", { name: /oficial/i })).toBeVisible();
   });
@@ -181,51 +194,85 @@ test.describe("navegação agrupada", () => {
   });
 
   /**
-   * Agrupar cria um risco que a lista plana não tinha: o menu cresce e passa a
-   * exigir scroll. Na primeira versão desta mudança, medido em 1280×768, o
-   * conteúdo dava 1019px contra 663px visíveis — SETE links e os grupos Análise
-   * e Organização ficavam fora da dobra. Trocar "17 itens sem hierarquia" por
-   * "20 itens que não cabem" seria recriar o problema em outra forma.
-   *
-   * Medido por ferramenta, nunca a olho.
+   * A barra tem largura fixa e a tela não: em 1024 (o `lg` do Tailwind, onde
+   * os rótulos aparecem) tudo — marca, cinco abas com texto, busca e quatro
+   * ícones — precisa caber sem estourar a linha. Abaixo de `lg` os rótulos
+   * somem e ficam os ícones. Medido por ferramenta, nunca a olho.
    */
-  test("nenhum grupo fica fora da dobra, e em 900px o menu não rola", async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await loginAdmin(page);
+  // 768 é o `md`: as abas aparecem (só ícone) e o hambúrguer some — é a faixa
+  // mais apertada em que a barra inteira do desktop existe.
+  for (const largura of [768, 1024, 1280]) {
+    test(`em ${largura}px a barra cabe inteira, sem overflow`, async ({ page }) => {
+      await page.setViewportSize({ width: largura, height: 800 });
+      await loginAdmin(page);
 
+      await expectSemOverflowHorizontal(page, `barra em ${largura}px`);
+      const m = await page.evaluate(() => {
+        const header = document.querySelector("header")!;
+        const r = header.getBoundingClientRect();
+        const filhos = [...header.querySelectorAll("a, button")].map((el) => el.getBoundingClientRect());
+        return {
+          alturaDaBarra: Math.round(r.height),
+          foraDaBarra: filhos.filter((f) => f.right > r.right + 1 || f.bottom > r.bottom + 1).length,
+        };
+      });
+      expect(m.alturaDaBarra, "a barra tem de ser UMA linha (h-14 = 56px)").toBe(56);
+      expect(m.foraDaBarra, "nenhum controle da barra pode sair dela").toBe(0);
+    });
+  }
+
+  test("o inbox ocupa a tela inteira abaixo da barra, sem moldura", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await loginAdmin(page);
+    await page.goto("/app/inbox");
+
+    // A grade do inbox declara `data-tela-cheia` e o <main> cede o padding.
     const m = await page.evaluate(() => {
-      const nav = document.querySelector('nav[aria-label="Navegação principal"]')!;
-      const r = nav.getBoundingClientRect();
+      const grade = document.querySelector("[data-tela-cheia]")!;
+      const header = document.querySelector("header")!;
+      const g = grade.getBoundingClientRect();
+      const h = header.getBoundingClientRect();
       return {
-        rola: nav.scrollHeight > Math.round(r.height) + 1,
-        titulosFora: [...nav.querySelectorAll("h2")].filter(
-          (h) => h.getBoundingClientRect().bottom > r.bottom,
-        ).length,
+        esquerda: Math.round(g.left),
+        largura: Math.round(g.width),
+        topo: Math.round(g.top),
+        base: Math.round(g.bottom),
+        baseDaBarra: Math.round(h.bottom),
+        viewport: { w: window.innerWidth, h: window.innerHeight },
       };
     });
+    expect(m.esquerda, "a grade começa na borda esquerda — sem menu lateral e sem padding").toBe(0);
+    expect(m.largura, "a grade usa a largura inteira").toBe(m.viewport.w);
+    expect(m.topo, "a grade começa logo abaixo da barra").toBe(m.baseDaBarra);
+    expect(m.base, "a grade termina na borda de baixo — o composer nunca nasce fora da tela").toBe(
+      m.viewport.h,
+    );
 
-    expect(m.titulosFora, "grupo inteiro invisível é o problema que viemos resolver").toBe(0);
-    expect(m.rola, "em 900px o menu inteiro tem de caber sem scroll").toBe(false);
+    await page.screenshot({ path: path.join(EVIDENCE, "nav-inbox-tela-cheia.png") });
   });
 
   test.describe("mobile", () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
-    test("em 390px, o sidebar vira gaveta e não cria overflow horizontal", async ({ page }) => {
+    test("em 390px, as abas somem e a gaveta traz o inventário inteiro", async ({ page }) => {
       await loginAdmin(page);
 
-      await expect(sidebar(page), "o sidebar desktop fica fora da árvore acessível no mobile").toHaveCount(0);
+      await expect(abas(page), "as abas do desktop ficam fora da árvore acessível no mobile").toHaveCount(0);
       await expectSemOverflowHorizontal(page, "shell mobile após login");
 
       await page.getByRole("button", { name: "Abrir navegação" }).click();
-      await expect(sidebar(page)).toBeVisible();
+      await expect(gaveta(page)).toBeVisible();
       await expectSemOverflowHorizontal(page, "shell mobile com drawer aberto");
       await page.screenshot({
         path: path.join(EVIDENCE, "nav-mobile-390-drawer-aberta.png"),
         fullPage: true,
       });
 
-      await sidebar(page).getByRole("link", { name: "Funis", exact: true }).click();
+      // O inventário inteiro está na gaveta — inclusive o que no desktop só
+      // se acha em Configurações.
+      await expect(gaveta(page).getByRole("link", { name: "Etapas do funil" })).toBeVisible();
+
+      await gaveta(page).getByRole("link", { name: "Funis", exact: true }).click();
       await page.waitForURL(/\/app\/kanban/);
       await expect(page.getByRole("dialog")).toHaveCount(0);
       await expectSemOverflowHorizontal(page, "shell mobile após navegar pelo drawer");
@@ -237,28 +284,13 @@ test.describe("navegação agrupada", () => {
     });
   });
 
-  test("Configurações fica fixo no rodapé, fora da área que rola", async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 768 });
-    await loginAdmin(page);
-
-    const config = page.getByRole("link", { name: "Configurações" });
-    await expect(config).toBeVisible();
-
-    const dentroDaNav = await page.evaluate(() => {
-      const nav = document.querySelector('nav[aria-label="Navegação principal"]')!;
-      const link = [...document.querySelectorAll("a")].find(
-        (a) => a.textContent?.trim() === "Configurações",
-      );
-      return nav.contains(link!);
-    });
-    expect(dentroDaNav, "Configurações não pode depender de scroll para aparecer").toBe(false);
-  });
-
-  test("um agent não vê o cabeçalho de um grupo que a permissão esvaziou", async ({ page }) => {
+  test("um agent não vê o grupo que a permissão esvaziou — nem no inventário", async ({ page }) => {
     await login(page, creds.users.agent!.email);
 
+    await page.getByRole("link", { name: "Configurações", exact: true }).click();
+    await page.waitForURL(/\/app\/settings$/);
     // CANAIS é todo manager+/admin: o título não pode sobrar sozinho.
-    await expect(sidebar(page).getByRole("heading", { name: "Canais" })).toHaveCount(0);
-    await expect(sidebar(page).getByRole("heading", { name: "Atendimento" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Canais", level: 2 })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Atendimento", level: 2 })).toBeVisible();
   });
 });

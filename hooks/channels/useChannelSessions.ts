@@ -40,7 +40,7 @@ export function channelLabel(
 
 /**
  * Lista os canais WhatsApp (channel_sessions) da org ativa. Fonte única
- * para o seletor do inbox, o sinal de saúde da sidebar e a Central de Conexões.
+ * para o seletor do inbox, o sinal de saúde da barra superior e a Central de Conexões.
  *
  * Devolve um objeto explícito (e não o resultado cru do react-query) por dois
  * motivos: `schemaOutdated` vem do `meta` da resposta e se perderia num `select`,

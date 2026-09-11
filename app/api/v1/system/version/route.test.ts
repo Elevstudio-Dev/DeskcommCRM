@@ -322,7 +322,7 @@ describe("GET /api/v1/system/version", () => {
     vi.mocked(loadAuthUser).mockResolvedValue(MEMBRO as never);
     const { GET } = await import("../version/route");
     const body = await (await GET(get())).json();
-    // O rodapé da sidebar é o mesmo componente para todo mundo: se as duas
+    // O aviso de versão do menu do usuário é o mesmo componente para todo mundo: se as duas
     // respostas divergissem, dois usuários da mesma instalação leriam versões
     // diferentes na mesma tela.
     expect(body.data.current_version).toBe("1.0.0");

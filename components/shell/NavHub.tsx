@@ -24,7 +24,7 @@ interface NavHubProps {
 /**
  * Vitrine de um grupo do registro de navegação.
  *
- * O sidebar carrega o uso diário; o hub carrega o inventário — todas as telas
+ * A barra superior carrega o uso diário; o hub carrega o inventário — todas as telas
  * do grupo, cada uma com a frase que explica para que serve. Era isso que
  * faltava: telas como Conhecimento e Credenciais existiam só como aba dentro de
  * `/app/ai`, invisíveis para quem ainda não estava lá.

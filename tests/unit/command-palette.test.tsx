@@ -37,7 +37,7 @@ function abrir() {
 }
 
 describe("CommandPalette", () => {
-  it("acha uma tela que o sidebar não mostra", async () => {
+  it("acha uma tela que não é aba da barra", async () => {
     const user = userEvent.setup();
     abrir();
     await user.type(screen.getByRole("combobox"), "conhec");

@@ -122,12 +122,16 @@ describe("os elos que somem sem barulho", () => {
     expect(perfil, "ainda oferece um idioma sem tradução").not.toMatch(/value="en-US"/);
   });
 
-  it("a barra lateral traduz — ela aparece em TODA tela", () => {
+  it("a barra superior traduz — ela aparece em TODA tela", () => {
     // Sem ela, escolher espanhol não mudaria nada visível no primeiro clique, e
-    // o operador concluiria que a opção segue sendo decorativa.
-    const fonte = readFileSync("components/shell/Sidebar.tsx", "utf8");
-    expect(fonte).toMatch(/const t = useT\(\);/);
-    expect(fonte).toMatch(/\{t\(item\.label\)\}/);
+    // o operador concluiria que a opção segue sendo decorativa. Era a barra
+    // lateral; o menu saiu e as abas herdaram a obrigação — e a gaveta do
+    // celular também, porque no telefone ela É a navegação.
+    for (const arquivo of ["components/shell/AbasPrincipais.tsx", "components/shell/MenuCompleto.tsx"]) {
+      const fonte = readFileSync(arquivo, "utf8");
+      expect(fonte, arquivo).toMatch(/const t = useT\(\);/);
+      expect(fonte, arquivo).toMatch(/\{t\((aba|item)\.label\)\}/);
+    }
   });
 
   it("o inbox traduz o que se usa o dia inteiro", () => {
@@ -142,7 +146,7 @@ describe("os elos que somem sem barulho", () => {
 });
 
 describe("o dicionário acompanha o registro de navegação", () => {
-  it("todo item da barra lateral tem tradução", () => {
+  it("toda aba da barra superior tem tradução", () => {
     // ⚠️ ESTE CRUZAMENTO NÃO EXISTIA, e a falta dele é do tipo que não
     // vermelheia: a CHAVE do dicionário é o próprio texto em português, então
     // renomear um rótulo no registro não quebra nada — `traduzir()` devolve a
@@ -153,16 +157,20 @@ describe("o dicionário acompanha o registro de navegação", () => {
     // certo para eles. A lista é curta de propósito — cada entrada aqui é uma
     // renúncia consciente, não um lugar para esconder rótulo esquecido.
     const NOMES_PROPRIOS = ["Nuvemshop"];
-    const semTraducao = NAV_DESTINATIONS.filter((d) => d.sidebar)
-      .filter((d) => !NOMES_PROPRIOS.includes(d.label))
-      .filter((d) => !(d.label in DICIONARIO));
+    const rotulos = [
+      ...NAV_DESTINATIONS.filter((d) => d.principal !== undefined).map((d) => d.label),
+      ...NAV_GROUPS.flatMap((g) => (g.hub?.aba ? [g.hub.aba.label] : [])),
+    ];
+    const semTraducao = rotulos
+      .filter((label) => !NOMES_PROPRIOS.includes(label))
+      .filter((label) => !(label in DICIONARIO));
     expect(
-      semTraducao.map((d) => d.label),
-      "item de menu sem entrada em lib/i18n/dicionario.ts — o espanhol dele cai para o português",
+      semTraducao,
+      "aba sem entrada em lib/i18n/dicionario.ts — o espanhol dela cai para o português",
     ).toEqual([]);
   });
 
-  it("todo grupo da barra lateral tem tradução", () => {
+  it("todo grupo do inventário tem tradução", () => {
     const semTraducao = NAV_GROUPS.filter((g) => !(g.label in DICIONARIO));
     expect(semTraducao.map((g) => g.label)).toEqual([]);
   });

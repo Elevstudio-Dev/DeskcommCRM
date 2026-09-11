@@ -12,7 +12,7 @@
  * mesma coisa e a assimetria não aparecia. Quando `app/layout.tsx` passou a
  * injetar a marca RESOLVIDA (banco acima do `.env`), elas divergiram: numa
  * instalação com logo gravado pela tela e `APP_LOGO_URL` vazio — o caso normal
- * de quem sobe logo pela tela — o SSR de `components/shell/Sidebar.tsx` via
+ * de quem sobe logo pela tela — o SSR de `components/shell/MarcaNaBarra.tsx` via
  * `logoUrl: null` e desenhava `<span>`, e o navegador via a URL do banco e
  * desenhava `<img>`. Trocar o TIPO do elemento entre servidor e cliente é
  * hydration mismatch: React #418 em toda tela, com a árvore descartada e

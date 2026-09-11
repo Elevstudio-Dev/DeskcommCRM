@@ -68,14 +68,14 @@ describe("guarda de white-label (self-host)", () => {
   });
 
   it("injeta a marca em runtime pelo PublicEnvScript", () => {
-    // Sem estas duas chaves no payload, os client components (Sidebar,
+    // Sem estas duas chaves no payload, os client components (MarcaNaBarra,
     // AdminSidebar) caem no padrão e só a marca do servidor muda — a instalação
-    // ficaria com o nome do revendedor no título da aba e o nosso na sidebar.
+    // ficaria com o nome do revendedor no título da aba e o nosso na barra.
     //
     // As duas liam `env.APP_NAME` / `env.APP_LOGO_URL` — o arquivo de instalação
     // CRU — e a consequência foi medida: `platform_branding.logo_url` e
     // `MarcaDeSaida.logoUrl` existiam sem nenhum leitor, porque o único render de
-    // logo do produto (`components/shell/Sidebar.tsx`) lê daqui. O operador
+    // logo do produto (`components/shell/MarcaNaBarra.tsx`) lê daqui. O operador
     // salvava um valor que nada mostrava, e a tela dizia "salvo". Passam a vir da
     // marca RESOLVIDA (banco acima, `.env` embaixo).
     expect(publicEnvScript).toMatch(/APP_NAME:\s*marca\.name/);

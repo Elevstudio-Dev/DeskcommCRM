@@ -32,7 +32,7 @@ import { env } from "@/lib/env";
  * Até esta onda as duas chaves de marca eram `env.APP_NAME` e `env.APP_LOGO_URL`
  * — o arquivo de instalação CRU. Consequência medida: `platform_branding.logo_url`
  * e `MarcaDeSaida.logoUrl` existiam e não tinham nenhum leitor, porque o único
- * render de logo do produto (`components/shell/Sidebar.tsx`) lê
+ * render de logo do produto (`components/shell/MarcaNaBarra.tsx`) lê
  * `window.__PUBLIC_ENV__.APP_LOGO_URL`. O operador salvava um valor que nada
  * mostrava, e a tela dizia "salvo".
  *

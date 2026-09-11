@@ -119,7 +119,9 @@ describe("o vocabulário do funil na interface", () => {
     // passava a falhar por AMBIGUIDADE — um modo de falha que não parece
     // vocabulário, e sim teste quebrado.
     const porGrupo = new Map<string, string[]>();
-    for (const d of NAV_DESTINATIONS.filter((x) => x.sidebar)) {
+    // TODO destino, e não só os de menu: o inventário de Configurações lista
+    // o grupo inteiro, então a colisão apareceria lá.
+    for (const d of NAV_DESTINATIONS) {
       porGrupo.set(d.group, [...(porGrupo.get(d.group) ?? []), d.label]);
     }
     for (const [grupo, labels] of porGrupo) {

@@ -50,7 +50,7 @@ export async function GET(_req: NextRequest): Promise<Response> {
   // diagnóstico que o dono tem sem abrir um terminal, que é justamente o que
   // esta feature existe para eliminar.
   //
-  // Lido ANTES da bifurcação por papel de propósito: o rodapé da sidebar (que
+  // Lido ANTES da bifurcação por papel de propósito: o aviso de versão no menu do usuário (que
   // todo mundo vê) e esta tela precisam falar da MESMA versão — a que está
   // rodando.
   const { data: run, error: runError } = await db

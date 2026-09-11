@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
-import { Sidebar } from "@/components/shell/Sidebar";
+import { MarcaNaBarra } from "@/components/shell/MarcaNaBarra";
 import type { ActiveOrg, AuthUser } from "@/lib/auth/types";
 import type { Branding } from "@/lib/branding";
 import { MarcaDaInstalacaoProvider } from "@/lib/branding/contexto";
@@ -17,21 +17,20 @@ import { MarcaDaInstalacaoProvider } from "@/lib/branding/contexto";
  * criado o campo decorativo clássico: a tela oferece, o código ignora, e o
  * cliente conclui que o produto está quebrado.
  *
- * Conferir que a Sidebar MENCIONA `activeOrg.marca` não bastaria — é evidência
- * de símbolo presente, não de comportamento presente. Os dois casos abaixo
+ * Era `sidebar-nome-da-organizacao.test.tsx`: a marca vivia no cabeçalho do
+ * menu lateral. O menu saiu (2026-09-10) e a marca foi para o canto esquerdo
+ * da barra superior, em `MarcaNaBarra` — o componente mudou de lugar, a
+ * obrigação não. O caso "recolhida, a inicial acompanha o nome" saiu junto
+ * com o estado recolhido: não há mais menu para recolher.
+ *
+ * Conferir que o componente MENCIONA `activeOrg.marca` não bastaria — é
+ * evidência de símbolo presente, não de comportamento presente. Os casos abaixo
  * medem o texto que a barra renderiza, com e sem a marca, e o segundo afirma
  * também a AUSÊNCIA do nome da instalação: sem isso, um componente que
  * mostrasse os dois passaria.
  */
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/app/inbox" }));
-vi.mock("@/app/actions/shell/toggleSidebar", () => ({ toggleSidebar: vi.fn() }));
 vi.mock("@/hooks/i18n/useT", () => ({ useT: () => (chave: string) => chave }));
-// Os dois buscam estado do servidor e não têm nada a ver com o nome da marca.
-vi.mock("@/components/connections/ConnectionHealthDot", () => ({
-  ConnectionHealthDot: () => null,
-}));
-vi.mock("@/components/shell/VersionFooter", () => ({ VersionFooter: () => null }));
 
 /**
  * A marca da INSTALAÇÃO, como o SERVIDOR a entrega.
@@ -45,7 +44,7 @@ vi.mock("@/components/shell/VersionFooter", () => ({ VersionFooter: () => null }
  * marca": deste lado da fronteira é exatamente o que o layout raiz faz.
  *
  * `logoUrl: null` no padrão porque com logo a barra mostra a imagem NO LUGAR do
- * texto — os três primeiros casos, que medem nome, não mediriam nada.
+ * texto — os primeiros casos, que medem nome, não mediriam nada.
  */
 let marcaDaInstalacao: Branding = {
   name: "Sistema do Revendedor",
@@ -53,11 +52,11 @@ let marcaDaInstalacao: Branding = {
   initial: "S",
 };
 
-/** A barra como o layout raiz a monta: dentro do provedor da marca. */
-function renderSidebar(props: { collapsed: boolean }) {
+/** A marca como o layout raiz a monta: dentro do provedor da marca. */
+function renderMarca() {
   return render(
     <MarcaDaInstalacaoProvider marca={marcaDaInstalacao}>
-      <Sidebar collapsed={props.collapsed} />
+      <MarcaNaBarra />
     </MarcaDaInstalacaoProvider>,
   );
 }
@@ -80,32 +79,29 @@ vi.mock("@/hooks/auth/AuthProvider", () => ({
   useAuth: () => contexto,
 }));
 
-describe("o nome da marca na barra lateral", () => {
+describe("o nome da marca na barra superior", () => {
   it("sem marca da organização, mostra o nome da instalação", () => {
     // Não-regressão: a organização que nunca abriu a tela de marca precisa ver
     // exatamente o que via antes. É também a guarda de vacuidade do caso
     // seguinte — se a barra nunca mostrasse nome nenhum, os dois passariam.
     contexto = { user: usuario, activeOrg: org };
-    renderSidebar({ collapsed: false });
+    renderMarca();
     expect(screen.getByText("Sistema do Revendedor")).toBeTruthy();
   });
 
   it("com marca da organização, o nome dela SUBSTITUI o da instalação", () => {
     contexto = { user: usuario, activeOrg: { ...org, marca: { nome: "Loja da Ana" } } };
-    renderSidebar({ collapsed: false });
+    renderMarca();
     expect(screen.getByText("Loja da Ana")).toBeTruthy();
     // A ausência importa tanto quanto a presença: uma barra que mostrasse os
     // dois nomes passaria na asserção de cima e estaria errada.
     expect(screen.queryByText("Sistema do Revendedor")).toBeNull();
   });
 
-  it("recolhida, a inicial acompanha o nome que a barra mostra", () => {
-    // Sem isto, recolher o menu trocaria a marca: o nome viria da organização e
-    // a inicial continuaria vindo da INSTALAÇÃO — "L" expandido, "S" recolhido.
-    contexto = { user: usuario, activeOrg: { ...org, marca: { nome: "Loja da Ana" } } };
-    renderSidebar({ collapsed: true });
-    expect(screen.getByText("L")).toBeTruthy();
-    expect(screen.queryByText("S")).toBeNull();
+  it("a marca é um link para o inbox — o 'início' de quem atende", () => {
+    contexto = { user: usuario, activeOrg: org };
+    renderMarca();
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/app/inbox");
   });
 });
 
@@ -113,7 +109,7 @@ describe("o nome da marca na barra lateral", () => {
  * O CONSUMIDOR do logo — a outra metade, e a que estava faltando.
  *
  * POR QUE ESTE BLOCO EXISTE: medido antes desta onda, `platform_branding.logo_url`
- * era gravável e ilegível. O único render de logo do produto é esta barra, e ela
+ * era gravável e ilegível. O único render de logo do produto é esta marca, e ela
  * lia `window.__PUBLIC_ENV__.APP_LOGO_URL`, que vinha do `.env` cru — o operador
  * salvava e nada mudava. Estes casos medem a barra DESENHANDO a imagem, não a
  * presença do símbolo `logoUrl` no arquivo.
@@ -124,7 +120,7 @@ describe("o nome da marca na barra lateral", () => {
  * prova de ponta a ponta é pela tela. Nem provam que os dois lados da fronteira
  * concordam — isso é `tests/unit/marca-sem-divergencia-de-hidratacao.test.tsx`.
  */
-describe("o logo na barra lateral", () => {
+describe("o logo na barra superior", () => {
   const LOGO_DA_INSTALACAO = "https://cdn.exemplo.test/revendedor.png";
   const LOGO_DA_ORG = "https://cdn.exemplo.test/loja-da-ana.png";
 
@@ -137,11 +133,11 @@ describe("o logo na barra lateral", () => {
   it("com logo da instalação, a barra desenha a imagem no lugar do nome", () => {
     marcaDaInstalacao = { ...marcaDaInstalacao, logoUrl: LOGO_DA_INSTALACAO };
     contexto = { user: usuario, activeOrg: org };
-    renderSidebar({ collapsed: false });
+    renderMarca();
 
     expect(imagem().getAttribute("src")).toBe(LOGO_DA_INSTALACAO);
     // A ausência importa: uma barra que mostrasse imagem E nome passaria só na
-    // asserção de cima, e o cabeçalho tem 56px de altura para um dos dois.
+    // asserção de cima, e o canto tem 36px de altura para um dos dois.
     expect(screen.queryByText("Sistema do Revendedor")).toBeNull();
   });
 
@@ -151,7 +147,7 @@ describe("o logo na barra lateral", () => {
       user: usuario,
       activeOrg: { ...org, marca: { nome: "Loja da Ana", logoUrl: LOGO_DA_ORG } },
     };
-    renderSidebar({ collapsed: false });
+    renderMarca();
 
     expect(imagem().getAttribute("src")).toBe(LOGO_DA_ORG);
     // O `alt` acompanha a imagem que está ali: com o logo da org, legendar com o
@@ -166,7 +162,7 @@ describe("o logo na barra lateral", () => {
     // logo do revendedor por causa de um campo em branco.
     marcaDaInstalacao = { ...marcaDaInstalacao, logoUrl: LOGO_DA_INSTALACAO };
     contexto = { user: usuario, activeOrg: { ...org, marca: { logoUrl: "" } } };
-    renderSidebar({ collapsed: false });
+    renderMarca();
 
     expect(imagem().getAttribute("src")).toBe(LOGO_DA_INSTALACAO);
   });
@@ -176,7 +172,7 @@ describe("o logo na barra lateral", () => {
     // com `src` vazio, todos passariam pelo `getByRole("img")` e o produto
     // mostraria o ícone de imagem quebrada em toda instalação de fábrica.
     contexto = { user: usuario, activeOrg: org };
-    renderSidebar({ collapsed: false });
+    renderMarca();
 
     expect(screen.queryByRole("img")).toBeNull();
     expect(screen.getByText("Sistema do Revendedor")).toBeTruthy();

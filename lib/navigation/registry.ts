@@ -47,10 +47,21 @@ import {
  * no Sidebar, `LINKS` no hub de Configurações e `TABS` na área de IA. Sete telas
  * só eram alcançáveis por dentro da própria seção e uma não tinha link nenhum.
  *
- * Sidebar, hubs e a paleta ⌘K são PROJEÇÕES puras deste array — nenhum deles
- * decide o que existe, só desenha o que sai daqui. Tela nova aparece nos três
- * sem editar três arquivos, e `tests/unit/navegacao-completude.test.ts` reprova
- * o CI se uma rota nascer fora daqui.
+ * A barra superior, o inventário de Configurações, os hubs e a paleta ⌘K são
+ * PROJEÇÕES puras deste array — nenhum deles decide o que existe, só desenha o
+ * que sai daqui. Tela nova aparece em todos sem editar quatro arquivos, e
+ * `tests/unit/navegacao-completude.test.ts` reprova o CI se uma rota nascer
+ * fora daqui.
+ *
+ * ⚠️ O MENU LATERAL FOI REMOVIDO (2026-09-10). Ele carregava 20 links em seis
+ * grupos e disputava 240px com a conversa — e o produto é, antes de tudo, a
+ * conversa. Hoje há DUAS portas, e só duas:
+ *
+ *   - a BARRA SUPERIOR, com as abas de uso diário (`principal: N`) ao lado da
+ *     busca — cinco, e não vinte, porque uma fila de abas que precisa rolar é
+ *     o menu lateral de novo, deitado;
+ *   - CONFIGURAÇÕES, que é o inventário de TUDO: todo grupo, toda tela, com a
+ *     frase que diz para que serve. O que não é aba se acha ali ou no ⌘K.
  *
  * Doutrina: docs/doctrine/sistema-vivo.md — "por qual porta se chega até mim?"
  */
@@ -61,12 +72,25 @@ export interface NavGroup {
   id: NavGroupId;
   label: string;
   /**
-   * Hub do grupo, quando ele tem telas demais para caber no sidebar.
+   * Hub do grupo: a tela que lista todas as dele, por jornada.
    * O rótulo é declarado junto do href porque não é derivável: "Ver tudo em IA"
    * é útil, "Ver tudo em Organização" seria gratuito quando a tela já se chama
    * Configurações e o usuário a conhece por esse nome.
+   *
+   * `aba`: quando o próprio hub sobe para a barra superior. É o caso da IA — o
+   * atendente abre "IA" e vê Agentes, Follow-ups, Roteadores e o resto de uma
+   * vez, em vez de uma aba por tela. O rótulo é curto de propósito: a barra
+   * tem cinco lugares e "Agente de IA" ocuparia dois.
    */
-  hub?: { href: string; label: string };
+  hub?: { href: string; label: string; aba?: AbaDoHub };
+}
+
+/** Como um hub se apresenta quando vira aba da barra superior. */
+export interface AbaDoHub {
+  label: string;
+  icon: PhosphorIcon;
+  /** Posição na barra, contada junto com os destinos `principal`. */
+  posicao: number;
 }
 
 export interface NavDestination {
@@ -80,8 +104,13 @@ export interface NavDestination {
   section?: string;
   /** Ausente = viewer. Ver a regra de escolha abaixo. */
   minRole?: Role;
-  /** Ausente = só no hub. `true` = uso diário, sobe para o sidebar. */
-  sidebar?: boolean;
+  /**
+   * Ausente = só em Configurações (e no ⌘K). Um número = uso diário, é uma das
+   * abas da barra superior, e o número é a POSIÇÃO dela lá — declarada, e não
+   * derivada da ordem dos grupos, porque a ordem de uma fila de cinco abas é
+   * decisão de produto ("Contatos antes de Funis") e não de taxonomia.
+   */
+  principal?: number;
   healthDot?: boolean;
 }
 
@@ -94,14 +123,18 @@ export interface NavDestination {
  * observar o sistema funcionando (grupo Análise) — por isso Evolução da IA mora
  * aqui, e não junto dos agentes.
  *
- * Hub só onde o grupo passa de 4 telas. Abaixo disso ele cabe inteiro no
- * sidebar, e um hub de 3 itens seria só um clique a mais para chegar onde já
- * dava para chegar.
+ * Hub próprio só na IA, que tem treze telas em três etapas de jornada e
+ * merece a vitrine. Os outros grupos não precisam de hub: o inventário de
+ * Configurações já lista todos eles, seção por seção.
  */
 export const NAV_GROUPS: NavGroup[] = [
   { id: "atendimento", label: "Atendimento" },
   { id: "crm", label: "CRM" },
-  { id: "ia", label: "Agente de IA", hub: { href: "/app/ai", label: "Ver tudo em IA" } },
+  {
+    id: "ia",
+    label: "Agente de IA",
+    hub: { href: "/app/ai", label: "Ver tudo em IA", aba: { label: "IA", icon: Robot, posicao: 5 } },
+  },
   { id: "canais", label: "Canais" },
   { id: "analise", label: "Análise" },
   {
@@ -112,15 +145,15 @@ export const NAV_GROUPS: NavGroup[] = [
 ];
 
 /**
- * Grupo cujo hub vive no RODAPÉ fixo do sidebar, fora da área que rola.
+ * O grupo cujo hub é CONFIGURAÇÕES — a segunda porta do produto.
  *
- * Medido em tela (1280×768, o notebook comum): com todos os grupos na área
- * rolável, o conteúdo dava 1019px contra 663px visíveis — Configurações ficava
- * fora da dobra em TODAS as alturas testadas, inclusive 1080px. É o item que
- * mais se procura quando não se acha algo; deixá-lo dependendo de scroll
- * recriaria, em outra forma, o problema que esta reorganização veio resolver.
+ * A barra superior mostra o hub dele como a engrenagem ao lado da busca, e a
+ * tela dele (`/app/settings`) é o inventário de TODOS os grupos, não só deste.
+ * Era o rodapé fixo do menu lateral, pela mesma razão de então: é o item que
+ * mais se procura quando não se acha algo, e ele não pode depender de nada
+ * para aparecer.
  */
-export const GRUPO_NO_RODAPE: NavGroupId = "organizacao";
+export const GRUPO_DAS_CONFIGURACOES: NavGroupId = "organizacao";
 
 /**
  * Como `minRole` foi escolhido — medido tela a tela, não estimado:
@@ -143,7 +176,10 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "As conversas de WhatsApp, com você e a IA atendendo lado a lado.",
     icon: Inbox,
     group: "atendimento",
-    sidebar: true,
+    // A primeira aba, sempre: é a tela em que o atendente passa o dia, e é para
+    // ela que o menu lateral foi removido — cada pixel da barra era um pixel a
+    // menos de conversa.
+    principal: 1,
   },
   {
     href: "/app/radar",
@@ -151,7 +187,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "Quem esfriou e ainda está aberto — o que corre risco de morrer sem resposta.",
     icon: ClockCountdown,
     group: "atendimento",
-    sidebar: true,
   },
   {
     // Entra em "atendimento", e não em "organizacao", porque a Agenda é onde o
@@ -171,7 +206,7 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "O que está marcado, com quem, e quem atende — seu e da equipe.",
     icon: CalendarBlank,
     group: "atendimento",
-    sidebar: true,
+    principal: 4,
   },
   {
     // Renomeado de "Templates": estes são scripts do atendente, consumidos pelo
@@ -182,7 +217,8 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "Scripts salvos para responder mais rápido, seus ou da equipe.",
     icon: FileText,
     group: "atendimento",
-    sidebar: true,
+    // Não é aba: o atendente as usa DE DENTRO do composer, pelo "/" — a tela
+    // é onde se cadastram, não onde se usam.
   },
 
   // ---- CRM — o funil ----
@@ -202,7 +238,7 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "Seus funis de venda — clique em um para abrir o quadro de clientes.",
     icon: Kanban,
     group: "crm",
-    sidebar: true,
+    principal: 3,
   },
   {
     href: "/app/contacts",
@@ -210,7 +246,9 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "As pessoas do outro lado da conversa e seu histórico.",
     icon: Users,
     group: "crm",
-    sidebar: true,
+    // Segunda aba, antes de Funis: é a ordem do WhatsApp (conversas, contatos),
+    // que é de onde vem quem usa isto.
+    principal: 2,
   },
   {
     // ⚠️ Esta tela nasceu porque a FERRAMENTA já existia sem ela. O agente de IA
@@ -226,7 +264,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "O catálogo da loja, com o preço que o atendente de IA responde.",
     icon: Storefront,
     group: "crm",
-    sidebar: true,
   },
   {
     // A promessa que o comentário da Agenda fazia desde que ela nasceu. Aqui se
@@ -246,10 +283,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     // não da conta de quem está logado. O gate `navegacao-registry` cobra a
     // seção em todo grupo que tem hub, e sem ela o destino não aparece no hub.
     section: "Sua empresa",
-    // SEM `sidebar`, como as outras DEZ entradas de "organizacao": este grupo
-    // tem hub, e se chega às telas dele por "Configurações". Eu tinha posto
-    // `sidebar: true` e a cerca reprovou dizendo "a tela existe e não tem porta
-    // na navegação" — a porta existia, era outra.
   },
   {
     // Estava enterrado em Configurações e ninguém sabia que existia — o achado
@@ -266,7 +299,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     icon: Funnel,
     group: "crm",
     minRole: "manager",
-    sidebar: true,
   },
   {
     /**
@@ -289,7 +321,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     icon: Tag,
     group: "crm",
     minRole: "manager",
-    sidebar: true,
   },
 
   // ---- Agente de IA — montar, ensinar, acompanhar ----
@@ -301,7 +332,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     group: "ia",
     section: "Montar o agente",
     minRole: "manager",
-    sidebar: true,
   },
   {
     href: "/app/ai/followups",
@@ -311,7 +341,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     group: "ia",
     section: "Montar o agente",
     minRole: "manager",
-    sidebar: true,
   },
   {
     href: "/app/ai/routers",
@@ -321,7 +350,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     group: "ia",
     section: "Montar o agente",
     minRole: "manager",
-    sidebar: true,
   },
   {
     href: "/app/ai/credentials",
@@ -343,11 +371,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     group: "ia",
     section: "Montar o agente",
     minRole: "manager",
-    // SEM `sidebar: true`, como as outras nove telas deste grupo. Adicionar as
-    // duas telas novas à sidebar estourou a dobra em 900px — medido pelo e2e
-    // `navegacao.spec.ts`, que existe justamente porque agrupar o menu o faz
-    // crescer. Configurar provedor é tarefa de poucas vezes; o caminho é o hub
-    // "Ver tudo em IA", igual a Credenciais, Conhecimento, Memória e Skills.
   },
   {
     href: "/app/ai/knowledge/sources",
@@ -415,8 +438,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     group: "ia",
     section: "Acompanhar o agente",
     minRole: "manager",
-    // Idem: fora da sidebar para o menu não passar da dobra. Quem vem para cá
-    // está diagnosticando, e chega pelo hub ou pelo link do aviso na Central.
   },
   {
     href: "/app/ai/usage",
@@ -441,7 +462,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     icon: PlugsConnected,
     group: "canais",
     minRole: "admin",
-    sidebar: true,
     healthDot: true,
   },
   {
@@ -454,7 +474,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     // A página não filtra por papel, mas as Server Actions de conectar e
     // desconectar exigem admin — mostrar a um viewer seria oferecer botão morto.
     minRole: "admin",
-    sidebar: true,
   },
   {
     href: "/app/webhooks",
@@ -463,7 +482,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     icon: WebhooksLogo,
     group: "canais",
     minRole: "manager",
-    sidebar: true,
   },
 
   // ---- Análise — olhar o sistema funcionando ----
@@ -473,7 +491,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     description: "Funil e performance por atendente nos últimos 30 dias.",
     icon: ChartBar,
     group: "analise",
-    sidebar: true,
   },
   {
     // Observabilidade, não configuração: por isso não fica junto dos agentes.
@@ -483,7 +500,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     icon: ChartLineUp,
     group: "analise",
     minRole: "manager",
-    sidebar: true,
   },
   {
     href: "/app/audit",
@@ -492,7 +508,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     icon: ClockCounterClockwise,
     group: "analise",
     minRole: "manager",
-    sidebar: true,
   },
 
   // ---- Organização — conta, empresa, acesso ----
@@ -560,9 +575,6 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     // identidade da empresa, e dá-lo a `manager` o colocaria abaixo de billing e
     // de API tokens na mesma prancheta.
     minRole: "admin",
-    // SEM `sidebar`: fica só no hub. Trocar a marca é tarefa de uma vez, e
-    // agrupar o menu já o fez crescer — duas telas a mais estouraram a dobra em
-    // 900px, medido pelo e2e `navegacao.spec.ts`.
   },
   {
     href: "/app/settings/billing",
@@ -606,22 +618,59 @@ export function canSee(d: NavDestination, isPlatformAdmin: boolean, role: Role |
   return ROLE_RANK[role] >= ROLE_RANK[d.minRole ?? "viewer"];
 }
 
-/** Projeção do sidebar: só o uso diário, agrupado, sem grupo vazio. */
-export function sidebarGroups(
-  isPlatformAdmin: boolean,
-  role: Role | null,
-): Array<{ group: NavGroup; items: NavDestination[] }> {
-  return NAV_GROUPS.map((group) => ({
-    group,
-    items: NAV_DESTINATIONS.filter(
-      (d) => d.group === group.id && d.sidebar && canSee(d, isPlatformAdmin, role),
-    ),
-  })).filter((g) => g.items.length > 0);
+/** Uma aba da barra superior — destino ou hub, a barra não distingue. */
+export interface AbaPrincipal {
+  href: string;
+  label: string;
+  icon: PhosphorIcon;
+  healthDot?: boolean;
 }
 
 /**
- * Projeção do hub: TODAS as telas do grupo — inclusive as que já estão no
- * sidebar. O hub é inventário, não sobra; é onde se descobre o que existe.
+ * Projeção da BARRA SUPERIOR: as abas de uso diário, na posição declarada.
+ *
+ * Um hub entra quando declara `aba` E quando o papel enxerga ao menos uma tela
+ * do grupo — uma aba que abre um hub vazio é um link para uma página em
+ * branco, que é o mesmo defeito do "cabeçalho órfão" do menu antigo.
+ */
+export function abasPrincipais(isPlatformAdmin: boolean, role: Role | null): AbaPrincipal[] {
+  const abas: Array<AbaPrincipal & { posicao: number }> = [];
+  for (const d of NAV_DESTINATIONS) {
+    if (d.principal === undefined || !canSee(d, isPlatformAdmin, role)) continue;
+    abas.push({ href: d.href, label: d.label, icon: d.icon, healthDot: d.healthDot, posicao: d.principal });
+  }
+  for (const g of NAV_GROUPS) {
+    const aba = g.hub?.aba;
+    if (!aba) continue;
+    const veAlguma = NAV_DESTINATIONS.some((d) => d.group === g.id && canSee(d, isPlatformAdmin, role));
+    if (!veAlguma) continue;
+    abas.push({ href: g.hub!.href, label: aba.label, icon: aba.icon, posicao: aba.posicao });
+  }
+  return abas
+    .sort((a, b) => a.posicao - b.posicao)
+    .map(({ posicao: _posicao, ...aba }) => aba);
+}
+
+/**
+ * Projeção de CONFIGURAÇÕES: TODOS os grupos, cada um com suas seções — o
+ * inventário inteiro do produto numa tela só. É a porta de tudo que não é aba.
+ *
+ * Grupo sem seção (Atendimento, CRM, Canais, Análise) vira uma seção única sem
+ * título, e grupo que a permissão esvaziou não aparece — nem o título.
+ */
+export function inventario(
+  isPlatformAdmin: boolean,
+  role: Role | null,
+): Array<{ group: NavGroup; sections: Array<{ section: string; items: NavDestination[] }> }> {
+  return NAV_GROUPS.map((group) => ({
+    group,
+    sections: hubSections(group.id, isPlatformAdmin, role),
+  })).filter((g) => g.sections.length > 0);
+}
+
+/**
+ * Projeção do hub: TODAS as telas do grupo — inclusive as que já são aba da
+ * barra. O hub é inventário, não sobra; é onde se descobre o que existe.
  *
  * A ordem das seções é a de primeira aparição no registro, então reordenar a
  * jornada é reordenar o array — não há uma segunda lista para manter em sincronia.
@@ -642,7 +691,7 @@ export function hubSections(
   return [...porSecao.entries()].map(([section, items]) => ({ section, items }));
 }
 
-/** Projeção do ⌘K: todo destino visível, do sidebar ou não. */
+/** Projeção do ⌘K: todo destino visível, aba ou não. */
 export function searchable(isPlatformAdmin: boolean, role: Role | null): NavDestination[] {
   return NAV_DESTINATIONS.filter((d) => canSee(d, isPlatformAdmin, role));
 }
