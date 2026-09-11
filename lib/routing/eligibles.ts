@@ -15,11 +15,22 @@ import { isAttendantEligible, OPEN_LOAD_STATUSES } from "./eligibility";
 import type { RoutingCandidate } from "./decide";
 import { availabilityScheduleSchema } from "@/lib/schemas/routing";
 
-/** Elegíveis = disponíveis ∧ dentro do horário ∧ com folga (carga < capacidade). */
+export interface EligibleOptions {
+  /**
+   * O setor da conversa. Com setor E o setor tem membros, só os membros são
+   * elegíveis — o rodízio é DENTRO do setor. Sem setor (ou setor vazio), todos,
+   * como sempre foi: um setor sem ninguém não pode virar uma fila que ninguém
+   * atende.
+   */
+  sectorId?: string | null;
+}
+
+/** Elegíveis = disponíveis ∧ dentro do horário ∧ com folga (carga < capacidade) ∧ do setor. */
 export async function loadEligibleAttendants(
   supabase: SupabaseClient,
   organizationId: string,
   now: Date,
+  opts: EligibleOptions = {},
 ): Promise<RoutingCandidate[]> {
   const { data: avail } = await supabase
     .from("attendant_availability")
@@ -27,8 +38,19 @@ export async function loadEligibleAttendants(
     .eq("organization_id", organizationId)
     .eq("is_available", true);
 
-  const rows = (avail ?? []) as Array<{ user_id: string; capacity: number; schedule: unknown }>;
+  let rows = (avail ?? []) as Array<{ user_id: string; capacity: number; schedule: unknown }>;
   if (rows.length === 0) return [];
+
+  if (opts.sectorId) {
+    const { data: membros } = await supabase
+      .from("sector_members")
+      .select("user_id")
+      .eq("organization_id", organizationId)
+      .eq("sector_id", opts.sectorId);
+    const doSetor = new Set(((membros ?? []) as Array<{ user_id: string }>).map((m) => m.user_id));
+    if (doSetor.size > 0) rows = rows.filter((r) => doSetor.has(r.user_id));
+    if (rows.length === 0) return [];
+  }
 
   const userIds = rows.map((r) => r.user_id);
 

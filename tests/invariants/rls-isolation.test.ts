@@ -193,6 +193,22 @@ beforeAll(() => {
             values (v_org, 'RLS-' || v_org::text, 'Produto de invariante', 100);
         end if;
 
+        -- sectors / sector_members (migration 0213): o setor e quem está nele.
+        -- Leitura é org-scoped sem gate de papel (o agent precisa da lista para
+        -- filtrar o inbox); a escrita é manager+, medida em
+        -- tests/invariants/setores-visibilidade.test.ts.
+        if not exists (select 1 from public.sectors where organization_id = v_org) then
+          insert into public.sectors (organization_id, name, position)
+            values (v_org, 'Setor de invariante', 0);
+        end if;
+        if not exists (select 1 from public.sector_members where organization_id = v_org) then
+          insert into public.sector_members (sector_id, user_id, organization_id)
+            select s.id,
+                   case when v_org = '${ORG_A}'::uuid then '${USER_A}'::uuid else '${USER_B}'::uuid end,
+                   v_org
+              from public.sectors s where s.organization_id = v_org limit 1;
+        end if;
+
         if not exists (select 1 from public.push_subscriptions where organization_id = v_org) then
           insert into public.push_subscriptions
             (organization_id, user_id, endpoint, p256dh, auth)
@@ -247,6 +263,12 @@ export const TABLES = [
   // exige `manager` — esse segundo eixo é medido em
   // `tests/invariants/catalogo-so-gestor-muda-preco.test.ts`, não aqui.
   "catalog_products",
+  // migration 0213 — setores e membros. A regra de VISIBILIDADE por setor (o
+  // agent do setor A não vê a conversa do setor B) é outro eixo, medido em
+  // `tests/invariants/setores-visibilidade.test.ts`; aqui é só o isolamento
+  // entre organizações.
+  "sectors",
+  "sector_members",
   // ⚠️ `webhook_lead_captures` (migration 0174) NÃO entra nesta lista, e a
   // ausência é deliberada: a policy dela exige `manager`, e o usuário semeado
   // aqui é `agent` — o controle positivo falharia por ACERTO, e a "correção"

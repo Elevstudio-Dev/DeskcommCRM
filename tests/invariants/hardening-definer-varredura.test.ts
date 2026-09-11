@@ -80,6 +80,14 @@ const AUTHENTICATED_PERMITIDO: readonly Excecao[] = [
       "membership e papel.",
   },
   {
+    fn: "fn_conversation_set_sector(uuid,uuid,uuid,text)",
+    razao:
+      "A rota de transferência para setor chama com a sessão do usuário " +
+      "(app/api/v1/conversations/[id]/sector). Mesmo molde de " +
+      "fn_conversation_assign: checa membership agent+ da org, valida o setor " +
+      "e o motivo, e grava o evento na mesma transação (migration 0213).",
+  },
+  {
     fn: "fn_log_event(uuid,text,jsonb)",
     razao:
       "Chamada de dentro dos triggers de domínio; o grant a authenticated foi " +

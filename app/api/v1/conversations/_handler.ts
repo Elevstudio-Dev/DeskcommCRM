@@ -19,7 +19,7 @@ type SB = SupabaseClient;
 
 const SELECT_COLS = `
   id, organization_id, contact_id, channel_session_id, channel, status,
-  status_changed_at, assigned_to_user_id, assigned_to_user_name, assignee_kind, assigned_at, last_inbound_at,
+  status_changed_at, assigned_to_user_id, assigned_to_user_name, assignee_kind, assigned_at, sector_id, last_inbound_at,
   last_outbound_at, last_message_at, last_message_preview,
   unread_count_for_assignee, is_group, group_chat_id, tags, metadata,
   snooze_until, created_at, updated_at,
@@ -130,6 +130,10 @@ export async function listConversationsHandler(
   // meio, sem erro nenhum na tela.
   if (q.is_group !== undefined) query = query.eq("is_group", q.is_group);
   if (q.tag) query = query.contains("tags", [q.tag]); // tags @> array[tag] (GIN)
+  // "sem" = as que ainda não têm setor (a fila antes do menu responder, ou a
+  // organização que não usa setores). Um uuid = as daquele setor.
+  if (q.sector_id === "sem") query = query.is("sector_id", null);
+  else if (q.sector_id) query = query.eq("sector_id", q.sector_id);
 
   if (q.assigned_to === "me") {
     if (ctx.actor.type !== "user") {

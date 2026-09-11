@@ -9,6 +9,7 @@ import { Phone, Robot } from "@/lib/ui/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { OwnerBadge } from "@/components/kanban/OwnerBadge";
+import { ChipDeSetor } from "@/components/setores/ChipDeSetor";
 import { comandoDaConversa } from "@/lib/inbox/comando-da-conversa";
 import { cn } from "@/lib/utils";
 import type { ConversationWithContact } from "@/hooks/inbox/useConversationsRealtime";
@@ -234,6 +235,9 @@ export function ConversationListItem({
               {waitingLabel(conversation, t, localeDaData)}
             </span>
           )}
+          {/* O setor vem ANTES das tags: é a fila em que a conversa está, e
+              a pergunta "isso é com quem?" vem antes de "isso é sobre o quê?". */}
+          <ChipDeSetor sectorId={conversation.sector_id} compacto />
           {visibleTags.map((t) => (
             <Badge key={t} variant="secondary" className="h-4 px-1.5 text-[10px]">
               {t}

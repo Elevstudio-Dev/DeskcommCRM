@@ -67,7 +67,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams): Promise<R
 
   const { data, error } = await supabase
     .from("conversation_assignment_events")
-    .select("id, reason, from_user_id, to_user_id, changed_by, created_at")
+    .select("id, reason, from_user_id, to_user_id, changed_by, created_at, from_sector_id, to_sector_id")
     .eq("conversation_id", id)
     .eq("organization_id", org.orgId)
     .order("created_at", { ascending: true });
@@ -82,7 +82,22 @@ export async function GET(_req: NextRequest, { params }: RouteParams): Promise<R
     to_user_id: string | null;
     changed_by: string | null;
     created_at: string;
+    from_sector_id: string | null;
+    to_sector_id: string | null;
   }>;
+
+  // Os nomes dos setores citados — inclusive arquivados: o fio conta história,
+  // e "transferida para ?" não é história.
+  const idsDeSetor = [...new Set(eventos.flatMap((e) => [e.from_sector_id, e.to_sector_id]).filter((x): x is string => !!x))];
+  const nomesDeSetor = new Map<string, string>();
+  if (idsDeSetor.length > 0) {
+    const { data: setores } = await supabase
+      .from("sectors")
+      .select("id, name")
+      .eq("organization_id", org.orgId)
+      .in("id", idsDeSetor);
+    for (const s of (setores ?? []) as Array<{ id: string; name: string }>) nomesDeSetor.set(s.id, s.name);
+  }
 
   const nomes = await nomesDosAtendentes(
     eventos.flatMap((e) => [e.to_user_id, e.from_user_id, e.changed_by]),
@@ -111,6 +126,10 @@ export async function GET(_req: NextRequest, { params }: RouteParams): Promise<R
       to_user_name: nomeDe(e.to_user_id),
       from_user_name: nomeDe(e.from_user_id),
       changed_by_name: nomeDe(e.changed_by),
+      from_sector_id: e.from_sector_id,
+      to_sector_id: e.to_sector_id,
+      from_sector_name: e.from_sector_id ? (nomesDeSetor.get(e.from_sector_id) ?? null) : null,
+      to_sector_name: e.to_sector_id ? (nomesDeSetor.get(e.to_sector_id) ?? null) : null,
     })),
     { requestId },
   );

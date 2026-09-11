@@ -25,6 +25,8 @@ const DEFAULT_BATCH_SIZE = 100;
 
 export type RoutingOutcome =
   | "assigned"
+  /** O menu de setores ainda aguarda o cliente: o rodízio é o do setor, depois. */
+  | "skipped_awaiting_sector"
   | "skipped_manual"
   | "skipped_already_assigned"
   | "skipped_unsupported_mode"
@@ -52,6 +54,7 @@ interface EventRow {
 
 const EMPTY_OUTCOMES = (): Record<RoutingOutcome, number> => ({
   assigned: 0,
+  skipped_awaiting_sector: 0,
   skipped_manual: 0,
   skipped_already_assigned: 0,
   skipped_unsupported_mode: 0,
@@ -129,7 +132,7 @@ async function processEvent(event: EventRow, now: Date): Promise<RoutingOutcome>
 
   const { data: conv } = await admin
     .from("conversations")
-    .select("id, organization_id, contact_id, assigned_to_user_id, status")
+    .select("id, organization_id, contact_id, assigned_to_user_id, status, sector_id, metadata")
     .eq("id", conversationId)
     .eq("organization_id", orgId)
     .maybeSingle();
@@ -149,9 +152,21 @@ async function processEvent(event: EventRow, now: Date): Promise<RoutingOutcome>
   const config = routingConfigSchema.parse(settings.routing ?? {});
 
   const alreadyAssigned = Boolean(conv.assigned_to_user_id);
+
+  // O MENU DE SETORES ESTÁ NO AR: a conversa nasceu, o gatilho emitiu este
+  // evento, e o menu perguntou ao cliente qual setor. Atribuir alguém agora
+  // seria escolher o setor pela pessoa — e o rodízio certo é o de DENTRO do
+  // setor, que `lib/setores/aplicar-menu.ts` acorda com um evento novo quando
+  // o cliente responde. Este evento morre aqui, de propósito.
+  if (menuAguardando((conv as { metadata?: unknown }).metadata)) {
+    await markDone(event, "skipped_awaiting_sector");
+    return "skipped_awaiting_sector";
+  }
+
+  const sectorId = ((conv as { sector_id?: string | null }).sector_id ?? null) as string | null;
   const eligibles =
     !alreadyAssigned && config.mode === "round_robin"
-      ? await loadEligibleAttendants(createAdminClient(), orgId, now)
+      ? await loadEligibleAttendants(createAdminClient(), orgId, now, { sectorId })
       : [];
 
   const action = decideRouting({
@@ -371,4 +386,11 @@ export async function adotarLeadsDoContato(
     });
     return 0;
   }
+}
+
+/** `conversations.metadata.menu_setores.estado === "aguardando"` — ver `lib/setores/menu.ts`. */
+function menuAguardando(metadata: unknown): boolean {
+  if (!metadata || typeof metadata !== "object") return false;
+  const menu = (metadata as { menu_setores?: { estado?: unknown } }).menu_setores;
+  return !!menu && typeof menu === "object" && menu.estado === "aguardando";
 }

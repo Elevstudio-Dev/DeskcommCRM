@@ -17,6 +17,8 @@ export {
   Kanban,
   Users,
   UsersThree,
+  // Setores: quatro quadrados, os grupos que atendem junto.
+  SquaresFour,
   Storefront,
   Robot,
   Sparkle,

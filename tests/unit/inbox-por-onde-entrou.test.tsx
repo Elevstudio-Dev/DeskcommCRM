@@ -1,7 +1,15 @@
 import { readFileSync } from "node:fs";
 
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// Setores (migration 0213): a lista lê o mapa de setores do cache do
+// react-query, e este teste renderiza sem QueryClientProvider. Sem setor
+// nenhum, o chip não aparece — que é o caso deste arquivo.
+vi.mock("@/hooks/setores/useSetores", () => ({
+  useSetores: () => ({ data: [], isLoading: false }),
+  useMapaDeSetores: () => new Map(),
+}));
 
 /**
  * POR ONDE a conversa entrou, na lista do inbox.

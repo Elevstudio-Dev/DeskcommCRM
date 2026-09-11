@@ -418,6 +418,16 @@ export const AUDIT_ACTIONS = [
   "catalog_product.updated",
   "catalog_product.deleted",
   "catalog_product.imported",
+
+  // Setores (migration 0213): quem criou, quem arquivou, quem pôs quem em
+  // qual setor — e a conversa que mudou de setor, que é o que decide quem a
+  // vê. O menu de primeiro contato é configuração da organização.
+  "sector.created",
+  "sector.updated",
+  "sector.archived",
+  "sector.members_changed",
+  "conversation.sector_changed",
+  "sectors.menu_config_changed",
 ] as const;
 
 /** Um código de auditoria. Derivado de `AUDIT_ACTIONS` — não redigite a lista. */

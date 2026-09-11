@@ -45,6 +45,12 @@ const EMISSAO = /p_event_type:\s*"([a-z0-9_.]+)"/g;
  * mas eles existem e o arquivo está nomeado para poder ser conferido.
  */
 const CONSUMIDORES_FORA_DO_REGISTRY: Record<string, string> = {
+  "conversation.routing_requested":
+    "lib/routing/worker.ts — o worker de rodízio (cron `/api/v1/cron/routing-worker`) " +
+    "drena direto do event_log por `event_type`, fora do registry. Até a migration " +
+    "0213 só o gatilho de INSERT em `conversations` o emitia (fora da varredura " +
+    "deste teste); o menu de setores e a transferência para setor passaram a " +
+    "emiti-lo do TypeScript para acordar o rodízio DENTRO do setor.",
   "ai_agent.dispatch_requested":
     "lib/agent-engine/edge/crm/drain.ts — o agent-engine roda em processo próprio " +
     "(serviço `worker` do docker-compose.prod.yml) e drena direto do event_log. " +

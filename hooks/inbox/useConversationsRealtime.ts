@@ -94,6 +94,8 @@ export interface ConversationsFilters {
    * dono: grupo nao se mistura com cliente esperando resposta).
    */
   is_group?: boolean;
+  /** Um setor (uuid) ou `"sem"` (sem setor). Ausente = todas. */
+  sector_id?: string;
 }
 
 interface ListResponse {
@@ -134,6 +136,7 @@ export function useConversationsRealtime(
       // manda, e um `if (filters.is_group)` o engoliria em silencio — a lista
       // voltaria com os grupos no meio da Fila e nada apontaria para aqui.
       if (filters.is_group !== undefined) qs.set("is_group", String(filters.is_group));
+      if (filters.sector_id) qs.set("sector_id", filters.sector_id);
       if (pageParam) qs.set("cursor", pageParam);
       qs.set("limit", "50");
       try {

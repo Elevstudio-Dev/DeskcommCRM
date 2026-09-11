@@ -6,7 +6,7 @@ import { useUser } from "@/hooks/auth/AuthProvider";
 import { useLocaleDeData } from "@/hooks/i18n/useLocaleDeData";
 import { useT } from "@/hooks/i18n/useT";
 import type { AssignmentEvent } from "@/hooks/inbox/useConversationAssignmentEvents";
-import { ArrowRight, Robot, UserCircle } from "@/lib/ui/icons";
+import { ArrowRight, Robot, Signpost, UserCircle } from "@/lib/ui/icons";
 
 interface Props {
   evento: AssignmentEvent;
@@ -65,9 +65,10 @@ export function EventoDeResponsavel({ evento }: Props) {
  * O texto de cada motivo.
  *
  * `reason` vem da constraint da tabela (`claim | transfer | release | routing |
- * handoff`) — os cinco estão cobertos, e o `default` devolve `null` em vez de um
- * texto genérico: motivo novo que ninguém traduziu deve SUMIR, não aparecer como
- * "conversa atualizada", que é ruído com aparência de informação.
+ * handoff | sector_menu | sector_transfer`) — os sete estão cobertos, e o
+ * `default` devolve `null` em vez de um texto genérico: motivo novo que ninguém
+ * traduziu deve SUMIR, não aparecer como "conversa atualizada", que é ruído com
+ * aparência de informação.
  */
 function descrever(
   e: AssignmentEvent,
@@ -136,6 +137,30 @@ function descrever(
           : t("O automático passou para uma pessoa"),
         icone: <Robot size={12} weight="duotone" aria-hidden />,
       };
+    case "sector_menu":
+      // O CLIENTE escolheu no menu de primeiro contato. Sem o nome do setor
+      // (apagado? cache antigo?) a linha não diz nada — `null`.
+      return e.to_sector_name
+        ? {
+            texto: `${t("O cliente escolheu o setor")} ${e.to_sector_name}`,
+            icone: <Signpost size={12} weight="fill" aria-hidden />,
+          }
+        : null;
+    case "sector_transfer": {
+      const quem = nomeDe(e.changed_by, e.changed_by_name);
+      if (!e.to_sector_name) {
+        return {
+          texto: quem ? `${quem} ${t("tirou a conversa do setor")}` : t("A conversa saiu do setor"),
+          icone: <Signpost size={12} weight="regular" aria-hidden />,
+        };
+      }
+      return {
+        texto: quem
+          ? `${quem} ${t("transferiu para o setor")} ${e.to_sector_name}`
+          : `${t("Transferida para o setor")} ${e.to_sector_name}`,
+        icone: <Signpost size={12} weight="fill" aria-hidden />,
+      };
+    }
     default:
       return null;
   }

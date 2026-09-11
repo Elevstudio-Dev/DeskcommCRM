@@ -19,7 +19,10 @@ import { showApiError } from "@/components/feedback/ApiErrorToast";
  */
 export interface AssignmentEvent {
   id: string;
-  /** `claim` | `transfer` | `release` | `routing` | `handoff` (constraint da tabela). */
+  /**
+   * `claim` | `transfer` | `release` | `routing` | `handoff` | `sector_menu` |
+   * `sector_transfer` (constraint da tabela, migration 0213).
+   */
   reason: string;
   created_at: string;
   to_user_id: string | null;
@@ -29,6 +32,11 @@ export interface AssignmentEvent {
   to_user_name: string | null;
   from_user_name: string | null;
   changed_by_name: string | null;
+  /** Os setores de uma transferência de setor (migration 0213). Ausentes em resposta antiga em cache. */
+  from_sector_id?: string | null;
+  to_sector_id?: string | null;
+  from_sector_name?: string | null;
+  to_sector_name?: string | null;
 }
 
 export function useConversationAssignmentEvents(conversationId: string | null) {

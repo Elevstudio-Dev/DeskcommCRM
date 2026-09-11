@@ -22,6 +22,7 @@ import {
 import { channelLabel, useChannelSessions } from "@/hooks/channels/useChannelSessions";
 import { useAuth } from "@/hooks/auth/AuthProvider";
 import { useConversationTagVocabulary } from "@/hooks/inbox/useConversationTags";
+import { useSetores } from "@/hooks/setores/useSetores";
 import { useConversationCounts } from "@/hooks/inbox/useConversationCounts";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -67,6 +68,8 @@ export interface InboxFiltersValue {
   onlyUnread: boolean;
   channel_session_id?: string;
   tag?: string;
+  /** Um setor (uuid) ou `"sem"`. Só aparece quando a organização tem setores. */
+  sector_id?: string;
 }
 
 interface Props {
@@ -167,6 +170,7 @@ export function InboxFilters({ value, onChange }: Props) {
   const t = useT();
   const [searchInput, setSearchInput] = useState(value.search);
   const { data: channels } = useChannelSessions({ refetchInterval: 30_000 });
+  const { data: setores } = useSetores();
   const { activeOrg } = useAuth();
   const { data: tagVocabulary } = useConversationTagVocabulary(activeOrg?.orgId ?? null);
   const { data: counts } = useConversationCounts(activeOrg?.orgId ?? null);
@@ -248,6 +252,29 @@ export function InboxFilters({ value, onChange }: Props) {
                 {channelLabel(c)}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {(setores?.length ?? 0) > 0 && (
+        <Select
+          value={value.sector_id ?? "all"}
+          onValueChange={(v) => onChange({ ...value, sector_id: v === "all" ? undefined : v })}
+        >
+          <SelectTrigger className="h-8 text-sm" aria-label={t("Filtrar por setor")}>
+            <SelectValue placeholder={t("Todos os setores")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("Todos os setores")}</SelectItem>
+            {setores?.map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                <span className="flex items-center gap-2">
+                  <span className={cn("size-2 shrink-0 rounded-full", CLASSE_DE_COR[s.color]?.ponto)} aria-hidden />
+                  {s.name}
+                </span>
+              </SelectItem>
+            ))}
+            <SelectItem value="sem">{t("Sem setor")}</SelectItem>
           </SelectContent>
         </Select>
       )}

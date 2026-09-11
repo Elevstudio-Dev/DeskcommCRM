@@ -28,6 +28,9 @@ import { useAutomaticoAtivo } from "@/hooks/ai/useAutomaticoAtivo";
 import { OwnerBadge } from "@/components/kanban/OwnerBadge";
 import { comandoDaConversa, ROTULO_DO_MOTIVO } from "@/lib/inbox/comando-da-conversa";
 import { ReassignDialog } from "@/components/inbox/ReassignDialog";
+import { ChipDeSetor } from "@/components/setores/ChipDeSetor";
+import { TransferirParaSetorDialog } from "@/components/setores/TransferirParaSetorDialog";
+import { useSetores } from "@/hooks/setores/useSetores";
 import { ItensDeLembrete, rotuloDeLembrete } from "@/components/inbox/SnoozeButton";
 import type { ConversationWithContact } from "@/hooks/inbox/useConversationsRealtime";
 import { rotuloDoContato } from "@/lib/contacts/rotulo-do-contato";
@@ -90,6 +93,10 @@ export function ConversationHeader({ conversation }: Props) {
   // atendendo em instalação que nunca configurou agente nenhum.
   const automaticoDaOrg = useAutomaticoAtivo();
   const [reassignOpen, setReassignOpen] = useState(false);
+  const [setorOpen, setSetorOpen] = useState(false);
+  // O item "Transferir para setor…" só existe quando a organização tem setor.
+  const { data: setoresDaOrg } = useSetores();
+  const temSetores = (setoresDaOrg?.length ?? 0) > 0;
 
   const c = conversation.contacts ?? null;
   const displayName = rotuloDoContato(c);
@@ -288,6 +295,7 @@ export function ConversationHeader({ conversation }: Props) {
             por texto, faria a mesma pergunta ter três respostas diferentes na
             mesma tela. Cor não sobrevive ao daltonismo nem ao teste do metro. */}
         <div className="mt-1 flex items-center gap-2" data-testid="comando-da-conversa">
+          <ChipDeSetor sectorId={conversation.sector_id} />
           {comando.quem === "humano" ? (
             <OwnerBadge ownerKind="user" ownerName={comando.nome ?? t("Atendente")} />
           ) : comando.quem === "automatico" ? (
@@ -389,6 +397,11 @@ export function ConversationHeader({ conversation }: Props) {
                   {t("Transferir")}
                 </DropdownMenuItem>
               )}
+              {estaViva && temSetores && (
+                <DropdownMenuItem data-testid="transferir-para-setor" onClick={() => setSetorOpen(true)}>
+                  {t("Transferir para setor…")}
+                </DropdownMenuItem>
+              )}
               {estaViva && (
                 // SUBMENU, e não item que abre outro menu: o lembrete tem três
                 // durações, e empurrá-las para o nível de cima faria "Opções"
@@ -447,6 +460,12 @@ export function ConversationHeader({ conversation }: Props) {
         conversationId={conversation.id}
         open={reassignOpen}
         onOpenChange={setReassignOpen}
+      />
+      <TransferirParaSetorDialog
+        conversationId={conversation.id}
+        setorAtualId={conversation.sector_id ?? null}
+        open={setorOpen}
+        onOpenChange={setSetorOpen}
       />
     </div>
   );

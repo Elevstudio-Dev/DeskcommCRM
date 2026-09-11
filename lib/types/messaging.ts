@@ -21,6 +21,11 @@ export interface Conversation {
   assigned_to_user_name: string | null;
   assignee_kind: string | null;
   assigned_at: string | null;
+  /**
+   * O SETOR da conversa (migration 0213). `null` até o menu de primeiro
+   * contato ou a equipe decidir. Quem escreve é só `fn_conversation_set_sector`.
+   */
+  sector_id: string | null;
   last_inbound_at: string | null;
   last_outbound_at: string | null;
   last_message_at: string | null;

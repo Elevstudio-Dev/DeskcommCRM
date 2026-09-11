@@ -32,6 +32,7 @@ import {
   ScalesSimple,
   ShieldCheck,
   Signpost,
+  SquaresFour,
   Storefront,
   UserCircle,
   Tag,
@@ -551,6 +552,19 @@ export const NAV_DESTINATIONS: NavDestination[] = [
     label: "Distribuição de atendimento",
     description: "Quem recebe cada cliente novo, e o que cada atendente enxerga.",
     icon: UsersThree,
+    group: "organizacao",
+    section: "Sua empresa",
+    minRole: "manager",
+  },
+  {
+    // Pedido do dono (2026-09-11): "em vez de atendente, ter setores". O setor
+    // é a fila; quem está nele vê a fila dele. O menu de primeiro contato mora
+    // na mesma tela porque é a outra metade da mesma pergunta — "isso é com
+    // quem?" — respondida pelo cliente em vez de pela equipe.
+    href: "/app/settings/tenant/setores",
+    label: "Setores",
+    description: "Os grupos que atendem junto, quem está em cada um, e o menu que pergunta ao cliente com quem ele quer falar.",
+    icon: SquaresFour,
     group: "organizacao",
     section: "Sua empresa",
     minRole: "manager",

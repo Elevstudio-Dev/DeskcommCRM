@@ -33,11 +33,12 @@ const FONTE = readFileSync(
 );
 
 /**
- * Os cinco valores que a constraint da tabela permite hoje. Escritos à mão de
- * propósito: é a cópia do CONTRATO DO BANCO, e o caso existe para reprovar
- * quando o banco ganhar um sexto e a tela não souber dele.
+ * Os sete valores que a constraint da tabela permite hoje (os dois últimos
+ * desde a migration 0213, os setores). Escritos à mão de propósito: é a cópia
+ * do CONTRATO DO BANCO, e o caso existe para reprovar quando o banco ganhar um
+ * oitavo e a tela não souber dele.
  */
-const MOTIVOS = ["claim", "transfer", "release", "routing", "handoff"];
+const MOTIVOS = ["claim", "transfer", "release", "routing", "handoff", "sector_menu", "sector_transfer"];
 
 describe("o aviso de quem assumiu", () => {
   it("todo motivo que o banco permite tem tratamento na tela", () => {

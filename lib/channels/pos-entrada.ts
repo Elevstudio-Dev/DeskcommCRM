@@ -24,6 +24,11 @@
  *   2. lead     — `garantirLeadDaConversa` RELÊ o contato e recusa criar card
  *                 para bloqueado. Inverter 1 e 2 faz quem acabou de pedir para
  *                 sair virar oportunidade nova no funil;
+ *   2b. menu de setores — no PRIMEIRO contato, se a organização tem setores e
+ *                 o menu ligado, o sistema pergunta o setor antes de qualquer
+ *                 atendimento. Enquanto o menu está no ar (a pergunta, a
+ *                 resposta, o lembrete), o passo 3 NÃO roda: "2" não é uma
+ *                 pergunta para a IA responder. Ver `lib/setores/menu.ts`.
  *   3. despacho — o turno do agente resolve o lead ativo do contato. Emitir
  *                 antes do passo 2 faria o primeiro turno rodar sem lead.
  *
@@ -46,6 +51,7 @@ import { ehPedidoDeOptOut } from "@/lib/opt-out/deteccao";
 import { acelerarPipelineDeEventos } from "@/lib/dev/kick-local-pipeline";
 import { autorizarContatoParaIA } from "@/lib/ai/elegibilidade/autorizacao";
 import { casarCampanha, lerCampanhas } from "@/lib/ai/elegibilidade/campanha";
+import { aplicarMenuDeSetores } from "@/lib/setores/aplicar-menu";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
@@ -117,6 +123,12 @@ export async function aplicarEfeitosPosEntrada(
 ): Promise<void> {
   await aplicarOptOut(admin, entrada);
   await abrirDemanda(admin, entrada);
+  const menu = await aplicarMenuDeSetores(admin, {
+    organizationId: entrada.organizationId,
+    conversationId: entrada.conversationId,
+    texto: entrada.texto,
+    requestId: entrada.requestId,
+  });
   await avaliarCampanha(admin, entrada);
   // A resposta do lead avança o follow-up AQUI. O despacho do agente (LLM)
   // vem depois: no Hobby ele estoura o tempo da request e o próximo texto
@@ -127,6 +139,14 @@ export async function aplicarEfeitosPosEntrada(
     messageId: entrada.messageId,
     texto: entrada.texto,
   });
+  if (menu.segurarAgente) {
+    logger.info("pos-entrada: agente não acordado — a mensagem é do menu de setores", {
+      organization_id: entrada.organizationId,
+      conversation_id: entrada.conversationId,
+      decisao: menu.decisao,
+    });
+    return;
+  }
   await pedirDespachoDoAgente(admin, entrada);
 }
 
