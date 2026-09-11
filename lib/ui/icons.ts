@@ -46,6 +46,9 @@ export {
   BellSlash,
   PaperPlaneTilt,
   Smiley,
+  // O raio é o que o WhatsApp Business usa para "resposta rápida" — quem vem
+  // de lá reconhece sem ler.
+  Lightning,
   Check,
   Checks,
   X,

@@ -1,19 +1,19 @@
 /**
- * Interpola variáveis de template com dados do contato da conversa (Onda 5).
- * Suporta {{nome}} e {{primeiro_nome}}. Variável sem valor ou desconhecida
- * mantém o literal `{{x}}` — nunca gera texto quebrado que iria pro cliente.
+ * Interpola `{{nome}}` e `{{primeiro_nome}}` com o contato da conversa (Onda 5).
+ *
+ * ⚠️ CASCA de compatibilidade. A regra mudou de casa em 2026-09-11:
+ * `lib/inbox/parametros-de-mensagem.ts` conhece também `{{atendente}}` e trata
+ * qualquer outra chave como PARÂMETRO LIVRE, a preencher numa janelinha antes
+ * de usar. Esta função continua fazendo o que sempre fez — o que não conhece,
+ * mantém literal — e existe para o teste antigo e para quem ainda a importa.
+ * Código novo usa `preencher` + `valoresAutomaticos` diretamente.
  */
+import { preencher, valoresAutomaticos } from "@/lib/inbox/parametros-de-mensagem";
+
 export interface TemplateContact {
   name?: string | null;
 }
 
 export function interpolateTemplate(body: string, contact: TemplateContact): string {
-  const full = (contact.name ?? "").trim();
-  const first = full.split(/\s+/)[0] ?? "";
-  return body.replace(/\{\{\s*([a-zA-Z_]+)\s*\}\}/g, (literal, rawKey: string) => {
-    const key = rawKey.toLowerCase();
-    if (key === "nome") return full !== "" ? full : literal;
-    if (key === "primeiro_nome") return first !== "" ? first : literal;
-    return literal; // desconhecida: mantém
-  });
+  return preencher(body, valoresAutomaticos({ contato: { nome: contact.name } }));
 }

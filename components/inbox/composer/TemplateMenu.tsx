@@ -14,11 +14,13 @@ interface Props {
   open: boolean;
   query: string;
   templates: MessageTemplate[];
+  /** A lista ainda não chegou: mostra "carregando" em vez de "nenhuma". */
+  carregando?: boolean;
   onPick: (t: MessageTemplate) => void;
   onClose: () => void;
 }
 
-export function TemplateMenu({ open, query, templates, onPick, onClose: _onClose }: Props) {
+export function TemplateMenu({ open, query, templates, carregando, onPick, onClose: _onClose }: Props) {
   const t = useT();
   if (!open) return null;
   const q = query.toLowerCase();
@@ -29,10 +31,14 @@ export function TemplateMenu({ open, query, templates, onPick, onClose: _onClose
     <div
       className="absolute bottom-14 left-3 z-20 max-h-64 w-80 overflow-y-auto rounded-lg border border-border bg-popover p-1 shadow-lg"
       role="listbox"
-      aria-label={t("Templates de script")}
+      aria-label={t("Mensagens prontas")}
     >
-      {filtered.length === 0 ? (
-        <div className="px-3 py-2 text-xs text-muted-foreground">{t("Nenhum template. Crie em Configurações.")}</div>
+      {carregando && filtered.length === 0 ? (
+        <div className="px-3 py-2 text-xs text-muted-foreground">{t("Carregando…")}</div>
+      ) : filtered.length === 0 ? (
+        <div className="px-3 py-2 text-xs text-muted-foreground">
+          {t("Nenhuma mensagem pronta. Crie em Configurações → Respostas rápidas.")}
+        </div>
       ) : (
         filtered.map((tpl) => (
           <button

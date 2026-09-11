@@ -120,7 +120,7 @@ interface InboxLayoutProps {
 
 export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {}) {
   const t = useT();
-  const { activeOrg } = useAuth();
+  const { activeOrg, user } = useAuth();
   const orgId = activeOrg?.orgId ?? null;
 
   const router = useRouter();
@@ -438,6 +438,7 @@ export function InboxLayout({ initialSelectedId = null }: InboxLayoutProps = {})
               janelaFechada={motivoDaJanela}
               disabled={selectedConversation.status === "closed"}
               contactName={selectedConversation.contacts?.name ?? null}
+              attendantName={user.full_name}
               respondendo={respondendo}
               onCancelarResposta={() => setRespondendo(null)}
               currentContactId={selectedConversation.contact_id}

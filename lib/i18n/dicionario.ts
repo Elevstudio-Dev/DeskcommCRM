@@ -4080,8 +4080,34 @@ export const DICIONARIO: Traducoes = {
   "Como aparece no cartão": { es: "Cómo aparece en la tarjeta" },
   "Sugerir resposta": { es: "Sugerir respuesta" },
   Emoji: { es: "Emoji" },
-  "Templates de script": { es: "Plantillas de guion" },
-  "Nenhum template. Crie em Configurações.": { es: "Ningún modelo. Crea uno en Configuración." },
+  "Nenhuma mensagem pronta. Crie em Configurações → Respostas rápidas.": {
+    es: "Ningún mensaje listo. Crea uno en Configuración → Respuestas rápidas.",
+  },
+
+  // ─── Mensagens prontas com parâmetros (composer + formulário) ───
+  "Mensagens prontas": { es: "Mensajes listos" },
+  "Preencha o que falta. Os campos já preenchidos vieram do cadastro e podem ser corrigidos.": {
+    es: "Completa lo que falta. Los campos ya completados vienen del registro y se pueden corregir.",
+  },
+  automático: { es: "automático" },
+  "Como vai sair": { es: "Cómo va a salir" },
+  "Usar mensagem": { es: "Usar mensaje" },
+  "Nome do cliente": { es: "Nombre del cliente" },
+  "Primeiro nome do cliente": { es: "Primer nombre del cliente" },
+  "Nome do atendente": { es: "Nombre del agente" },
+  "Parâmetros automáticos (chegam preenchidos):": { es: "Parámetros automáticos (llegan completados):" },
+  "Novo parâmetro": { es: "Nuevo parámetro" },
+  "novo parâmetro, ex.: numero_pedido": { es: "nuevo parámetro, p. ej.: numero_pedido" },
+  "Qualquer outro parâmetro vira um campo para preencher na hora de usar.": {
+    es: "Cualquier otro parámetro se convierte en un campo para completar al usarlo.",
+  },
+  "Esta mensagem pede:": { es: "Este mensaje pide:" },
+  Parâmetros: { es: "Parámetros" },
+  "Preenchido na hora de usar": { es: "Completado al usar" },
+  "Chega preenchido": { es: "Llega completado" },
+  "Oi {{primeiro_nome}}, aqui é {{atendente}}. Seu pedido {{numero_pedido}} saiu!": {
+    es: "Hola {{primeiro_nome}}, soy {{atendente}}. ¡Tu pedido {{numero_pedido}} ya salió!",
+  },
 
   // ─── Inbox: mídia (áudio, imagem, figurinha, vídeo, documento) ───
   "Mídia indisponível": { es: "Contenido no disponible" },

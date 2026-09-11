@@ -8,7 +8,7 @@ import {
   type ClipboardEvent,
   type KeyboardEvent,
 } from "react";
-import { PaperPlaneTilt } from "@/lib/ui/icons";
+import { Lightning, PaperPlaneTilt } from "@/lib/ui/icons";
 import { Button } from "@/components/ui/button";
 import { AttachMenu } from "@/components/inbox/composer/AttachMenu";
 import { AttachmentPreviewDialog } from "@/components/inbox/composer/AttachmentPreviewDialog";
@@ -16,6 +16,7 @@ import { ContactPickerDialog } from "@/components/inbox/composer/ContactPickerDi
 import { AudioRecorder } from "@/components/inbox/composer/AudioRecorder";
 import { DraftReplyButton } from "@/components/inbox/composer/DraftReplyButton";
 import { EmojiButton } from "@/components/inbox/composer/EmojiButton";
+import { PreencherParametrosDialog } from "@/components/inbox/composer/PreencherParametrosDialog";
 import { resolveSlash, TemplateMenu } from "@/components/inbox/composer/TemplateMenu";
 import { useCreateNote } from "@/hooks/inbox/useCreateNote";
 import { useMessageTemplates, type MessageTemplate } from "@/hooks/inbox/useMessageTemplates";
@@ -23,7 +24,12 @@ import { X } from "lucide-react";
 import { useSendMessage } from "@/hooks/inbox/useSendMessage";
 import { useUploadMedia } from "@/hooks/inbox/useUploadMedia";
 import { imagemDoClipboard } from "@/lib/inbox/clipboard-image";
-import { interpolateTemplate } from "@/lib/inbox/template-vars";
+import {
+  extrairParametros,
+  precisaDeJanela,
+  preencher,
+  valoresAutomaticos,
+} from "@/lib/inbox/parametros-de-mensagem";
 import { cn } from "@/lib/utils";
 
 export interface ComposerHandle {
@@ -54,8 +60,14 @@ interface Props {
   respondendo?: { id: string; body: string | null; direction: string } | null;
   /** Desfaz a escolha — o `x` da faixa de citação. */
   onCancelarResposta?: () => void;
-  /** Nome do contato da conversa, para interpolar {{nome}}/{{primeiro_nome}} do template escolhido. */
+  /** Nome do contato da conversa — preenche {{nome}}/{{primeiro_nome}} da mensagem pronta. */
   contactName?: string | null;
+  /**
+   * Nome de quem está atendendo — preenche {{atendente}}. Vem por prop, e não
+   * de `useUser()`, para o composer não depender do provedor de autenticação:
+   * ele é renderizado sozinho em vários testes, e o nome é só um texto.
+   */
+  attendantName?: string | null;
   /** Contato da conversa — excluído do seletor de cartão compartilhado. */
   currentContactId?: string | null;
 }
@@ -67,6 +79,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
     blockedReason,
     janelaFechada,
     contactName,
+    attendantName,
     currentContactId,
     respondendo,
     onCancelarResposta,
@@ -78,6 +91,12 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [contactPickerOpen, setContactPickerOpen] = useState(false);
   const [menuDismissed, setMenuDismissed] = useState(false);
+  // O botão ⚡ abre o mesmo menu do `/`, sem exigir que o campo esteja vazio
+  // nem que a pessoa saiba o atalho.
+  const [menuForcado, setMenuForcado] = useState(false);
+  // A mensagem pronta que ainda pede algo — enquanto não for `null`, a
+  // janelinha está aberta.
+  const [templateParaPreencher, setTemplateParaPreencher] = useState<MessageTemplate | null>(null);
   const [mode, setMode] = useState<"reply" | "note">("reply");
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const send = useSendMessage();
@@ -85,7 +104,11 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
   const createNote = useCreateNote();
   const templates = useMessageTemplates();
   const slash = resolveSlash(text);
-  const menuOpen = mode === "reply" && slash.open && !menuDismissed;
+  const menuOpen = mode === "reply" && ((slash.open && !menuDismissed) || menuForcado);
+  const valoresDaConversa = valoresAutomaticos({
+    contato: { nome: contactName },
+    atendente: { nome: attendantName },
+  });
 
   useImperativeHandle(ref, () => ({
     focus: () => taRef.current?.focus(),
@@ -144,10 +167,11 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
     );
   }
 
-  function applyTemplate(t: MessageTemplate) {
-    const filled = interpolateTemplate(t.body, { name: contactName ?? null });
+  /** O texto pronto entra no campo, com o cursor no fim — o envio é o botão de sempre. */
+  function inserirTextoPronto(filled: string) {
     setText(filled);
     setMenuDismissed(true);
+    setMenuForcado(false);
     const ta = taRef.current;
     if (!ta) return;
     requestAnimationFrame(() => {
@@ -155,6 +179,23 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
       ta.selectionStart = ta.selectionEnd = filled.length;
       autoresize();
     });
+  }
+
+  /**
+   * Escolheu uma mensagem pronta. Se tudo que ela pede já tem valor (contato e
+   * atendente), entra direto, como sempre entrou. Se sobra algo — um parâmetro
+   * livre como {{numero_pedido}}, ou um automático sem de onde vir —, abre a
+   * janelinha. A regra é `precisaDeJanela` (lib/inbox/parametros-de-mensagem).
+   */
+  function applyTemplate(t: MessageTemplate) {
+    const parametros = extrairParametros(t.body);
+    if (precisaDeJanela(parametros, valoresDaConversa)) {
+      setMenuDismissed(true);
+      setMenuForcado(false);
+      setTemplateParaPreencher(t);
+      return;
+    }
+    inserirTextoPronto(preencher(t.body, valoresDaConversa));
   }
 
   function applyDraft(draft: string) {
@@ -190,6 +231,7 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Escape" && menuOpen) {
       setMenuDismissed(true);
+      setMenuForcado(false);
       return;
     }
     if (e.key === "Enter" && !e.shiftKey) {
@@ -217,10 +259,14 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
       >
         <TemplateMenu
           open={menuOpen}
-          query={slash.query}
+          query={slash.open ? slash.query : ""}
           templates={templates.data ?? []}
+          carregando={templates.isLoading}
           onPick={applyTemplate}
-          onClose={() => setMenuDismissed(true)}
+          onClose={() => {
+            setMenuDismissed(true);
+            setMenuForcado(false);
+          }}
         />
         <div className="mb-1.5 flex gap-1">
           <button
@@ -300,6 +346,26 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
           {mode === "reply" && (
             <DraftReplyButton conversationId={conversationId} disabled={isDisabled} onDraft={applyDraft} />
           )}
+          {mode === "reply" && (
+            // Quem vem do WhatsApp não sabe que `/` abre um menu. O raio abre
+            // o mesmo menu — e é o ícone que o WhatsApp Business usa para isto.
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-9 w-9 shrink-0"
+              aria-label={t("Mensagens prontas")}
+              title={t("Mensagens prontas")}
+              aria-expanded={menuOpen}
+              disabled={respostaBarrada}
+              onClick={() => {
+                setMenuForcado((v) => !v);
+                setMenuDismissed(false);
+              }}
+            >
+              <Lightning size={18} weight={menuOpen ? "fill" : "regular"} aria-hidden />
+            </Button>
+          )}
           <EmojiButton
             disabled={isDisabled}
             onPick={(emoji) => {
@@ -375,6 +441,15 @@ export const Composer = forwardRef<ComposerHandle, Props>(function Composer(
           )}
         </div>
       </div>
+      <PreencherParametrosDialog
+        template={templateParaPreencher}
+        valoresIniciais={valoresDaConversa}
+        onUsar={(texto) => {
+          setTemplateParaPreencher(null);
+          inserirTextoPronto(texto);
+        }}
+        onCancelar={() => setTemplateParaPreencher(null)}
+      />
       <AttachmentPreviewDialog
         file={pendingFile}
         sending={upload.isPending || send.isPending}

@@ -23,6 +23,7 @@ import { Plus, PencilSimple, Trash } from "@/lib/ui/icons";
 import { apiClient } from "@/lib/api/client";
 import { showApiError } from "@/components/feedback/ApiErrorToast";
 import { useMessageTemplates, type MessageTemplate } from "@/hooks/inbox/useMessageTemplates";
+import { extrairParametros } from "@/lib/inbox/parametros-de-mensagem";
 import { TemplateFormDialog } from "./TemplateFormDialog";
 
 const TEMPLATES_KEY = ["message-templates"];
@@ -93,6 +94,7 @@ export function TemplatesClient({ canShare, currentUserId }: Props) {
                     </Badge>
                   </div>
                   <p className="line-clamp-2 text-sm text-muted-foreground">{template.body}</p>
+                  <ParametrosDaMensagem corpo={template.body} />
                 </div>
                 {canModify && (
                   <div className="flex shrink-0 gap-1">
@@ -150,6 +152,33 @@ export function TemplatesClient({ canShare, currentUserId }: Props) {
         canShare={canShare}
         template={editing}
       />
+    </div>
+  );
+}
+
+/**
+ * Os parâmetros de uma mensagem, na lista: o que chega sozinho e o que vai
+ * ser perguntado na hora de usar. Sem isto, só abrindo cada uma para saber.
+ */
+function ParametrosDaMensagem({ corpo }: { corpo: string }) {
+  const t = useT();
+  const parametros = extrairParametros(corpo);
+  if (parametros.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1 pt-1" aria-label={t("Parâmetros")}>
+      {parametros.map((p) => (
+        <span
+          key={p.chave}
+          className={
+            p.origem === "livre"
+              ? "rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] text-foreground"
+              : "rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground"
+          }
+          title={p.origem === "livre" ? t("Preenchido na hora de usar") : t("Chega preenchido")}
+        >
+          {t(p.rotulo)}
+        </span>
+      ))}
     </div>
   );
 }
