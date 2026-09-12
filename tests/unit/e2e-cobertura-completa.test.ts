@@ -140,8 +140,11 @@ describe("cobertura do e2e no CI", () => {
     // deixaria passar um workflow onde `LISTA` nunca é atribuída.
     expect(yml, "SPECS_PARTE_1 não alimenta a variável que roda").toMatch(/LISTA="\$SPECS_PARTE_1"/);
     expect(yml, "SPECS_PARTE_2 não alimenta a variável que roda").toMatch(/LISTA="\$SPECS_PARTE_2"/);
+    // Entre `--workers=1` e `$LISTA` cabem outras flags (`--reporter=line`
+    // entrou em 2026-09-12); o que se cobra é que a lista seja o ARGUMENTO do
+    // run, não a forma literal da linha.
     expect(yml, "a lista escolhida não é passada ao Playwright").toMatch(
-      /playwright test --workers=1 \$LISTA/,
+      /playwright test --workers=1(?: --[a-z-]+=[^\s$]+)* \$LISTA/,
     );
     // E FORA_DO_CI nunca é passada a um run — ela existe para NÃO rodar.
     expect(yml).not.toMatch(/playwright test[^\n]*\$FORA_DO_CI/);

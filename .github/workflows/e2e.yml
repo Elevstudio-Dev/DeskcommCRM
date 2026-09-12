@@ -660,7 +660,12 @@ jobs:
           # o playwright rodar a suíte INTEIRA (ou nenhuma) e o job ficaria
           # verde medindo outra coisa.
           [ -n "$LISTA" ] || { echo "::error::lista da parte ${{ matrix.parte }} vazia"; exit 1; }
-          pnpm exec playwright test --workers=1 $LISTA
+          # `--reporter=line` porque o padrão no CI é `dot`, e `dot` só imprime
+          # a linha de pontos no FIM: quando a parte 2 estourou os 30 min
+          # (2026-09-12, run 34666582621) o log tinha "Running 135 tests" e
+          # nada mais — impossível dizer em qual spec ela travou. `line` grava
+          # uma linha por teste no instante em que ele termina.
+          pnpm exec playwright test --workers=1 --reporter=line $LISTA
         env:
           # Só o que NÃO vem do `.env.e2e`: isto é ajuste de CI, não config do
           # produto. CI = 1 IP para todos os specs, e o teto de produção

@@ -21,8 +21,15 @@ import { describe, expect, it } from "vitest";
  * definida, e cada `h-full` até o canvas resolveu como `auto`.
  *
  * Consertar o canvas consertaria UMA tela. A raiz com `h-dvh` conserta a
- * classe: toda tela que se apoia em `h-full` (o inbox, o construtor, a agenda)
- * volta a ter contra o que medir.
+ * classe: toda tela que se apoia em `h-full` (o inbox, o construtor) volta a
+ * ter contra o que medir.
+ *
+ * ⚠️ E toda tela que tinha `h-full` SEM QUERER passa a medir de verdade — a
+ * Agenda era uma: a coluna virou caixa fixa, o histórico encolheu a 0px e a
+ * grade virou janelinha com rolagem própria. Ela escolheu `min-h-full`
+ * (preenche quando cabe, cresce quando não cabe); a guarda é
+ * `agenda-historico-nao-encolhe`. Ao dar altura definida a uma casca, procure
+ * os `h-full` abaixo dela que só funcionavam porque resolviam como `auto`.
  *
  * ─── O que este teste NÃO prova ─────────────────────────────────────────────
  *

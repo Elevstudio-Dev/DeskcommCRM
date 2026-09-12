@@ -243,7 +243,16 @@ export function AgendaClient({
       data-testid="tela-agenda"
       data-fonte={agendamentosIniciais.length > 0 ? "api" : "api-sem-dado"}
       data-fuso={fusoDeApresentacao ?? "organizacao"}
-      className="flex h-full flex-col gap-4 p-6"
+      // `min-h-full`, e NÃO `h-full`: a tela preenche a janela quando cabe e
+      // CRESCE quando não cabe — a página rola, e a grade mostra o dia inteiro.
+      // Era assim por acidente na casca antiga (coluna `min-h-screen`, `main`
+      // sem `min-h-0`), e virou `h-full` de verdade quando a casca ganhou
+      // altura definida: a coluna passou a ser caixa fixa, o histórico
+      // encolheu até 0px e a grade virou uma janelinha de 240px com rolagem
+      // própria — em que arrastar um card por várias horas é impossível
+      // (`agenda-grade-interativa`: o card de origem sai da vista quando o
+      // destino entra). Ver `tests/unit/agenda-historico-nao-encolhe`.
+      className="flex min-h-full flex-col gap-4 p-6"
     >
       {/*
         Em Suspense porque `useSearchParams` obriga: sem a fronteira, o Next
@@ -617,11 +626,20 @@ export function AgendaClient({
         </SheetContent>
       </Sheet>
 
+      {/* `shrink-0` É CINTO DE SEGURANÇA. Com `min-h-full` na raiz a coluna
+          nunca fica menor que o conteúdo e nada encolhe. Mas se a raiz voltar
+          a `h-full` (caixa fixa), quem encolhe abaixo do conteúdo é só quem
+          tem `min-h-0` — e o histórico era o único filho com `min-h-0` SEM
+          `flex-1`: cabeçalho + histórico maiores que a janela, e ele absorvia
+          o excesso inteiro, até 0px. No CI (1280x720, banco limpo) nascia
+          invisível e `agenda-tela-do-produto` reprovava; localmente, em janela
+          alta, passava. Com `shrink-0` ele mede o conteúdo (até 320px) e rola
+          por dentro em qualquer caixa. */}
       <HistoricoDaAgenda
         agendamentos={agendamentos}
         pessoas={pessoas}
         agora={new Date()}
-        className="max-h-[320px]"
+        className="max-h-[320px] shrink-0"
         // ⚠️ ESTAS DUAS PROPS FALTAVAM, e a ausência tinha cara de permissão.
         // `HistoricoDaAgenda` usa `disabled={!onRemarcar}`; sem elas os botões
         // nasciam cinzas em toda linha, de toda organização — e o `title` dizia
@@ -686,7 +704,10 @@ export function AgendaClient({
           setRemarcandoId(null);
           setMarcando(true);
         }}
-        className="min-h-0 flex-1"
+        // Sem `min-h-0` aqui, de propósito: este item mede o conteúdo (a
+        // grade com o dia inteiro) e cresce quando sobra espaço. O piso da
+        // grade mora dentro de `AgendaInterativa`.
+        className="flex-1"
       />
 
     </div>

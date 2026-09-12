@@ -207,7 +207,7 @@ export function AgendaInterativa({
     : "";
 
   return (
-    <div className={cn("flex min-h-0 flex-col gap-2", className)}>
+    <div className={cn("flex flex-col gap-2", className)}>
       {tipos.length > 1 && (
         <div
           data-testid="tipo-da-grade"
@@ -319,7 +319,13 @@ export function AgendaInterativa({
         pessoas={pessoas}
         agendamentos={desenhados}
         onAbrirAgendamento={onAbrirAgendamento}
-        className="min-h-0 flex-1"
+        // Piso de 240px NA GRADE, e não na raiz deste componente: a barra de
+        // tipos acima quebra linha quando há muitos tipos (medido: 134px com o
+        // banco de desenvolvimento), e um piso na raiz seria dividido com ela.
+        // A raiz, sem `min-h-0`, mede o conteúdo (barra + este piso) e, quando
+        // a coluna da tela não tem essa altura, é a página que rola — nunca a
+        // grade que some.
+        className="min-h-[240px] flex-1"
         interacao={
           tipo
             ? {

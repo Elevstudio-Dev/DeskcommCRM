@@ -33,6 +33,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { PRAZO_DO_SILENCIO_MS } from "@/lib/escalacao/atendimento-manual";
 
+import { acaoDaConversa } from "./helpers/visao-do-inbox";
+
 const APP_URL = `http://localhost:${process.env.E2E_PORT ?? "3001"}`;
 const CREDS_PATH = path.join(process.cwd(), ".e2e-creds.json");
 const EVIDENCIA = path.join(process.cwd(), ".superpowers/evidence/j20-elegibilidade");
@@ -266,7 +268,11 @@ test.describe("J20.18 — resposta manual pelo celular pausa a IA (sem apagar a 
         page.getByTestId("badge-atendimento-humano"),
         "conversa com a IA pausada não pode ter a mesma cara de uma normal",
       ).toBeVisible({ timeout: 30_000 });
-      const devolver = page.getByTestId("devolver-ao-automatico");
+      // "Devolver ao automático" mora no menu "Opções" desde 2026-09-04 (ver
+      // `acaoDaConversa`). Esta spec procurava o item sem abrir o menu e foi a
+      // única vermelha da suíte por quatro dias: o item existia, só não estava
+      // à vista.
+      const devolver = await acaoDaConversa(page, "devolver-ao-automatico");
       await expect(devolver).toBeVisible();
       await captura(page, "18-ia-pausada-por-resposta-manual");
 
