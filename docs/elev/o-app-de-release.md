@@ -3,10 +3,15 @@
 > Estado medido em 2026-09-12: o App **`elevcrm-release`** (App ID `4914675`)
 > existe na conta Elevstudio-Dev, está instalado só em `ElevCRM` (instalação
 > `161026683`), e `gh secret list --repo Elevstudio-Dev/ElevCRM` lista
-> `RELEASE_APP_ID` e `RELEASE_APP_PRIVATE_KEY`. O primeiro *Run workflow* do
-> `release.yml` abriu o [PR #1 — Release 1.16.0](https://github.com/Elevstudio-Dev/ElevCRM/pull/1)
-> em 42 s, assinado por `elevcrm-release[bot]`. A seção "O que criar" abaixo
-> fica como registro de como se cria de novo (chave perdida, conta nova).
+> `RELEASE_APP_ID` e `RELEASE_APP_PRIVATE_KEY`. **O ciclo inteiro foi ensaiado
+> em 2026-09-12:** o [PR #2 — Release 1.16.0](https://github.com/Elevstudio-Dev/ElevCRM/pull/2)
+> nasceu do bot, o merge criou a tag `v1.16.0` e o
+> [release](https://github.com/Elevstudio-Dev/ElevCRM/releases/tag/v1.16.0), e
+> as três imagens saíram em `ghcr.io/elevstudio-dev/{elevcrm,elevcrm-worker,elevcrm-scheduler}`
+> com `1.16.0`, `1.16` e `stable` (mesmo digest; conferido por
+> `docker manifest inspect`). **Distribuir já é possível.** A seção "O que
+> criar" abaixo fica como registro de como se cria de novo (chave perdida,
+> conta nova).
 
 ## Por que um App, e não o token do próprio workflow
 

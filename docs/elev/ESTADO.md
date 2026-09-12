@@ -1,10 +1,10 @@
 # Estado do Elev CRM
 
-> **Gerado por `pnpm elev:estado` em 2026-09-11.** Todo número aqui foi medido na
+> **Gerado por `pnpm elev:estado` em 2026-09-12.** Todo número aqui foi medido na
 > execução — nenhum é copiado nem mantido à mão. Se esta data estiver velha,
 > rode o comando de novo em vez de acreditar no que está escrito.
 
-**Versão:** v1.14.0 · **Commit:** `47e386e1` · **Branch:** `main`
+**Versão:** v1.16.0 · **Commit:** `8fb63555` · **Branch:** `main`
 
 ## Tamanho
 
@@ -19,7 +19,7 @@
 
 | Camada | Arquivos |
 |---|---|
-| Unitários | 819 |
+| Unitários | 821 |
 | Invariantes de banco | 151 |
 | Ponta a ponta (E2E) | 78 |
 
@@ -39,8 +39,8 @@ teste não é, e um comando que demora 30 minutos ninguém executa.
 
 | | |
 |---|---|
-| Issues abertas em `melgarafael/DeskcommCRM` | 74 |
-| Commits deles que ainda não trouxemos | 404 |
+| Issues abertas em `melgarafael/DeskcommCRM` | 78 |
+| Commits deles que ainda não trouxemos | 450 |
 
 Quando `atrás` crescer, siga [sincronizar-com-upstream.md](sincronizar-com-upstream.md)
 — a decisão de puxar não é automática.

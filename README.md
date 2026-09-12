@@ -375,6 +375,7 @@ Entre os invariantes está o **teste de isolamento RLS**: cria 2 organizações,
 | [`CLAUDE.md`](CLAUDE.md) | Convenções não-negociáveis (leitura obrigatória pra contribuir) |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Visão de 1 página da arquitetura |
 | [`docs/index.md`](docs/index.md) | Índice dos 157 documentos, com regra de precedência |
+| [`docs/elev/`](docs/elev/) | **O que é do Elev CRM** — estado remedido (`ESTADO.md`), como rodar os testes, sincronizar com o upstream, o App de release e os levantamentos mensais |
 | [`docs/prd/`](docs/prd/) · [`docs/specs/`](docs/specs/) | PRDs e specs técnicas (schema SQL, payloads, MCP, governança) |
 
 ---

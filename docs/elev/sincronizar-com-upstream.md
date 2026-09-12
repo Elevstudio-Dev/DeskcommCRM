@@ -17,6 +17,17 @@ git fetch origin main
 pnpm elev:estado
 ```
 
+**Tags do upstream não entram no clone.** O remote `origin` (upstream) está com
+`remote.origin.tagOpt = --no-tags` (configurado em 2026-09-12; conferir com
+`git config --get remote.origin.tagOpt` num clone novo). Sem isso, `git fetch
+origin` traz as tags deles de carona, e os nomes colidem com os nossos: em
+2026-09-12 o clone tinha a `v1.16.0` **deles** e recusou a nossa
+(`! [rejected] v1.16.0 -> v1.16.0 (would clobber existing tag)`), e o
+`elev:estado` dizia v1.14.0 com a 1.16.0 já publicada. As tags que valem são as
+do `fork`: `git fetch fork --tags`. Se uma tag deles já estiver no clone,
+`git tag -d <tag>` e buscar de novo — e **não** apagar o marcador local
+`antes-do-merge-upstream` (é o primeiro pai do merge `653281fc`).
+
 O que veio, em linguagem de gente:
 
 ```bash
