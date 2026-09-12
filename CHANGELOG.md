@@ -8,6 +8,132 @@ Se você roda o Elev CRM numa VPS, **leia a seção da versão para a qual está
 
 ## [Não lançado]
 
+## [1.16.0] — 2026-09-12
+
+### Adicionado
+
+- **Chat interno — a equipe conversa entre si sem sair do CRM** Um ícone de chat na barra superior, ao lado da busca, abre o
+  **chat da equipe**: um painel com os canais à esquerda e a conversa à direita,
+  como o WhatsApp da equipe — só que dentro do CRM, sem misturar com as
+  conversas dos clientes.
+
+  Os canais:
+
+  - **Geral** — toda a equipe.
+  - **Um por setor** — quem está no setor e a gestão. Nasce sozinho quando o
+    setor é criado.
+  - **Conversa direta** — você e uma pessoa. "Conversa direta" na lista, escolha
+    com quem, e pronto; o mesmo par nunca vira duas conversas.
+
+  A mensagem do colega aparece na hora, sem recarregar. Com o painel fechado, um
+  aviso mostra quem escreveu e o começo do texto, com "Abrir" para ir direto ao
+  canal. O ícone na barra mostra quantas mensagens você ainda não viu; abrir o
+  canal zera a contagem dele.
+
+  Quem vê o quê é regra do banco, não da tela: um atendente que não está no
+  setor financeiro não vê o canal do financeiro, e a conversa direta entre duas
+  pessoas é só delas — nem o gestor lê. O histórico fica guardado.
+
+  Só texto nesta primeira versão: sem anexos, sem menções, sem reações. Contas
+  de leitura (viewer) não participam do chat.
+
+- **Mensagens prontas com parâmetros, preenchidos numa janelinha na hora de usar** Uma resposta rápida pode ter lacunas: **{{numero_pedido}}**, **{{valor}}**,
+  **{{data_entrega}}** — qualquer nome entre chaves duplas vira um campo. Na hora
+  de usar a mensagem no inbox, abre uma janelinha com um campo por lacuna, na
+  ordem em que aparecem no texto, e uma prévia de como a mensagem vai sair. "Usar
+  mensagem" põe o texto pronto no campo de escrever; o envio continua sendo o
+  botão de sempre, para dar uma última olhada antes de chegar no cliente.
+
+  Três lacunas chegam preenchidas sozinhas: **{{nome}}** e **{{primeiro_nome}}**
+  (do cadastro do contato) e **{{atendente}}** (quem está logado). Elas aparecem
+  na janelinha já com valor e podem ser corrigidas ali. Se o contato não tem nome
+  no cadastro, a janelinha pergunta — antes, "Olá {{nome}}" ia assim mesmo para
+  o cliente.
+
+  Mensagem sem lacuna livre entra direto no campo, como sempre entrou.
+
+  No cadastro da mensagem (Configurações → Atendimento → Respostas rápidas) há
+  botões para inserir as lacunas automáticas no ponto do cursor, um campo para
+  criar uma lacuna nova, e uma linha que mostra o que a mensagem vai pedir. A
+  lista mostra as lacunas de cada mensagem.
+
+  No campo de escrever do inbox há um botão ⚡ (o mesmo símbolo que o WhatsApp
+  Business usa) que abre a lista de mensagens prontas — o atalho "/" no começo
+  do texto continua funcionando.
+
+  Para começar uma conversa com um contato que ainda não escreveu, o caminho é o
+  de antes: Contatos → "Iniciar conversa no Inbox" → escolher a mensagem pronta.
+
+- **Setores — a conversa vai para um grupo de pessoas, e o cliente escolhe qual no primeiro contato** Uma loja de informática tem assistência, financeiro e recepção. Agora o CRM
+  tem isso também: **setores**. Em Configurações → Organização → Setores você
+  cria os setores, dá uma cor a cada um e diz quem atende em cada um. Uma pessoa
+  pode estar em mais de um setor.
+
+  **Quem está num setor vê a fila do setor.** Um atendente da assistência vê as
+  conversas da assistência e as que ainda não têm setor; não vê as do
+  financeiro. Gestores e administradores continuam vendo tudo, e quem não está
+  em setor nenhum também. As mensagens seguem a mesma regra da conversa.
+
+  **O menu de primeiro contato.** Ligue-o na mesma tela e, quando alguém escrever
+  pela primeira vez, o sistema responde com a saudação e a lista numerada
+  (1 - Assistência, 2 - Financeiro, 3 - Recepção). O cliente responde com o
+  número ou com o nome — sem acento, com erro de digitação, "quero o 2", tudo
+  vale — e a conversa vai para o setor. Se não der para entender, o sistema
+  lembra uma vez; depois, a conversa cai no setor padrão que você escolher (ou
+  fica na fila geral). Enquanto o menu está no ar, o atendimento automático não
+  responde: primeiro o setor, depois o atendimento. A saudação, o lembrete e a
+  confirmação são seus para escrever, e a tela mostra a prévia de como o cliente
+  vai receber.
+
+  **Transferir entre setores.** No cabeçalho da conversa, "Opções → Transferir
+  para setor…". A conversa vai para a fila do setor escolhido — quem era o
+  responsável deixa de ser — e o fio ganha a linha "Fulano transferiu para o
+  setor Financeiro". A escolha do cliente no menu também aparece ali.
+
+  **No inbox:** a etiqueta colorida do setor em cada conversa e um filtro "Todos
+  os setores" ao lado dos outros. O rodízio de atendimento, quando ligado,
+  passa a sortear só entre as pessoas do setor da conversa.
+
+  Nada muda para quem não criar setor nenhum.
+
+### Alterado
+
+- **O menu lateral saiu; a navegação sobe para a barra e a conversa ganha a tela inteira** O menu lateral foi removido. Ele carregava vinte links em seis grupos e ocupava
+  240 pixels de toda tela — inclusive do inbox, que é onde o atendente passa o
+  dia. Sem ele, a conversa vai de borda a borda: em um monitor de 1280 pixels, a
+  área de mensagens quase dobra.
+
+  A navegação passou a ter duas portas, e só duas:
+
+  - **As abas na barra superior**, ao lado da busca: **Inbox**, **Contatos**,
+    **Funis**, **Agenda** e **IA**. São as telas de uso diário, nessa ordem — a
+    ordem do WhatsApp, de onde vem quem usa isto. Em telas menores que 1024
+    pixels as abas viram ícones; abaixo de 768, uma gaveta.
+  - **Configurações**, pela engrenagem ao lado da busca. Ela deixou de ser "só a
+    sua conta e a sua empresa" e virou o **inventário do sistema inteiro**:
+    Atendimento, CRM, Agente de IA, Canais, Análise e Organização, cada grupo
+    uma seção, cada tela um cartão com a frase que diz para que serve. Tudo que
+    não é aba está ali — e continua no atalho de busca (⌘K / Ctrl+K), que já
+    varria o mesmo registro.
+
+  O que mudou de lugar, para quem já sabia o caminho antigo:
+
+  - **Conexões**, **Webhooks**, **Nuvemshop**, **Desempenho**, **Audit Log**,
+    **Radar**, **Respostas rápidas**, **Produtos**, **Etapas do funil** e
+    **Marcadores** eram itens do menu; agora estão em Configurações, no grupo de
+    sempre.
+  - **Agentes**, **Follow-ups** e **Roteadores** eram itens do menu; a aba
+    **IA** abre a vitrine com eles e com as outras dez telas de IA.
+  - A **versão instalada** e o aviso de **"Nova versão"** (só para o dono do
+    servidor) saíram do rodapé do menu e foram para o menu do avatar, no canto
+    direito — com um ponto pulsando sobre o avatar quando há versão nova.
+  - A **bolinha de saúde das conexões** ficava ao lado de "Conexões" no menu;
+    agora fica sobre a engrenagem de Configurações, para quem é admin.
+
+  Nada muda de endereço: todo link salvo continua abrindo a mesma tela. A
+  preferência "menu recolhido" deixa de existir, porque não há mais menu para
+  recolher.
+
 ## [1.15.0] — 2026-09-07
 
 ### Adicionado
@@ -2337,7 +2463,8 @@ Primeira versão marcada do Elev CRM. O projeto vinha sendo desenvolvido publica
 
 - **Node 22 é obrigatório para desenvolvimento.** A suíte de invariantes instancia o cliente do Supabase, que exige o `WebSocket` global — nativo apenas a partir do Node 22. Isso não afeta quem apenas hospeda: a VPS roda a imagem pronta.
 
-[Não lançado]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.15.0...HEAD
+[Não lançado]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.16.0...HEAD
+[1.16.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/Elevstudio-Dev/ElevCRM/compare/v1.12.0...v1.13.0
